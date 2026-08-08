@@ -1,0 +1,347 @@
+/**
+ * VeggiiCart brand theme overrides for NiceAdmin.
+ * Palette mirrors the Flutter app tokens.
+ */
+
+:root {
+  --vc-primary: #12833B;
+  --vc-deep-forest: #0B5C27;
+  --vc-ink: #1E1F22;
+  --vc-bg: #FFFFFF;
+  --vc-bg-section: #F4FAF6;
+  --vc-accent: #F5A623;
+  --vc-error: #D64545;
+  --vc-primary-soft: rgba(18, 131, 59, 0.12);
+  --vc-primary-softer: rgba(18, 131, 59, 0.06);
+  --bs-primary: #12833B;
+  --bs-primary-rgb: 18, 131, 59;
+  --bs-link-color: #12833B;
+  --bs-link-hover-color: #0B5C27;
+  --bs-success: #12833B;
+  --bs-warning: #F5A623;
+  --bs-danger: #D64545;
+}
+
+/*--------------------------------------------------------------
+# Global
+--------------------------------------------------------------*/
+body {
+  background: var(--vc-bg-section);
+  color: var(--vc-ink);
+}
+
+a {
+  color: var(--vc-primary);
+}
+
+a:hover {
+  color: var(--vc-deep-forest);
+}
+
+.pagetitle h1 {
+  color: var(--vc-deep-forest);
+}
+
+.back-to-top {
+  background: var(--vc-primary);
+}
+
+.back-to-top:hover {
+  background: var(--vc-deep-forest);
+}
+
+/*--------------------------------------------------------------
+# Bootstrap primary overrides
+--------------------------------------------------------------*/
+.btn-primary {
+  --bs-btn-bg: var(--vc-primary);
+  --bs-btn-border-color: var(--vc-primary);
+  --bs-btn-hover-bg: var(--vc-deep-forest);
+  --bs-btn-hover-border-color: var(--vc-deep-forest);
+  --bs-btn-active-bg: var(--vc-deep-forest);
+  --bs-btn-active-border-color: var(--vc-deep-forest);
+  --bs-btn-disabled-bg: var(--vc-primary);
+  --bs-btn-disabled-border-color: var(--vc-primary);
+  --bs-btn-focus-shadow-rgb: 18, 131, 59;
+}
+
+.btn-outline-primary {
+  --bs-btn-color: var(--vc-primary);
+  --bs-btn-border-color: var(--vc-primary);
+  --bs-btn-hover-bg: var(--vc-primary);
+  --bs-btn-hover-border-color: var(--vc-primary);
+  --bs-btn-active-bg: var(--vc-deep-forest);
+  --bs-btn-active-border-color: var(--vc-deep-forest);
+  --bs-btn-focus-shadow-rgb: 18, 131, 59;
+}
+
+.bg-primary,
+.badge.bg-primary {
+  background-color: var(--vc-primary) !important;
+}
+
+.text-primary {
+  color: var(--vc-primary) !important;
+}
+
+.form-control:focus,
+.form-select:focus,
+.form-check-input:focus {
+  border-color: var(--vc-primary);
+  box-shadow: 0 0 0 0.2rem var(--vc-primary-soft);
+}
+
+.form-check-input:checked {
+  background-color: var(--vc-primary);
+  border-color: var(--vc-primary);
+}
+
+.nav-tabs-bordered .nav-link:hover,
+.nav-tabs-bordered .nav-link:focus,
+.nav-tabs-bordered .nav-link.active {
+  color: var(--vc-primary);
+  border-bottom-color: var(--vc-primary);
+}
+
+.alert-warning {
+  --bs-alert-color: #7a5208;
+  --bs-alert-bg: #fff6e5;
+  --bs-alert-border-color: var(--vc-accent);
+}
+
+.alert-danger {
+  --bs-alert-color: #7a2222;
+  --bs-alert-bg: #fdecec;
+  --bs-alert-border-color: var(--vc-error);
+}
+
+/*--------------------------------------------------------------
+# Header / Logo
+--------------------------------------------------------------*/
+.header {
+  background: var(--vc-bg);
+}
+
+.logo {
+  gap: 0;
+}
+
+.logo .logo-icon {
+  max-height: 42px;
+  width: auto;
+  margin-right: 0;
+  display: none;
+  object-fit: contain;
+}
+
+.logo .logo-full {
+  max-height: 48px;
+  width: auto;
+  margin-right: 0;
+  display: block;
+  object-fit: contain;
+}
+
+/* Collapsed sidebar: no-bg mark */
+body.toggle-sidebar .logo .logo-full {
+  display: none !important;
+}
+
+body.toggle-sidebar .logo .logo-icon {
+  display: block !important;
+  max-height: 40px;
+}
+
+.login-logo {
+  max-height: 120px;
+  width: auto;
+  object-fit: contain;
+  border-radius: 8px;
+}
+
+.logo span {
+  color: var(--vc-deep-forest);
+}
+
+.toggle-sidebar-btn {
+  color: var(--vc-deep-forest) !important;
+}
+
+.header-nav .nav-icon {
+  color: var(--vc-deep-forest);
+}
+
+.header-nav .badge-number {
+  background-color: var(--vc-accent) !important;
+}
+
+.vc-avatar {
+  width: 36px;
+  height: 36px;
+  background: var(--vc-primary-soft);
+  color: var(--vc-deep-forest);
+  font-weight: 700;
+  font-size: 14px;
+}
+
+/*--------------------------------------------------------------
+# Sidebar
+--------------------------------------------------------------*/
+.sidebar {
+  background: var(--vc-bg);
+}
+
+.sidebar-nav .nav-link {
+  background: var(--vc-primary-softer);
+  color: var(--vc-primary);
+}
+
+.sidebar-nav .nav-link i {
+  color: var(--vc-primary);
+}
+
+.sidebar-nav .nav-link.collapsed {
+  color: var(--vc-deep-forest);
+  background: var(--vc-bg);
+}
+
+.sidebar-nav .nav-link.collapsed i {
+  color: #6b7c72;
+}
+
+.sidebar-nav .nav-link:hover {
+  color: var(--vc-primary);
+  background: var(--vc-primary-soft);
+}
+
+.sidebar-nav .nav-link:hover i {
+  color: var(--vc-primary);
+}
+
+.sidebar-nav .nav-link:not(.collapsed) {
+  color: var(--vc-deep-forest);
+  background: var(--vc-primary-soft);
+}
+
+.sidebar-nav .nav-link:not(.collapsed) i {
+  color: var(--vc-deep-forest);
+}
+
+.sidebar-nav .nav-content a {
+  color: var(--vc-deep-forest);
+}
+
+.sidebar-nav .nav-content a:hover,
+.sidebar-nav .nav-content a.active {
+  color: var(--vc-primary);
+}
+
+.sidebar-nav .nav-content a.active i {
+  background-color: var(--vc-primary);
+}
+
+.sidebar-nav .nav-heading {
+  color: #7a8a80;
+}
+
+/*--------------------------------------------------------------
+# Cards / Dashboard KPIs
+--------------------------------------------------------------*/
+.card {
+  border: none;
+  box-shadow: 0 0 20px rgba(1, 41, 112, 0.06);
+}
+
+.card-title {
+  color: var(--vc-deep-forest);
+}
+
+.dashboard .filter .icon:hover,
+.dashboard .filter .icon:focus {
+  color: var(--vc-primary);
+}
+
+.dashboard .sales-card .card-icon {
+  color: var(--vc-primary);
+  background: var(--vc-primary-soft);
+}
+
+.dashboard .revenue-card .card-icon {
+  color: var(--vc-deep-forest);
+  background: rgba(11, 92, 39, 0.12);
+}
+
+.dashboard .customers-card .card-icon {
+  color: var(--vc-accent);
+  background: rgba(245, 166, 35, 0.15);
+}
+
+.info-card h6 {
+  color: var(--vc-ink);
+}
+
+/*--------------------------------------------------------------
+# Tables
+--------------------------------------------------------------*/
+.table thead th {
+  color: var(--vc-deep-forest);
+  border-bottom-color: var(--vc-primary-soft) !important;
+}
+
+.datatable-table > thead > tr > th {
+  border-bottom-color: var(--vc-primary) !important;
+}
+
+/*--------------------------------------------------------------
+# Login
+--------------------------------------------------------------*/
+.vc-login-body {
+  background:
+    radial-gradient(ellipse at top left, rgba(18, 131, 59, 0.12), transparent 50%),
+    radial-gradient(ellipse at bottom right, rgba(245, 166, 35, 0.1), transparent 45%),
+    var(--vc-bg-section);
+}
+
+.vc-login-card {
+  border: 1px solid rgba(18, 131, 59, 0.08);
+  box-shadow: 0 12px 40px rgba(11, 92, 39, 0.08);
+}
+
+.vc-temp-creds {
+  background: var(--vc-bg-section);
+  border-radius: 6px;
+  padding: 10px 12px;
+  border-left: 3px solid var(--vc-accent);
+}
+
+.credits a {
+  color: var(--vc-primary);
+}
+
+/*--------------------------------------------------------------
+# Placeholder
+--------------------------------------------------------------*/
+.vc-coming-soon-icon {
+  width: 64px;
+  height: 64px;
+  margin: 0 auto;
+  border-radius: 50%;
+  background: var(--vc-primary-soft);
+  color: var(--vc-primary);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 28px;
+}
+
+/*--------------------------------------------------------------
+# Footer
+--------------------------------------------------------------*/
+.footer {
+  background: transparent;
+}
+
+.footer .copyright span,
+.footer a {
+  color: var(--vc-primary);
+}

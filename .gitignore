@@ -1,0 +1,16 @@
+# Local secrets
+app/config/config.local.php
+.env
+
+# OS / IDE
+.DS_Store
+Thumbs.db
+.idea/
+.vscode/
+*.swp
+*.swo
+
+# Logs / temp
+*.log
+tmp/
+cache/
