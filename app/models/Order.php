@@ -21,12 +21,21 @@ class Order extends Model
     ];
 
     public const STATUS_BADGE = [
-        'placed'            => 'bg-secondary',
-        'confirmed'         => 'bg-primary',
-        'delivery_date_set' => 'bg-info text-dark',
-        'out_for_delivery'  => 'bg-warning text-dark',
-        'delivered'         => 'bg-success',
-        'cancelled'         => 'bg-danger',
+        'placed'            => 'vc-status vc-status--placed',
+        'confirmed'         => 'vc-status vc-status--confirmed',
+        'delivery_date_set' => 'vc-status vc-status--delivery_date_set',
+        'out_for_delivery'  => 'vc-status vc-status--out_for_delivery',
+        'delivered'         => 'vc-status vc-status--delivered',
+        'cancelled'         => 'vc-status vc-status--cancelled',
+    ];
+
+    public const STATUS_ICONS = [
+        'placed'            => 'bi-bag-plus',
+        'confirmed'         => 'bi-check2-circle',
+        'delivery_date_set' => 'bi-calendar-event',
+        'out_for_delivery'  => 'bi-truck',
+        'delivered'         => 'bi-box-seam',
+        'cancelled'         => 'bi-x-circle',
     ];
 
     /** Forward graph (cancel handled separately). */
@@ -57,7 +66,9 @@ class Order extends Model
     {
         return [
             'label' => self::STATUS_LABELS[$status] ?? $status,
-            'class' => self::STATUS_BADGE[$status] ?? 'bg-secondary',
+            'class' => self::STATUS_BADGE[$status] ?? 'vc-status vc-status--placed',
+            'icon'  => self::STATUS_ICONS[$status] ?? 'bi-circle',
+            'key'   => $status,
         ];
     }
 

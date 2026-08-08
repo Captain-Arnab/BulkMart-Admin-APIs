@@ -4,88 +4,57 @@ class ReportController extends Controller
 {
     public function index(): void
     {
-        $from = trim((string) ($_GET['date_from'] ?? date('Y-m-01')));
-        $to = trim((string) ($_GET['date_to'] ?? date('Y-m-d')));
-        $run = isset($_GET['run']) || isset($_GET['date_from']);
+        $analytics = new AnalyticsService();
+        $filters = $analytics->normalizeFilters($_GET);
+        $productsPage = max(1, (int) ($_GET['pp'] ?? 1));
+        $customersPage = max(1, (int) ($_GET['cp'] ?? 1));
+        $ordersPage = max(1, (int) ($_GET['op'] ?? 1));
 
-        $stats = null;
-        if ($run) {
-            $stats = $this->buildStats($from, $to);
-        }
+        $payload = $analytics->reportsPayload($filters, $productsPage, $customersPage, $ordersPage);
 
         $this->view('reports/index', [
-            'title'     => 'Reports & Analytics',
-            'date_from' => $from,
-            'date_to'   => $to,
-            'stats'     => $stats,
-            'error'     => flash('error'),
+            'title'       => 'Reports & Analytics',
+            'filters'     => $payload['filters'],
+            'summary'     => $payload['summary'],
+            'payload'     => $payload,
+            'chartData'   => [
+                'trend'         => $payload['trend'],
+                'status'        => $payload['status'],
+                'categories'    => $payload['categories'],
+                'status_colors' => $payload['status_colors'],
+                'status_labels' => $payload['status_labels'],
+            ],
+            'error'       => flash('error'),
+            'pageScripts' => [asset('js/vc-analytics.js'), asset('js/vc-reports.js')],
         ]);
     }
 
     public function export(): void
     {
-        $from = trim((string) ($_GET['date_from'] ?? date('Y-m-01')));
-        $to = trim((string) ($_GET['date_to'] ?? date('Y-m-d')));
-        $stmt = db()->prepare(
-            "SELECT o.order_number, c.business_name, o.status, o.subtotal, o.delivery_fee, o.total, o.payment_method, o.placed_at
-             FROM orders o
-             INNER JOIN customers c ON c.id = o.customer_id
-             WHERE DATE(o.placed_at) BETWEEN ? AND ?
-             ORDER BY o.placed_at ASC"
-        );
-        $stmt->execute([$from, $to]);
-        $rows = $stmt->fetchAll();
+        $analytics = new AnalyticsService();
+        $filters = $analytics->normalizeFilters($_GET);
+        $rows = $analytics->exportOrders($filters['date_from'], $filters['date_to'], $filters);
 
-        header('Content-Type: text/csv');
-        header('Content-Disposition: attachment; filename="veggiicart_orders_' . $from . '_to_' . $to . '.csv"');
+        header('Content-Type: text/csv; charset=utf-8');
+        header(
+            'Content-Disposition: attachment; filename="veggiicart_orders_'
+            . $filters['date_from'] . '_to_' . $filters['date_to'] . '.csv"'
+        );
         $out = fopen('php://output', 'w');
         fputcsv($out, ['order_number', 'business_name', 'status', 'subtotal', 'delivery_fee', 'total', 'payment_method', 'placed_at']);
         foreach ($rows as $row) {
-            fputcsv($out, $row);
+            fputcsv($out, [
+                $row['order_number'],
+                $row['business_name'],
+                $row['status'],
+                $row['subtotal'],
+                $row['delivery_fee'],
+                $row['total'],
+                $row['payment_method'],
+                $row['placed_at'],
+            ]);
         }
         fclose($out);
         exit;
-    }
-
-    private function buildStats(string $from, string $to): array
-    {
-        $pdo = db();
-        $base = $pdo->prepare(
-            "SELECT COUNT(*) AS order_count,
-                    COALESCE(SUM(CASE WHEN status != 'cancelled' THEN total ELSE 0 END),0) AS revenue
-             FROM orders
-             WHERE DATE(placed_at) BETWEEN ? AND ?"
-        );
-        $base->execute([$from, $to]);
-        $summary = $base->fetch();
-
-        $topProducts = $pdo->prepare(
-            "SELECT oi.product_name_snapshot AS name, SUM(oi.quantity) AS qty
-             FROM order_items oi
-             INNER JOIN orders o ON o.id = oi.order_id
-             WHERE DATE(o.placed_at) BETWEEN ? AND ? AND o.status != 'cancelled'
-             GROUP BY oi.product_id, oi.product_name_snapshot
-             ORDER BY qty DESC
-             LIMIT 5"
-        );
-        $topProducts->execute([$from, $to]);
-
-        $topCustomers = $pdo->prepare(
-            "SELECT c.business_name, SUM(o.total) AS order_value, COUNT(*) AS orders
-             FROM orders o
-             INNER JOIN customers c ON c.id = o.customer_id
-             WHERE DATE(o.placed_at) BETWEEN ? AND ? AND o.status != 'cancelled'
-             GROUP BY c.id, c.business_name
-             ORDER BY order_value DESC
-             LIMIT 5"
-        );
-        $topCustomers->execute([$from, $to]);
-
-        return [
-            'order_count'   => (int) $summary['order_count'],
-            'revenue'       => (float) $summary['revenue'],
-            'top_products'  => $topProducts->fetchAll(),
-            'top_customers' => $topCustomers->fetchAll(),
-        ];
     }
 }

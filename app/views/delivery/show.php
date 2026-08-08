@@ -37,7 +37,10 @@ $codWarn = $codWarn ?? null;
         <div class="card-body">
           <div class="d-flex justify-content-between mb-3">
             <h5 class="card-title mb-0">Delivery details</h5>
-            <span class="badge rounded-pill <?= e($badge['class']) ?>"><?= e($badge['label']) ?></span>
+            <span class="<?= e($badge['class']) ?>">
+              <i class="bi <?= e($badge['icon']) ?>"></i>
+              <?= e($badge['label']) ?>
+            </span>
           </div>
           <div class="mb-3">
             <div class="fw-semibold"><?= e($order['business_name']) ?></div>
@@ -72,7 +75,10 @@ $codWarn = $codWarn ?? null;
             <?php foreach ($log as $entry): ?>
               <?php $b = Order::badge($entry['status']); ?>
               <li class="mb-2">
-                <span class="badge rounded-pill <?= e($b['class']) ?>"><?= e($b['label']) ?></span>
+                <span class="<?= e($b['class']) ?>">
+                  <i class="bi <?= e($b['icon']) ?>"></i>
+                  <?= e($b['label']) ?>
+                </span>
                 <span class="small text-muted ms-2"><?= e(date('d M Y, H:i', strtotime($entry['changed_at']))) ?></span>
                 <?php if ($entry['note']): ?><div class="small"><?= e($entry['note']) ?></div><?php endif; ?>
               </li>

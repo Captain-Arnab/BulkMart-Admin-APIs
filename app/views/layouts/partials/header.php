@@ -9,6 +9,24 @@ $roleLabel = match ($user['role'] ?? '') {
     'delivery_manager' => 'Delivery Manager',
     default => 'Admin',
 };
+
+$searchModules = [];
+foreach (rbac_sidebar_items($user) as $item) {
+    $searchModules[] = [
+        'label' => $item['label'],
+        'route' => $item['route'],
+        'icon'  => $item['icon'] ?? 'bi-grid',
+        'url'   => url($item['route']),
+    ];
+    foreach ($item['children'] ?? [] as $child) {
+        $searchModules[] = [
+            'label' => $item['label'] . ' · ' . $child['label'],
+            'route' => $child['route'],
+            'icon'  => $item['icon'] ?? 'bi-circle',
+            'url'   => url($child['route']),
+        ];
+    }
+}
 ?>
 <header id="header" class="header fixed-top d-flex align-items-center">
   <div class="d-flex align-items-center justify-content-between">
@@ -19,15 +37,32 @@ $roleLabel = match ($user['role'] ?? '') {
     <i class="bi bi-list toggle-sidebar-btn"></i>
   </div>
 
-  <div class="search-bar">
-    <form class="search-form d-flex align-items-center" method="GET" action="<?= e(url('dashboard')) ?>" onsubmit="return false;">
-      <input type="text" name="query" placeholder="Search modules…" title="Search" disabled>
-      <button type="submit" title="Search" disabled><i class="bi bi-search"></i></button>
+  <div class="search-bar vc-module-search" id="vc-module-search">
+    <form class="search-form d-flex align-items-center" role="search" autocomplete="off" onsubmit="return false;">
+      <i class="bi bi-search vc-search-icon" aria-hidden="true"></i>
+      <input type="search"
+             id="vc-module-search-input"
+             name="query"
+             placeholder="Search modules…"
+             aria-label="Search modules"
+             aria-autocomplete="list"
+             aria-controls="vc-module-search-results"
+             aria-expanded="false">
+      <kbd class="vc-search-kbd d-none d-xl-inline">⌘K</kbd>
+      <button type="button" class="vc-search-clear" id="vc-module-search-clear" title="Clear" hidden>
+        <i class="bi bi-x-lg"></i>
+      </button>
     </form>
+    <div class="vc-search-results" id="vc-module-search-results" role="listbox" hidden></div>
   </div>
 
   <nav class="header-nav ms-auto">
     <ul class="d-flex align-items-center">
+      <li class="nav-item d-block d-lg-none">
+        <a class="nav-link nav-icon search-bar-toggle" href="#" title="Search">
+          <i class="bi bi-search"></i>
+        </a>
+      </li>
       <li class="nav-item dropdown pe-3">
         <a class="nav-link nav-profile d-flex align-items-center pe-0" href="#" data-bs-toggle="dropdown">
           <div class="vc-avatar rounded-circle d-flex align-items-center justify-content-center">
@@ -41,7 +76,7 @@ $roleLabel = match ($user['role'] ?? '') {
             <span><?= e($roleLabel) ?></span>
           </li>
           <li><hr class="dropdown-divider"></li>
-          <?php if (rbac_can('settings')): ?>
+          <?php if (rbac_can('settings') || in_array($user['role'] ?? '', ['super_admin', 'sub_admin'], true)): ?>
           <li>
             <a class="dropdown-item d-flex align-items-center" href="<?= e(url('settings')) ?>">
               <i class="bi bi-gear"></i><span>Settings</span>
@@ -59,3 +94,6 @@ $roleLabel = match ($user['role'] ?? '') {
     </ul>
   </nav>
 </header>
+<script>
+  window.VC_MODULES = <?= json_encode($searchModules, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES) ?>;
+</script>

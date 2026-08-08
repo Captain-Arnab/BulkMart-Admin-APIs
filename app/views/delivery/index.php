@@ -44,7 +44,10 @@ $user = auth_user();
                 <div class="fw-bold"><?= e($o['order_number']) ?></div>
                 <div class="text-muted small"><?= e(date('d M Y, H:i', strtotime($o['placed_at']))) ?></div>
               </div>
-              <span class="badge rounded-pill <?= e($badge['class']) ?>"><?= e($badge['label']) ?></span>
+              <span class="<?= e($badge['class']) ?>">
+                <i class="bi <?= e($badge['icon']) ?>"></i>
+                <?= e($badge['label']) ?>
+              </span>
             </div>
             <div class="mb-2">
               <div class="fw-semibold"><?= e($o['business_name']) ?></div>

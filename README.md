@@ -39,9 +39,11 @@ Core PHP + MySQL admin shell built on the NiceAdmin (Bootstrap 5) UI kit.
 - `php scripts/seed.php` — categories, 34 products, admin user
 - `php scripts/seed_orders.php` — test customers, orders, delivery manager
 - `php scripts/seed_modules.php` — demo banners/offers/tickets + TEST sub-admin
+- `php scripts/seed_analytics.php` — DEMO orders (VC-DEMO-*) for Dashboard/Reports charts
 - `php scripts/verify_products.php` — smoke test products module
 - `php scripts/verify_orders.php` — smoke test orders/delivery + stock
 - `php scripts/verify_modules.php` — smoke test Step 11 modules + sub-admin gating
+- `php scripts/verify_analytics.php` — smoke test Dashboard + Reports charts
 
 ### Bulk templates
 

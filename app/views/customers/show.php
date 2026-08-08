@@ -69,7 +69,7 @@ $success = $success ?? null; $error = $error ?? null;
               <td><a href="<?= e(url('orders/'.$o['id'])) ?>"><?= e($o['order_number']) ?></a></td>
               <td><?= e(date('d M Y', strtotime($o['placed_at']))) ?></td>
               <td>₹<?= e(number_format((float)$o['total'],2)) ?></td>
-              <td><span class="badge <?= e($b['class']) ?>"><?= e($b['label']) ?></span></td>
+              <td><span class="<?= e($b['class']) ?>"><i class="bi <?= e($b['icon']) ?>"></i> <?= e($b['label']) ?></span></td>
             </tr>
           <?php endforeach; ?>
           </tbody></table>

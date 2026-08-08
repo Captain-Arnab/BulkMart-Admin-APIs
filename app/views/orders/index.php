@@ -3,64 +3,71 @@
 /** @var array $result */
 $success = $success ?? null;
 $error = $error ?? null;
+$totalShown = count($result['rows'] ?? []);
 ?>
-<div class="pagetitle d-flex flex-wrap justify-content-between align-items-center gap-2">
+<div class="pagetitle vc-pagetitle d-flex flex-wrap justify-content-between align-items-end gap-2">
   <div>
     <h1>Orders</h1>
     <nav>
-      <ol class="breadcrumb">
+      <ol class="breadcrumb mb-0">
         <li class="breadcrumb-item"><a href="<?= e(url('dashboard')) ?>">Home</a></li>
         <li class="breadcrumb-item active">Orders</li>
       </ol>
     </nav>
+  </div>
+  <div class="vc-page-meta text-muted small">
+    <?= (int) ($result['total'] ?? 0) ?> total · page <?= (int) ($result['page'] ?? 1) ?>
   </div>
 </div>
 
 <?php if ($success): ?><div class="alert alert-success"><?= e($success) ?></div><?php endif; ?>
 <?php if ($error): ?><div class="alert alert-danger"><?= e($error) ?></div><?php endif; ?>
 
-<section class="section">
-  <div class="card mb-3">
+<section class="section vc-orders">
+  <div class="card vc-filter-card mb-3">
     <div class="card-body py-3">
       <form class="row g-2 align-items-end" method="GET" action="<?= e(url('orders')) ?>">
-        <div class="col-md-3">
+        <div class="col-lg-3 col-md-6">
           <label class="form-label mb-1">Search</label>
-          <input type="text" name="q" value="<?= e($filters['q']) ?>" class="form-control" placeholder="Order # or customer">
+          <div class="vc-field-icon">
+            <i class="bi bi-search"></i>
+            <input type="text" name="q" value="<?= e($filters['q']) ?>" class="form-control" placeholder="Order # or customer">
+          </div>
         </div>
-        <div class="col-md-2">
+        <div class="col-lg-2 col-md-6">
           <label class="form-label mb-1">Status</label>
           <select name="status" class="form-select">
-            <option value="">All</option>
+            <option value="">All statuses</option>
             <?php foreach (Order::STATUS_LABELS as $key => $label): ?>
               <option value="<?= e($key) ?>" <?= $filters['status'] === $key ? 'selected' : '' ?>><?= e($label) ?></option>
             <?php endforeach; ?>
           </select>
         </div>
-        <div class="col-md-2">
+        <div class="col-lg-2 col-md-4">
           <label class="form-label mb-1">From</label>
           <input type="date" name="date_from" value="<?= e($filters['date_from']) ?>" class="form-control">
         </div>
-        <div class="col-md-2">
+        <div class="col-lg-2 col-md-4">
           <label class="form-label mb-1">To</label>
           <input type="date" name="date_to" value="<?= e($filters['date_to']) ?>" class="form-control">
         </div>
-        <div class="col-md-3 d-flex gap-2">
-          <button class="btn btn-primary" type="submit">Filter</button>
+        <div class="col-lg-3 col-md-4 d-flex gap-2">
+          <button class="btn btn-primary flex-grow-1" type="submit"><i class="bi bi-funnel me-1"></i>Filter</button>
           <a class="btn btn-outline-secondary" href="<?= e(url('orders')) ?>">Reset</a>
         </div>
       </form>
     </div>
   </div>
 
-  <div class="card">
+  <div class="card vc-orders-card">
     <div class="card-body pt-3">
       <div class="table-responsive">
-        <table class="table table-hover align-middle">
+        <table class="table vc-orders-table align-middle mb-0">
           <thead>
             <tr>
               <th>Order</th>
               <th>Customer</th>
-              <th>Items</th>
+              <th class="text-center">Items</th>
               <th>Total</th>
               <th>Status</th>
               <th>Placed</th>
@@ -70,22 +77,44 @@ $error = $error ?? null;
           </thead>
           <tbody>
           <?php if (!$result['rows']): ?>
-            <tr><td colspan="8" class="text-center text-muted py-4">No orders found.</td></tr>
+            <tr><td colspan="8" class="text-center text-muted py-5">No orders found for these filters.</td></tr>
           <?php endif; ?>
           <?php foreach ($result['rows'] as $o): ?>
             <?php $badge = Order::badge($o['status']); ?>
-            <tr>
-              <td class="fw-semibold"><?= e($o['order_number']) ?></td>
+            <tr class="vc-order-row">
               <td>
-                <div><?= e($o['business_name']) ?></div>
-                <div class="small text-muted"><?= e($o['mobile']) ?></div>
+                <a class="vc-order-id" href="<?= e(url('orders/' . $o['id'])) ?>">
+                  <span class="vc-order-id-hash">#</span><?= e($o['order_number']) ?>
+                </a>
               </td>
-              <td><?= (int) $o['item_count'] ?></td>
-              <td>₹<?= e(number_format((float)$o['total'], 2)) ?></td>
-              <td><span class="badge rounded-pill <?= e($badge['class']) ?>"><?= e($badge['label']) ?></span></td>
-              <td class="small"><?= e(date('d M Y, H:i', strtotime($o['placed_at']))) ?></td>
-              <td class="small"><?= e($o['delivery_manager_name'] ?: '—') ?></td>
-              <td class="text-end"><a class="btn btn-sm btn-outline-primary" href="<?= e(url('orders/' . $o['id'])) ?>">View</a></td>
+              <td>
+                <div class="vc-customer-cell">
+                  <span class="name"><?= e($o['business_name']) ?></span>
+                  <span class="meta"><i class="bi bi-phone"></i> <?= e($o['mobile']) ?></span>
+                </div>
+              </td>
+              <td class="text-center">
+                <span class="vc-count-chip"><?= (int) $o['item_count'] ?></span>
+              </td>
+              <td class="vc-money">₹<?= e(number_format((float) $o['total'], 2)) ?></td>
+              <td>
+                <span class="<?= e($badge['class']) ?>">
+                  <i class="bi <?= e($badge['icon']) ?>"></i>
+                  <?= e($badge['label']) ?>
+                </span>
+              </td>
+              <td>
+                <div class="vc-datetime">
+                  <span class="d"><?= e(date('d M Y', strtotime($o['placed_at']))) ?></span>
+                  <span class="t"><?= e(date('H:i', strtotime($o['placed_at']))) ?></span>
+                </div>
+              </td>
+              <td class="small text-muted"><?= e($o['delivery_manager_name'] ?: '—') ?></td>
+              <td class="text-end">
+                <a class="btn btn-sm vc-btn-view" href="<?= e(url('orders/' . $o['id'])) ?>" title="View order">
+                  View <i class="bi bi-arrow-right"></i>
+                </a>
+              </td>
             </tr>
           <?php endforeach; ?>
           </tbody>
@@ -93,8 +122,8 @@ $error = $error ?? null;
       </div>
 
       <?php if ($result['pages'] > 1): ?>
-        <nav>
-          <ul class="pagination pagination-sm mb-0">
+        <nav class="mt-3">
+          <ul class="pagination pagination-sm mb-0 vc-pager">
             <?php for ($p = 1; $p <= $result['pages']; $p++): ?>
               <?php
                 $qs = http_build_query(array_filter([
