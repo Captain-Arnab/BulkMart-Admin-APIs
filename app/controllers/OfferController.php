@@ -4,14 +4,190 @@ class OfferController extends Controller
 {
     public function index(): void
     {
-        $this->view('shared/placeholder', [
-            'title'       => 'Offers & Banners',
-            'module'      => 'offers',
-            'moduleLabel' => 'Offers & Banners',
-            'breadcrumb'  => [
-                ['label' => 'Home', 'url' => url('dashboard')],
-                ['label' => 'Offers & Banners', 'url' => null],
-            ],
+        $this->view('offers/index', [
+            'title'   => 'Offers & Banners',
+            'banners' => (new Banner())->all(),
+            'offers'  => (new Offer())->all(),
+            'success' => flash('success'),
+            'error'   => flash('error'),
         ]);
+    }
+
+    public function createBanner(): void
+    {
+        $this->view('offers/banner_form', [
+            'title'  => 'Add Banner',
+            'banner' => null,
+            'error'  => flash('error'),
+        ]);
+    }
+
+    public function storeBanner(): void
+    {
+        try {
+            $data = $this->bannerPayload();
+            if (empty($_FILES['image']['name'])) {
+                throw new InvalidArgumentException('Banner image is required.');
+            }
+            $data['image_url'] = UploadService::storeImage($_FILES['image'], 'banners');
+            (new Banner())->create($data);
+            flash('success', 'Banner created.');
+            redirect('offers');
+        } catch (Throwable $e) {
+            flash('error', $e->getMessage());
+            redirect('offers/banners/create');
+        }
+    }
+
+    public function editBanner(string $id): void
+    {
+        $banner = (new Banner())->find((int) $id);
+        if (!$banner) {
+            flash('error', 'Banner not found.');
+            redirect('offers');
+        }
+        $this->view('offers/banner_form', [
+            'title'  => 'Edit Banner',
+            'banner' => $banner,
+            'error'  => flash('error'),
+        ]);
+    }
+
+    public function updateBanner(string $id): void
+    {
+        $model = new Banner();
+        $banner = $model->find((int) $id);
+        if (!$banner) {
+            flash('error', 'Banner not found.');
+            redirect('offers');
+        }
+        try {
+            $data = $this->bannerPayload();
+            $data['image_url'] = $banner['image_url'];
+            if (!empty($_FILES['image']['name'])) {
+                $data['image_url'] = UploadService::storeImage($_FILES['image'], 'banners');
+            }
+            $model->update((int) $id, $data);
+            flash('success', 'Banner updated.');
+            redirect('offers');
+        } catch (Throwable $e) {
+            flash('error', $e->getMessage());
+            redirect('offers/banners/' . (int) $id . '/edit');
+        }
+    }
+
+    public function deleteBanner(string $id): void
+    {
+        (new Banner())->delete((int) $id);
+        flash('success', 'Banner deleted.');
+        redirect('offers');
+    }
+
+    public function createOffer(): void
+    {
+        $this->view('offers/offer_form', [
+            'title'      => 'Add Offer',
+            'offer'      => null,
+            'categories' => (new Category())->options(),
+            'error'      => flash('error'),
+        ]);
+    }
+
+    public function storeOffer(): void
+    {
+        try {
+            (new Offer())->create($this->offerPayload());
+            flash('success', 'Offer created.');
+            redirect('offers');
+        } catch (Throwable $e) {
+            flash('error', $e->getMessage());
+            redirect('offers/create');
+        }
+    }
+
+    public function editOffer(string $id): void
+    {
+        $offer = (new Offer())->find((int) $id);
+        if (!$offer) {
+            flash('error', 'Offer not found.');
+            redirect('offers');
+        }
+        $this->view('offers/offer_form', [
+            'title'      => 'Edit Offer',
+            'offer'      => $offer,
+            'categories' => (new Category())->options(),
+            'error'      => flash('error'),
+        ]);
+    }
+
+    public function updateOffer(string $id): void
+    {
+        $model = new Offer();
+        if (!$model->find((int) $id)) {
+            flash('error', 'Offer not found.');
+            redirect('offers');
+        }
+        try {
+            $model->update((int) $id, $this->offerPayload());
+            flash('success', 'Offer updated.');
+            redirect('offers');
+        } catch (Throwable $e) {
+            flash('error', $e->getMessage());
+            redirect('offers/' . (int) $id . '/edit');
+        }
+    }
+
+    public function deleteOffer(string $id): void
+    {
+        (new Offer())->delete((int) $id);
+        flash('success', 'Offer deleted.');
+        redirect('offers');
+    }
+
+    private function bannerPayload(): array
+    {
+        $title = trim((string) ($_POST['title'] ?? ''));
+        if ($title === '') {
+            throw new InvalidArgumentException('Title is required.');
+        }
+        return [
+            'title'       => $title,
+            'link'        => trim((string) ($_POST['link'] ?? '')) ?: null,
+            'active_from' => $this->normalizeDateTime($_POST['active_from'] ?? ''),
+            'active_to'   => $this->normalizeDateTime($_POST['active_to'] ?? ''),
+            'sort_order'  => (int) ($_POST['sort_order'] ?? 0),
+            'is_active'   => isset($_POST['is_active']) ? 1 : 0,
+            'image_url'   => null,
+        ];
+    }
+
+    private function offerPayload(): array
+    {
+        $title = trim((string) ($_POST['title'] ?? ''));
+        $type = trim((string) ($_POST['discount_type'] ?? ''));
+        $value = (float) ($_POST['discount_value'] ?? 0);
+        if ($title === '' || !in_array($type, ['percentage', 'flat'], true) || $value <= 0) {
+            throw new InvalidArgumentException('Title, discount type, and a positive discount value are required.');
+        }
+        return [
+            'title'         => $title,
+            'discount_type' => $type,
+            'discount_value'=> $value,
+            'min_qty'       => ($_POST['min_qty'] ?? '') === '' ? null : (float) $_POST['min_qty'],
+            'category_id'   => (int) ($_POST['category_id'] ?? 0) ?: null,
+            'coupon_code'   => trim((string) ($_POST['coupon_code'] ?? '')) ?: null,
+            'valid_from'    => $this->normalizeDateTime($_POST['valid_from'] ?? ''),
+            'valid_till'    => $this->normalizeDateTime($_POST['valid_till'] ?? ''),
+            'is_active'     => isset($_POST['is_active']) ? 1 : 0,
+        ];
+    }
+
+    private function normalizeDateTime($value): ?string
+    {
+        $value = trim((string) $value);
+        if ($value === '') {
+            return null;
+        }
+        return str_replace('T', ' ', $value) . (strlen($value) === 16 ? ':00' : '');
     }
 }

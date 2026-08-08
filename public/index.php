@@ -76,11 +76,43 @@ $router->post('/delivery/{id}/out-for-delivery', [DeliveryController::class, 'ou
 $router->post('/delivery/{id}/delivered', [DeliveryController::class, 'delivered'], [require_module('delivery')]);
 
 $router->get('/customers', [CustomerController::class, 'index'], [require_module('customers')]);
+$router->get('/customers/{id}', [CustomerController::class, 'show'], [require_module('customers')]);
+$router->post('/customers/{id}/approve', [CustomerController::class, 'approve'], [require_module('customers')]);
+$router->post('/customers/{id}/reject', [CustomerController::class, 'reject'], [require_module('customers')]);
+$router->post('/customers/{id}/toggle-block', [CustomerController::class, 'toggleBlock'], [require_module('customers')]);
+
 $router->get('/roles', [RoleController::class, 'index'], [require_module('roles')]);
+$router->get('/roles/create', [RoleController::class, 'create'], [require_module('roles')]);
+$router->post('/roles', [RoleController::class, 'store'], [require_module('roles')]);
+$router->get('/roles/{id}/edit', [RoleController::class, 'edit'], [require_module('roles')]);
+$router->post('/roles/{id}/update', [RoleController::class, 'update'], [require_module('roles')]);
+$router->post('/roles/{id}/toggle-active', [RoleController::class, 'toggleActive'], [require_module('roles')]);
+
 $router->get('/offers', [OfferController::class, 'index'], [require_module('offers')]);
+$router->get('/offers/banners/create', [OfferController::class, 'createBanner'], [require_module('offers')]);
+$router->post('/offers/banners', [OfferController::class, 'storeBanner'], [require_module('offers')]);
+$router->get('/offers/banners/{id}/edit', [OfferController::class, 'editBanner'], [require_module('offers')]);
+$router->post('/offers/banners/{id}/update', [OfferController::class, 'updateBanner'], [require_module('offers')]);
+$router->post('/offers/banners/{id}/delete', [OfferController::class, 'deleteBanner'], [require_module('offers')]);
+$router->get('/offers/create', [OfferController::class, 'createOffer'], [require_module('offers')]);
+$router->post('/offers', [OfferController::class, 'storeOffer'], [require_module('offers')]);
+$router->get('/offers/{id}/edit', [OfferController::class, 'editOffer'], [require_module('offers')]);
+$router->post('/offers/{id}/update', [OfferController::class, 'updateOffer'], [require_module('offers')]);
+$router->post('/offers/{id}/delete', [OfferController::class, 'deleteOffer'], [require_module('offers')]);
+
 $router->get('/market-prices', [MarketPriceController::class, 'index'], [require_module('market_prices')]);
+$router->post('/market-prices/save', [MarketPriceController::class, 'save'], [require_module('market_prices')]);
+
 $router->get('/support', [SupportController::class, 'index'], [require_module('support')]);
+$router->get('/support/{id}', [SupportController::class, 'show'], [require_module('support')]);
+$router->post('/support/{id}/reply', [SupportController::class, 'reply'], [require_module('support')]);
+$router->post('/support/{id}/status', [SupportController::class, 'updateStatus'], [require_module('support')]);
+
 $router->get('/reports', [ReportController::class, 'index'], [require_module('reports')]);
-$router->get('/settings', [SettingsController::class, 'index'], [require_module('settings')]);
+$router->get('/reports/export', [ReportController::class, 'export'], [require_module('reports')]);
+
+$router->get('/settings', [SettingsController::class, 'index'], ['require_settings_access']);
+$router->post('/settings/password', [SettingsController::class, 'updatePassword'], ['require_settings_access']);
+$router->post('/settings/app', [SettingsController::class, 'updateApp'], ['require_settings_access']);
 
 $router->dispatch($_SERVER['REQUEST_METHOD'] ?? 'GET', $_SERVER['REQUEST_URI'] ?? '/');

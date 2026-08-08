@@ -50,6 +50,22 @@ function rbac_can(string $module, ?array $user = null): bool
 }
 
 /**
+ * Middleware: settings accessible to Super Admin / Sub-Admin (own password + app basics).
+ */
+function require_settings_access(): void
+{
+    require_auth();
+    $user = auth_user();
+    $role = $user['role'] ?? '';
+    if (in_array($role, ['super_admin', 'sub_admin'], true) || rbac_can('settings')) {
+        return;
+    }
+    http_response_code(403);
+    flash('error', 'You do not have access to this module.');
+    redirect(auth_home_path());
+}
+
+/**
  * Middleware factory: require a module key.
  */
 function require_module(string $module): callable
@@ -151,6 +167,13 @@ function rbac_sidebar_items(?array $user = null): array
     ];
 
     return array_values(array_filter($items, static function (array $item) use ($user): bool {
+        // Account settings always available for Super Admin / Sub-Admin (password change)
+        if ($item['key'] === 'settings') {
+            $role = $user['role'] ?? ($user['role_type'] ?? '');
+            if (in_array($role, ['super_admin', 'sub_admin'], true)) {
+                return true;
+            }
+        }
         return rbac_can($item['key'], $user);
     }));
 }

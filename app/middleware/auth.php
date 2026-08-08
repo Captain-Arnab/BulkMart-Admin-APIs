@@ -87,6 +87,9 @@ function attempt_login(string $identity, string $password): bool
                 $perms = $admins->moduleKeys((int) $row['id']);
                 if ($row['role_type'] === 'delivery_manager') {
                     $perms = array_values(array_unique(array_merge($perms, ['delivery', 'profile'])));
+                } elseif ($row['role_type'] === 'sub_admin') {
+                    // Dashboard is always available for sub-admins
+                    $perms = array_values(array_unique(array_merge($perms, ['dashboard'])));
                 }
             }
             auth_login([

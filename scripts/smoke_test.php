@@ -103,7 +103,8 @@ foreach ($routes as $path) {
     if ($path === 'test/db') {
         $pass = $pass && str_contains($r['body'], 'DB connected');
     } else {
-        $pass = $pass && str_contains($r['body'], 'Coming soon');
+        // Modules are live; only reject leftover "Coming soon" placeholders.
+        $pass = $pass && !str_contains($r['body'], 'Coming soon');
     }
     ok("GET /$path", $pass);
 }
