@@ -11,7 +11,7 @@ $error = $error ?? flash('error');
 
             <div class="d-flex justify-content-center py-4">
               <a href="<?= e(url('login')) ?>" class="logo d-flex align-items-center w-auto flex-column text-center">
-                <img src="<?= e(asset('img/veggiicart_white_background.jpeg')) ?>" alt="VeggiiCart" class="login-logo">
+                <img src="<?= e(asset('img/logo-on-light.png')) ?>" alt="VeggiiCart" class="login-logo">
               </a>
             </div>
 
@@ -48,15 +48,11 @@ $error = $error ?? flash('error');
                 </form>
 
                 <div class="mt-3 small text-muted vc-temp-creds">
-                  <strong>TEMP seed login</strong> (change before go-live):<br>
-                  <?= e(SEED_ADMIN_EMAIL) ?> / <?= e(SEED_ADMIN_PASSWORD) ?>
+                  <strong>TEMP seed logins</strong> (change/remove before go-live):<br>
+                  Super Admin: <?= e(SEED_ADMIN_EMAIL) ?> / <?= e(SEED_ADMIN_PASSWORD) ?><br>
+                  TEST Delivery Mgr: delivery@veggiicart.com / Delivery@123
                 </div>
               </div>
-            </div>
-
-            <div class="credits">
-              VeggiiCart B2B Admin · UI by <a href="https://bootstrapmade.com/">BootstrapMade</a>
-            </div>
           </div>
         </div>
       </div>

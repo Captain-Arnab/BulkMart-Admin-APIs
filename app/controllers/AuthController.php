@@ -7,7 +7,7 @@ class AuthController extends Controller
     public function showLogin(): void
     {
         if (auth_check()) {
-            redirect('dashboard');
+            redirect(auth_home_path());
         }
         $this->view('auth/login', [
             'title' => 'Login',
@@ -25,12 +25,12 @@ class AuthController extends Controller
             redirect('login');
         }
 
-        if (!attempt_seed_login($identity, $password)) {
+        if (!attempt_login($identity, $password)) {
             flash('error', 'Invalid credentials. Please try again.');
             redirect('login');
         }
 
-        redirect('dashboard');
+        redirect(auth_home_path());
     }
 
     public function logout(): void

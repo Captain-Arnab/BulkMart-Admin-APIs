@@ -34,7 +34,6 @@ class Router
         $method = strtoupper($method);
         $path = parse_url($uri, PHP_URL_PATH) ?? '/';
 
-        // Strip base URL prefix (e.g. /VGS/veggiicart/public)
         $base = app_base_url();
         if ($base !== '' && str_starts_with($path, $base)) {
             $path = substr($path, strlen($base)) ?: '/';
@@ -49,7 +48,9 @@ class Router
             if ($route['method'] !== $method) {
                 continue;
             }
-            if ($route['path'] !== $path) {
+
+            $params = $this->match($route['path'], $path);
+            if ($params === null) {
                 continue;
             }
 
@@ -65,11 +66,11 @@ class Router
             if (is_array($handler)) {
                 [$class, $action] = $handler;
                 $controller = is_object($class) ? $class : new $class();
-                $controller->$action();
+                $controller->$action(...array_values($params));
                 return;
             }
 
-            $handler();
+            $handler(...array_values($params));
             return;
         }
 
@@ -79,5 +80,31 @@ class Router
         } else {
             echo '404 Not Found';
         }
+    }
+
+    /** @return array<string,string>|null */
+    private function match(string $routePath, string $requestPath): ?array
+    {
+        if ($routePath === $requestPath) {
+            return [];
+        }
+
+        $routeParts = explode('/', trim($routePath, '/'));
+        $reqParts = explode('/', trim($requestPath, '/'));
+        if (count($routeParts) !== count($reqParts)) {
+            return null;
+        }
+
+        $params = [];
+        foreach ($routeParts as $i => $part) {
+            if (preg_match('/^\{([a-zA-Z_][a-zA-Z0-9_]*)\}$/', $part, $m)) {
+                $params[$m[1]] = $reqParts[$i];
+                continue;
+            }
+            if ($part !== $reqParts[$i]) {
+                return null;
+            }
+        }
+        return $params;
     }
 }

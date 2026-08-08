@@ -13,8 +13,8 @@ $roleLabel = match ($user['role'] ?? '') {
 <header id="header" class="header fixed-top d-flex align-items-center">
   <div class="d-flex align-items-center justify-content-between">
     <a href="<?= e(url('dashboard')) ?>" class="logo d-flex align-items-center">
-      <img src="<?= e(asset('img/veggiicart_no_background.jpeg')) ?>" alt="VeggiiCart" class="logo-icon">
-      <img src="<?= e(asset('img/veggiicart_white_background.jpeg')) ?>" alt="VeggiiCart" class="logo-full">
+      <img src="<?= e(asset('img/logo-mark.png')) ?>" alt="VeggiiCart" class="logo-icon">
+      <img src="<?= e(asset('img/logo-on-light.png')) ?>" alt="VeggiiCart" class="logo-full">
     </a>
     <i class="bi bi-list toggle-sidebar-btn"></i>
   </div>
@@ -41,12 +41,14 @@ $roleLabel = match ($user['role'] ?? '') {
             <span><?= e($roleLabel) ?></span>
           </li>
           <li><hr class="dropdown-divider"></li>
+          <?php if (rbac_can('settings')): ?>
           <li>
             <a class="dropdown-item d-flex align-items-center" href="<?= e(url('settings')) ?>">
               <i class="bi bi-gear"></i><span>Settings</span>
             </a>
           </li>
           <li><hr class="dropdown-divider"></li>
+          <?php endif; ?>
           <li>
             <a class="dropdown-item d-flex align-items-center" href="<?= e(url('logout')) ?>">
               <i class="bi bi-box-arrow-right"></i><span>Sign Out</span>

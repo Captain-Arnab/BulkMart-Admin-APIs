@@ -9,19 +9,25 @@ $current = $current ?? current_path();
     <?php foreach ($navItems as $item): ?>
       <?php
         $hasChildren = !empty($item['children']);
-        $isActive = rbac_is_active($item['route'], $current);
-        if ($hasChildren) {
-            foreach ($item['children'] as $child) {
-                if (rbac_is_active($child['route'], $current)) {
-                    $isActive = true;
-                    break;
-                }
-            }
-        }
         $collapseId = 'nav-' . $item['key'];
+        $isActive = false;
+        if (!$hasChildren) {
+            $isActive = rbac_is_active($item['route'], $current);
+        }
       ?>
 
       <?php if ($hasChildren): ?>
+        <?php
+          $siblingRoutes = array_column($item['children'], 'route');
+          $childActive = false;
+          foreach ($item['children'] as $child) {
+              if (rbac_nav_child_active($child['route'], $current, $siblingRoutes)) {
+                  $childActive = true;
+                  break;
+              }
+          }
+          $isActive = $childActive || rbac_is_active($item['route'], $current);
+        ?>
         <li class="nav-item">
           <a class="nav-link <?= $isActive ? '' : 'collapsed' ?>"
              data-bs-target="#<?= e($collapseId) ?>"
@@ -37,7 +43,7 @@ $current = $current ?? current_path();
             <?php foreach ($item['children'] as $child): ?>
               <li>
                 <a href="<?= e(url($child['route'])) ?>"
-                   class="<?= rbac_is_active($child['route'], $current) ? 'active' : '' ?>">
+                   class="<?= rbac_nav_child_active($child['route'], $current, $siblingRoutes) ? 'active' : '' ?>">
                   <i class="bi bi-circle"></i>
                   <span><?= e($child['label']) ?></span>
                 </a>

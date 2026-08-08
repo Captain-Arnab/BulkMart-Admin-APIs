@@ -41,10 +41,37 @@
 
   /**
    * Sidebar toggle
+   * Desktop/laptop (>=992px): open by default; remember collapse preference.
+   * Mobile: closed by default (add toggle-sidebar to open).
    */
+  const SIDEBAR_KEY = 'vc_sidebar_collapsed';
+  const bodyEl = select('body');
+  const isDesktop = () => window.matchMedia('(min-width: 992px)').matches;
+
+  const applySidebarPreference = () => {
+    if (!bodyEl) return;
+    if (isDesktop()) {
+      const collapsed = localStorage.getItem(SIDEBAR_KEY) === '1';
+      bodyEl.classList.toggle('toggle-sidebar', collapsed);
+    } else {
+      // Mobile: ensure closed on fresh load
+      if (!bodyEl.dataset.vcMobileTouched) {
+        bodyEl.classList.remove('toggle-sidebar');
+      }
+    }
+  };
+
+  applySidebarPreference();
+  window.addEventListener('resize', applySidebarPreference);
+
   if (select('.toggle-sidebar-btn')) {
     on('click', '.toggle-sidebar-btn', function(e) {
-      select('body').classList.toggle('toggle-sidebar')
+      bodyEl.classList.toggle('toggle-sidebar');
+      if (isDesktop()) {
+        localStorage.setItem(SIDEBAR_KEY, bodyEl.classList.contains('toggle-sidebar') ? '1' : '0');
+      } else {
+        bodyEl.dataset.vcMobileTouched = '1';
+      }
     })
   }
 

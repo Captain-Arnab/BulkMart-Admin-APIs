@@ -4,14 +4,104 @@ class CategoryController extends Controller
 {
     public function index(): void
     {
-        $this->view('shared/placeholder', [
-            'title'       => 'Categories',
-            'module'      => 'categories',
-            'moduleLabel' => 'Categories',
-            'breadcrumb'  => [
-                ['label' => 'Home', 'url' => url('dashboard')],
-                ['label' => 'Categories', 'url' => null],
-            ],
+        $model = new Category();
+        $this->view('categories/index', [
+            'title'      => 'Categories',
+            'categories' => $model->all(),
+            'success'    => flash('success'),
+            'error'      => flash('error'),
         ]);
+    }
+
+    public function create(): void
+    {
+        $this->view('categories/form', [
+            'title'    => 'Add Category',
+            'category' => null,
+            'error'    => flash('error'),
+        ]);
+    }
+
+    public function store(): void
+    {
+        try {
+            $data = $this->validated();
+            if (!empty($_FILES['image']['name'])) {
+                $data['image_url'] = UploadService::storeImage($_FILES['image'], 'categories');
+            }
+            (new Category())->create($data);
+            flash('success', 'Category created.');
+            redirect('categories');
+        } catch (Throwable $e) {
+            flash('error', $e->getMessage());
+            redirect('categories/create');
+        }
+    }
+
+    public function edit(string $id): void
+    {
+        $category = (new Category())->find((int) $id);
+        if (!$category) {
+            flash('error', 'Category not found.');
+            redirect('categories');
+        }
+        $this->view('categories/form', [
+            'title'    => 'Edit Category',
+            'category' => $category,
+            'error'    => flash('error'),
+        ]);
+    }
+
+    public function update(string $id): void
+    {
+        $model = new Category();
+        $category = $model->find((int) $id);
+        if (!$category) {
+            flash('error', 'Category not found.');
+            redirect('categories');
+        }
+        try {
+            $data = $this->validated();
+            $data['image_url'] = $category['image_url'];
+            if (!empty($_FILES['image']['name'])) {
+                $data['image_url'] = UploadService::storeImage($_FILES['image'], 'categories');
+            }
+            $model->update((int) $id, $data);
+            flash('success', 'Category updated.');
+            redirect('categories');
+        } catch (Throwable $e) {
+            flash('error', $e->getMessage());
+            redirect('categories/' . (int) $id . '/edit');
+        }
+    }
+
+    public function delete(string $id): void
+    {
+        $model = new Category();
+        $category = $model->find((int) $id);
+        if (!$category) {
+            flash('error', 'Category not found.');
+            redirect('categories');
+        }
+        $count = $model->productCount((int) $id);
+        if ($count > 0) {
+            flash('error', "Cannot delete \"{$category['name']}\" — {$count} product(s) still use this category. Move or delete those products first.");
+            redirect('categories');
+        }
+        $model->delete((int) $id);
+        flash('success', 'Category deleted.');
+        redirect('categories');
+    }
+
+    private function validated(): array
+    {
+        $name = trim((string) ($_POST['name'] ?? ''));
+        if ($name === '') {
+            throw new InvalidArgumentException('Category name is required.');
+        }
+        if (mb_strlen($name) > 120) {
+            throw new InvalidArgumentException('Category name is too long.');
+        }
+        return ['name' => $name, 'image_url' => null];
     }
 }

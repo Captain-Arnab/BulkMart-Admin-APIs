@@ -4,21 +4,34 @@ Core PHP + MySQL admin shell built on the NiceAdmin (Bootstrap 5) UI kit.
 
 ## Quick start (XAMPP)
 
-1. Copy `app/config/config.sample.php` → `app/config/config.local.php` and set DB credentials (a starter `config.local.php` is already present for local XAMPP).
-2. Create an empty MySQL database named `veggiicart` (tables come later with the schema).
-3. Ensure Apache `mod_rewrite` is enabled and `AllowOverride All` for `htdocs`.
+1. Copy `app/config/config.sample.php` → `app/config/config.local.php` and set DB credentials.
+2. Run migrations + seed:
+   ```bash
+   php scripts/migrate.php
+   php scripts/seed.php
+   ```
+3. Ensure Apache `mod_rewrite` is enabled.
 4. Open: `http://localhost/VGS/veggiicart/public/login`
 
-### TEMP Super Admin (change before go-live)
+### Super Admin
 
 - Email: `admin@veggiicart.com`
-- Username: `admin`
-- Password: `ChangeMe@123`
+- Password: `ChangeMe@123` (change before go-live)
 
-### DB connectivity check
+### TEST Delivery Manager (remove before go-live)
 
-After login: `http://localhost/VGS/veggiicart/public/test/db`
+- Email: `delivery@veggiicart.com`
+- Password: `Delivery@123`
+- Seed with: `php scripts/seed_orders.php`
 
-## Structure
+### Useful scripts
 
-See project folders under `app/` (controllers, models, views, middleware, core) and `public/` (front controller + assets).
+- `php scripts/migrate.php` — apply SQL migrations
+- `php scripts/seed.php` — categories, 34 products, admin user
+- `php scripts/seed_orders.php` — test customers, orders, delivery manager
+- `php scripts/verify_products.php` — smoke test products module
+- `php scripts/verify_orders.php` — smoke test orders/delivery + stock
+### Bulk templates
+
+- `database/templates/products_bulk_upload.csv`
+- `database/templates/products_bulk_stock.csv`

@@ -1,17 +1,199 @@
 <?php
 
-/** Order model — PDO query wrappers. Schema TBD. */
 class Order extends Model
 {
-    protected string $table = 'orders';
+    public const STATUSES = [
+        'placed',
+        'confirmed',
+        'delivery_date_set',
+        'out_for_delivery',
+        'delivered',
+        'cancelled',
+    ];
 
-    public function all(): array
+    public const STATUS_LABELS = [
+        'placed'            => 'Placed',
+        'confirmed'         => 'Confirmed',
+        'delivery_date_set' => 'Delivery date set',
+        'out_for_delivery'  => 'Out for delivery',
+        'delivered'         => 'Delivered',
+        'cancelled'         => 'Cancelled',
+    ];
+
+    public const STATUS_BADGE = [
+        'placed'            => 'bg-secondary',
+        'confirmed'         => 'bg-primary',
+        'delivery_date_set' => 'bg-info text-dark',
+        'out_for_delivery'  => 'bg-warning text-dark',
+        'delivered'         => 'bg-success',
+        'cancelled'         => 'bg-danger',
+    ];
+
+    /** Forward graph (cancel handled separately). */
+    public const FORWARD = [
+        'placed'            => ['confirmed'],
+        'confirmed'         => ['delivery_date_set'],
+        'delivery_date_set' => ['out_for_delivery'],
+        'out_for_delivery'  => ['delivered'],
+        'delivered'         => [],
+        'cancelled'         => [],
+    ];
+
+    public static function canCancel(string $status): bool
     {
-        return [];
+        return in_array($status, ['placed', 'confirmed', 'delivery_date_set'], true);
+    }
+
+    public static function nextStatuses(string $current): array
+    {
+        $next = self::FORWARD[$current] ?? [];
+        if (self::canCancel($current)) {
+            $next[] = 'cancelled';
+        }
+        return $next;
+    }
+
+    public static function badge(string $status): array
+    {
+        return [
+            'label' => self::STATUS_LABELS[$status] ?? $status,
+            'class' => self::STATUS_BADGE[$status] ?? 'bg-secondary',
+        ];
+    }
+
+    /**
+     * @return array{rows: array, total: int, page: int, per_page: int, pages: int}
+     */
+    public function paginate(array $filters, int $page = 1, int $perPage = 15): array
+    {
+        $where = ['1=1'];
+        $params = [];
+
+        if (!empty($filters['status'])) {
+            $where[] = 'o.status = ?';
+            $params[] = $filters['status'];
+        }
+        if (!empty($filters['date_from'])) {
+            $where[] = 'DATE(o.placed_at) >= ?';
+            $params[] = $filters['date_from'];
+        }
+        if (!empty($filters['date_to'])) {
+            $where[] = 'DATE(o.placed_at) <= ?';
+            $params[] = $filters['date_to'];
+        }
+        if (!empty($filters['q'])) {
+            $where[] = '(o.order_number LIKE ? OR c.business_name LIKE ? OR c.owner_name LIKE ? OR c.mobile LIKE ?)';
+            $like = '%' . $filters['q'] . '%';
+            array_push($params, $like, $like, $like, $like);
+        }
+        if (!empty($filters['assigned_to'])) {
+            $where[] = 'o.assigned_delivery_manager_id = ?';
+            $params[] = (int) $filters['assigned_to'];
+        }
+        if (!empty($filters['statuses']) && is_array($filters['statuses'])) {
+            $in = implode(',', array_fill(0, count($filters['statuses']), '?'));
+            $where[] = "o.status IN ($in)";
+            foreach ($filters['statuses'] as $s) {
+                $params[] = $s;
+            }
+        }
+
+        $sqlWhere = implode(' AND ', $where);
+        $countRow = $this->fetchOne(
+            "SELECT COUNT(*) AS c
+             FROM orders o
+             INNER JOIN customers c ON c.id = o.customer_id
+             WHERE $sqlWhere",
+            $params
+        );
+        $total = (int) ($countRow['c'] ?? 0);
+        $pages = max(1, (int) ceil($total / $perPage));
+        $page = max(1, min($page, $pages));
+        $offset = ($page - 1) * $perPage;
+
+        $rows = $this->fetchAll(
+            "SELECT o.*,
+                    c.business_name, c.owner_name, c.mobile,
+                    dm.name AS delivery_manager_name,
+                    a.line1, a.line2, a.city, a.state, a.pincode, a.landmark,
+                    (SELECT COUNT(*) FROM order_items oi WHERE oi.order_id = o.id) AS item_count
+             FROM orders o
+             INNER JOIN customers c ON c.id = o.customer_id
+             INNER JOIN addresses a ON a.id = o.address_id
+             LEFT JOIN admin_users dm ON dm.id = o.assigned_delivery_manager_id
+             WHERE $sqlWhere
+             ORDER BY o.placed_at DESC
+             LIMIT $perPage OFFSET $offset",
+            $params
+        );
+
+        return [
+            'rows'     => $rows,
+            'total'    => $total,
+            'page'     => $page,
+            'per_page' => $perPage,
+            'pages'    => $pages,
+        ];
     }
 
     public function find(int $id): ?array
     {
-        return null;
+        return $this->fetchOne(
+            "SELECT o.*,
+                    c.business_name, c.owner_name, c.mobile, c.email AS customer_email,
+                    c.business_type, c.gst_number,
+                    a.label AS address_label, a.line1, a.line2, a.city, a.state, a.pincode, a.landmark,
+                    dm.name AS delivery_manager_name, dm.email AS delivery_manager_email
+             FROM orders o
+             INNER JOIN customers c ON c.id = o.customer_id
+             INNER JOIN addresses a ON a.id = o.address_id
+             LEFT JOIN admin_users dm ON dm.id = o.assigned_delivery_manager_id
+             WHERE o.id = ?",
+            [$id]
+        );
+    }
+
+    public function items(int $orderId): array
+    {
+        return $this->fetchAll(
+            'SELECT * FROM order_items WHERE order_id = ? ORDER BY id ASC',
+            [$orderId]
+        );
+    }
+
+    public function statusLog(int $orderId): array
+    {
+        return $this->fetchAll(
+            "SELECT l.*, au.name AS admin_name
+             FROM order_status_log l
+             LEFT JOIN admin_users au ON au.id = l.changed_by_admin_id
+             WHERE l.order_id = ?
+             ORDER BY l.changed_at ASC, l.id ASC",
+            [$orderId]
+        );
+    }
+
+    public function deliveryManagers(): array
+    {
+        return $this->fetchAll(
+            "SELECT id, name, email FROM admin_users
+             WHERE role_type = 'delivery_manager' AND is_active = 1
+             ORDER BY name ASC"
+        );
+    }
+
+    public function updateFields(int $id, array $fields): bool
+    {
+        if ($fields === []) {
+            return true;
+        }
+        $sets = [];
+        $params = [];
+        foreach ($fields as $col => $val) {
+            $sets[] = "`$col` = ?";
+            $params[] = $val;
+        }
+        $params[] = $id;
+        return $this->execute('UPDATE orders SET ' . implode(', ', $sets) . ' WHERE id = ?', $params);
     }
 }

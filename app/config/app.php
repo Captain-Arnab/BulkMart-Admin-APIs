@@ -85,6 +85,18 @@ function asset(string $path): string
     return url('assets/' . ltrim($path, '/'));
 }
 
+/** Public upload / media URL helper */
+function media(?string $path, string $fallback = ''): string
+{
+    if ($path === null || $path === '') {
+        return $fallback;
+    }
+    if (preg_match('#^https?://#i', $path)) {
+        return $path;
+    }
+    return url(ltrim($path, '/'));
+}
+
 function e(?string $value): string
 {
     return htmlspecialchars((string) $value, ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8');

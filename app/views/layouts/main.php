@@ -14,7 +14,7 @@ $pageTitle = ($title ?? 'Admin') . ' · ' . APP_NAME;
   <title><?= e($pageTitle) ?></title>
   <meta name="description" content="VeggiiCart Admin Panel">
 
-  <link href="<?= e(asset('img/veggiicart_no_background.jpeg')) ?>" rel="icon">
+  <link href="<?= e(asset('img/logo-mark.png')) ?>" rel="icon">
   <link href="https://fonts.gstatic.com" rel="preconnect">
   <link href="https://fonts.googleapis.com/css?family=Open+Sans:300,300i,400,400i,600,600i,700,700i|Nunito:300,300i,400,400i,600,600i,700,700i|Poppins:300,300i,400,400i,500,500i,600,600i,700,700i" rel="stylesheet">
 
@@ -40,9 +40,6 @@ $pageTitle = ($title ?? 'Admin') . ' · ' . APP_NAME;
 <footer id="footer" class="footer">
   <div class="copyright">
     &copy; <?= date('Y') ?> <strong><span>VeggiiCart</span></strong>. All Rights Reserved
-  </div>
-  <div class="credits">
-    UI kit by <a href="https://bootstrapmade.com/">BootstrapMade NiceAdmin</a>
   </div>
 </footer>
 

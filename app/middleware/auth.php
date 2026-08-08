@@ -1,7 +1,6 @@
 <?php
 /**
  * Session / login gate.
- * Public routes (login) skip this; everything else redirects to /login.
  */
 
 function auth_start_session(): void
@@ -47,9 +46,15 @@ function auth_logout(): void
     session_destroy();
 }
 
-/**
- * Middleware: require authenticated session.
- */
+function auth_home_path(?array $user = null): string
+{
+    $user = $user ?? auth_user();
+    if ($user && ($user['role'] ?? '') === 'delivery_manager') {
+        return 'delivery';
+    }
+    return 'dashboard';
+}
+
 function require_auth(): void
 {
     if (!auth_check()) {
@@ -59,9 +64,49 @@ function require_auth(): void
 }
 
 /**
- * Attempt login against seeded Super Admin (pre-DB).
- * Later: replace with admin_users table lookup.
+ * Login against admin_users. Falls back to TEMP seed constants if DB user missing.
  */
+function attempt_login(string $identity, string $password): bool
+{
+    $identity = trim($identity);
+    if ($identity === '' || $password === '') {
+        return false;
+    }
+
+    try {
+        $admins = new AdminUser();
+        $email = strtolower($identity);
+        // allow username "admin" → seed email
+        if ($email === strtolower(SEED_ADMIN_USERNAME)) {
+            $email = strtolower(SEED_ADMIN_EMAIL);
+        }
+        $row = $admins->findByEmail($email);
+        if ($row && (int) $row['is_active'] === 1 && password_verify($password, $row['password_hash'])) {
+            $perms = null;
+            if ($row['role_type'] !== 'super_admin') {
+                $perms = $admins->moduleKeys((int) $row['id']);
+                if ($row['role_type'] === 'delivery_manager') {
+                    $perms = array_values(array_unique(array_merge($perms, ['delivery', 'profile'])));
+                }
+            }
+            auth_login([
+                'id'                 => (int) $row['id'],
+                'name'               => $row['name'],
+                'email'              => $row['email'],
+                'username'           => explode('@', $row['email'])[0],
+                'role'               => $row['role_type'],
+                'module_permissions' => $perms,
+            ]);
+            return true;
+        }
+    } catch (Throwable $e) {
+        // DB not ready — fall through to seed login
+    }
+
+    return attempt_seed_login($identity, $password);
+}
+
+/** @deprecated keep for fallback before seed/migrate */
 function attempt_seed_login(string $identity, string $password): bool
 {
     $identity = trim(strtolower($identity));
@@ -76,7 +121,6 @@ function attempt_seed_login(string $identity, string $password): bool
         'email'              => SEED_ADMIN_EMAIL,
         'username'           => SEED_ADMIN_USERNAME,
         'role'               => SEED_ADMIN_ROLE,
-        // null = all modules (Super Admin)
         'module_permissions' => null,
     ]);
     return true;

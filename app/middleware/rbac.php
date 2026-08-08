@@ -59,7 +59,7 @@ function require_module(string $module): callable
         if (!rbac_can($module)) {
             http_response_code(403);
             flash('error', 'You do not have access to this module.');
-            redirect('dashboard');
+            redirect(auth_home_path());
         }
     };
 }
@@ -155,6 +155,9 @@ function rbac_sidebar_items(?array $user = null): array
     }));
 }
 
+/**
+ * Exact or prefix match (used for top-level / section open state).
+ */
 function rbac_is_active(string $route, string $currentPath): bool
 {
     $route = trim($route, '/');
@@ -166,6 +169,37 @@ function rbac_is_active(string $route, string $currentPath): bool
         return true;
     }
     return false;
+}
+
+/**
+ * Child nav active state: prefer the most specific sibling route.
+ * e.g. on products/add → only "Add Product" is active, not "All Products".
+ */
+function rbac_nav_child_active(string $route, string $currentPath, array $siblingRoutes = []): bool
+{
+    $route = trim($route, '/');
+    $currentPath = trim($currentPath, '/');
+
+    if ($currentPath === $route) {
+        return true;
+    }
+
+    if ($route === '' || !str_starts_with($currentPath, $route . '/')) {
+        return false;
+    }
+
+    // Another sibling owns this path more specifically
+    foreach ($siblingRoutes as $sib) {
+        $sib = trim((string) $sib, '/');
+        if ($sib === '' || $sib === $route) {
+            continue;
+        }
+        if ($currentPath === $sib || str_starts_with($currentPath, $sib . '/')) {
+            return false;
+        }
+    }
+
+    return true;
 }
 
 function current_path(): string
