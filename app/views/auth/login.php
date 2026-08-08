@@ -4,30 +4,70 @@ $error = $error ?? flash('error');
 $showSeedHints = defined('APP_DEBUG') && APP_DEBUG;
 ?>
 <div class="vc-login">
-  <aside class="vc-login-brand" aria-hidden="false">
-    <div class="vc-login-brand-bg" aria-hidden="true"></div>
-    <div class="vc-login-brand-content">
+  <aside class="vc-login-brand">
+    <div class="vc-login-brand-bg" aria-hidden="true">
+      <span class="vc-login-orb vc-login-orb--1"></span>
+      <span class="vc-login-orb vc-login-orb--2"></span>
+      <span class="vc-login-orb vc-login-orb--3"></span>
+      <svg class="vc-login-leaf vc-login-leaf--a" viewBox="0 0 120 160" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+        <path d="M60 8C28 40 18 78 22 118c22-18 40-28 58-32-6-28-8-52-20-78z" fill="currentColor" opacity=".18"/>
+        <path d="M60 8c12 26 18 50 20 78 8 2 20 10 34 28C110 74 96 36 60 8z" fill="currentColor" opacity=".12"/>
+        <path d="M60 20v108" stroke="currentColor" stroke-width="3" stroke-linecap="round" opacity=".28"/>
+      </svg>
+      <svg class="vc-login-leaf vc-login-leaf--b" viewBox="0 0 120 160" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+        <path d="M60 8C28 40 18 78 22 118c22-18 40-28 58-32-6-28-8-52-20-78z" fill="currentColor" opacity=".14"/>
+        <path d="M60 20v100" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" opacity=".22"/>
+      </svg>
+    </div>
+
+    <div class="vc-login-brand-top">
       <img src="<?= e(asset('img/logo-on-light.png')) ?>" alt="VeggiiCart" class="vc-login-brand-logo">
-      <p class="vc-login-brand-tag">Your reliable B2B produce partner</p>
+    </div>
+
+    <div class="vc-login-brand-content">
+      <p class="vc-login-brand-eyebrow">Wholesale admin</p>
+      <h2 class="vc-login-brand-tag">Your reliable B2B produce partner</h2>
+      <p class="vc-login-brand-lead">Run stock, orders, and delivery from one calm console built for fresh-produce ops.</p>
       <ul class="vc-login-brand-points">
-        <li><i class="bi bi-box-seam"></i> Products &amp; stock control</li>
-        <li><i class="bi bi-truck"></i> Orders &amp; delivery ops</li>
-        <li><i class="bi bi-graph-up-arrow"></i> Live wholesale analytics</li>
+        <li style="--i:0">
+          <i class="bi bi-box-seam" aria-hidden="true"></i>
+          <span>
+            <strong>Products &amp; stock</strong>
+            <small>Live inventory for every SKU</small>
+          </span>
+        </li>
+        <li style="--i:1">
+          <i class="bi bi-truck" aria-hidden="true"></i>
+          <span>
+            <strong>Orders &amp; delivery</strong>
+            <small>Route-ready wholesale fulfilment</small>
+          </span>
+        </li>
+        <li style="--i:2">
+          <i class="bi bi-graph-up-arrow" aria-hidden="true"></i>
+          <span>
+            <strong>Live analytics</strong>
+            <small>Revenue and ops at a glance</small>
+          </span>
+        </li>
       </ul>
     </div>
-    <p class="vc-login-brand-foot">&copy; <?= date('Y') ?> VeggiiCart</p>
+
+    <p class="vc-login-brand-foot">&copy; <?= date('Y') ?> VeggiiCart · Fresh produce, wholesale-first</p>
   </aside>
 
   <main class="vc-login-panel">
     <div class="vc-login-panel-inner">
       <div class="vc-login-mobile-brand d-lg-none">
         <img src="<?= e(asset('img/logo-on-light.png')) ?>" alt="VeggiiCart" class="vc-login-mobile-logo">
+        <p>Wholesale operations</p>
       </div>
 
       <div class="vc-login-card">
+        <div class="vc-login-card-accent" aria-hidden="true"></div>
         <div class="vc-login-card-head">
-          <h1>Admin sign in</h1>
-          <p>Wholesale operations console</p>
+          <h1>Welcome back</h1>
+          <p>Sign in to continue to your admin console</p>
         </div>
 
         <?php if ($error): ?>
@@ -60,13 +100,13 @@ $showSeedHints = defined('APP_DEBUG') && APP_DEBUG;
           </div>
 
           <button class="btn btn-primary vc-login-submit" type="submit">
-            Sign in <i class="bi bi-arrow-right ms-1"></i>
+            Sign in <i class="bi bi-arrow-right" aria-hidden="true"></i>
           </button>
         </form>
 
         <?php if ($showSeedHints): ?>
           <details class="vc-login-seed">
-            <summary>Demo accounts (debug)</summary>
+            <summary><i class="bi bi-key me-1" aria-hidden="true"></i> Demo accounts (debug)</summary>
             <div class="vc-login-seed-body">
               <div><strong>Super Admin</strong><br><?= e(SEED_ADMIN_EMAIL) ?> / <?= e(SEED_ADMIN_PASSWORD) ?></div>
               <div class="mt-2"><strong>TEST Delivery Mgr</strong><br>delivery@veggiicart.com / Delivery@123</div>
@@ -74,6 +114,11 @@ $showSeedHints = defined('APP_DEBUG') && APP_DEBUG;
           </details>
         <?php endif; ?>
       </div>
+
+      <p class="vc-login-secure">
+        <i class="bi bi-shield-check" aria-hidden="true"></i>
+        Secured staff access · VeggiiCart admin
+      </p>
     </div>
   </main>
 </div>

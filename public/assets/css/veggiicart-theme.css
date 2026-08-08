@@ -650,14 +650,7 @@ a.vc-kpi-link:focus {
   margin: 0;
   min-height: 100vh;
   background: #0B5C27;
-}
-
-.vc-login-card {
-  background: #fff;
-  border: 1px solid rgba(18, 131, 59, 0.1);
-  border-radius: 20px;
-  box-shadow: 0 18px 50px rgba(11, 92, 39, 0.1);
-  padding: clamp(1.5rem, 3vw, 2rem);
+  overflow-x: hidden;
 }
 
 .vc-temp-creds {
@@ -673,7 +666,7 @@ a.vc-kpi-link:focus {
 .vc-login {
   min-height: 100vh;
   display: grid;
-  grid-template-columns: minmax(0, 1.05fr) minmax(0, 0.95fr);
+  grid-template-columns: minmax(0, 1.12fr) minmax(320px, 0.88fr);
 }
 
 .vc-login-brand {
@@ -681,10 +674,11 @@ a.vc-kpi-link:focus {
   display: flex;
   flex-direction: column;
   justify-content: space-between;
-  padding: clamp(2rem, 4vw, 3.5rem);
+  padding: clamp(1.75rem, 3.5vw, 3rem) clamp(1.75rem, 4vw, 3.75rem);
   color: #fff;
   overflow: hidden;
-  background: linear-gradient(155deg, #0B5C27 0%, #12833B 48%, #1aa34a 100%);
+  background:
+    linear-gradient(160deg, #084d21 0%, #0B5C27 28%, #12833B 68%, #169644 100%);
 }
 
 .vc-login-brand-bg {
@@ -692,37 +686,124 @@ a.vc-kpi-link:focus {
   inset: 0;
   pointer-events: none;
   background:
-    radial-gradient(circle at 18% 22%, rgba(255, 255, 255, 0.16), transparent 32%),
-    radial-gradient(circle at 85% 75%, rgba(245, 166, 35, 0.22), transparent 38%),
-    url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%23ffffff' fill-opacity='0.05'%3E%3Cpath d='M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6 4V0H4v4H0v2h4v4h2V6h4V4H6z'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E");
+    radial-gradient(ellipse 55% 45% at 12% 18%, rgba(255, 255, 255, 0.14), transparent 55%),
+    radial-gradient(ellipse 50% 40% at 88% 82%, rgba(245, 166, 35, 0.28), transparent 55%),
+    radial-gradient(circle at 70% 30%, rgba(255, 255, 255, 0.06), transparent 28%);
 }
 
-.vc-login-brand-content {
+.vc-login-orb {
+  position: absolute;
+  border-radius: 50%;
+  filter: blur(2px);
+  opacity: 0.55;
+  animation: vc-login-drift 14s ease-in-out infinite;
+}
+
+.vc-login-orb--1 {
+  width: 220px;
+  height: 220px;
+  top: -60px;
+  right: -40px;
+  background: rgba(255, 255, 255, 0.1);
+}
+
+.vc-login-orb--2 {
+  width: 160px;
+  height: 160px;
+  bottom: 12%;
+  left: -50px;
+  background: rgba(245, 166, 35, 0.18);
+  animation-delay: -4s;
+  animation-duration: 18s;
+}
+
+.vc-login-orb--3 {
+  width: 90px;
+  height: 90px;
+  top: 42%;
+  right: 18%;
+  background: rgba(255, 255, 255, 0.08);
+  animation-delay: -8s;
+  animation-duration: 12s;
+}
+
+.vc-login-leaf {
+  position: absolute;
+  color: #fff;
+  opacity: 0.9;
+  animation: vc-login-sway 10s ease-in-out infinite;
+}
+
+.vc-login-leaf--a {
+  width: 150px;
+  right: -10px;
+  bottom: 8%;
+  transform: rotate(18deg);
+}
+
+.vc-login-leaf--b {
+  width: 95px;
+  right: 18%;
+  bottom: 22%;
+  transform: rotate(-28deg);
+  animation-delay: -3s;
+  animation-duration: 13s;
+  opacity: 0.7;
+}
+
+.vc-login-brand-top,
+.vc-login-brand-content,
+.vc-login-brand-foot {
   position: relative;
   z-index: 1;
-  max-width: 440px;
-  animation: vc-login-rise 0.7s ease both;
+}
+
+.vc-login-brand-top {
+  animation: vc-login-rise 0.65s ease both;
 }
 
 .vc-login-brand-logo {
   display: block;
-  height: clamp(64px, 9vw, 88px);
+  height: clamp(110px, 14vw, 160px);
   width: auto;
-  max-width: min(100%, 340px);
+  max-width: min(100%, 520px);
   object-fit: contain;
   object-position: left center;
   filter: brightness(0) invert(1);
-  margin-bottom: 1.25rem;
+}
+
+.vc-login-brand-content {
+  max-width: 460px;
+  margin: 2.5rem 0;
+  animation: vc-login-rise 0.75s ease 0.06s both;
+}
+
+.vc-login-brand-eyebrow {
+  margin: 0 0 0.65rem;
+  font-size: 0.78rem;
+  font-weight: 700;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: #F5A623;
 }
 
 .vc-login-brand-tag {
-  margin: 0 0 1.75rem;
+  margin: 0 0 0.9rem;
   font-family: 'Nunito', 'Poppins', sans-serif;
-  font-size: clamp(1.15rem, 2.2vw, 1.45rem);
-  font-weight: 700;
-  letter-spacing: -0.02em;
-  line-height: 1.35;
-  color: rgba(255, 255, 255, 0.95);
+  font-size: clamp(1.7rem, 3.3vw, 2.4rem);
+  font-weight: 800;
+  letter-spacing: -0.03em;
+  line-height: 1.18;
+  color: #fff;
+  max-width: 14ch;
+}
+
+.vc-login-brand-lead {
+  margin: 0 0 1.75rem;
+  max-width: 34ch;
+  font-size: 0.98rem;
+  line-height: 1.55;
+  color: rgba(255, 255, 255, 0.82);
 }
 
 .vc-login-brand-points {
@@ -730,76 +811,144 @@ a.vc-kpi-link:focus {
   margin: 0;
   padding: 0;
   display: grid;
-  gap: 0.85rem;
+  gap: 0.65rem;
 }
 
 .vc-login-brand-points li {
   display: flex;
   align-items: center;
-  gap: 0.75rem;
-  font-size: 0.98rem;
-  font-weight: 600;
-  color: rgba(255, 255, 255, 0.9);
+  gap: 0.85rem;
+  padding: 0.35rem 0;
+  color: rgba(255, 255, 255, 0.95);
+  animation: vc-login-rise 0.7s ease both;
+  animation-delay: calc(0.18s + (var(--i, 0) * 0.08s));
 }
 
 .vc-login-brand-points i {
-  width: 36px;
-  height: 36px;
-  border-radius: 10px;
+  width: 38px;
+  height: 38px;
+  border-radius: 11px;
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  background: rgba(255, 255, 255, 0.14);
+  background: rgba(255, 255, 255, 0.12);
+  box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.14);
   color: #fff;
+  font-size: 1.05rem;
   flex: 0 0 auto;
 }
 
+.vc-login-brand-points span {
+  display: grid;
+  gap: 0.1rem;
+  min-width: 0;
+}
+
+.vc-login-brand-points strong {
+  font-size: 0.95rem;
+  font-weight: 700;
+  line-height: 1.25;
+}
+
+.vc-login-brand-points small {
+  font-size: 0.78rem;
+  color: rgba(255, 255, 255, 0.68);
+  line-height: 1.3;
+}
+
 .vc-login-brand-foot {
-  position: relative;
-  z-index: 1;
-  margin: 2rem 0 0;
-  font-size: 0.82rem;
-  color: rgba(255, 255, 255, 0.65);
+  margin: 0;
+  font-size: 0.8rem;
+  color: rgba(255, 255, 255, 0.62);
+  animation: vc-login-rise 0.7s ease 0.2s both;
 }
 
 .vc-login-panel {
+  position: relative;
   display: flex;
   align-items: center;
   justify-content: center;
   padding: clamp(1.5rem, 4vw, 3rem);
   background:
-    radial-gradient(ellipse at top right, rgba(18, 131, 59, 0.08), transparent 45%),
-    #F7FBF8;
+    radial-gradient(ellipse 70% 50% at 100% 0%, rgba(18, 131, 59, 0.1), transparent 55%),
+    radial-gradient(ellipse 50% 40% at 0% 100%, rgba(245, 166, 35, 0.08), transparent 50%),
+    linear-gradient(180deg, #EEF6F0 0%, #F8FBF9 48%, #FFFFFF 100%);
+}
+
+.vc-login-panel::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  opacity: 0.35;
+  background-image: url("data:image/svg+xml,%3Csvg width='72' height='72' viewBox='0 0 72 72' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='%2312833B' fill-opacity='0.045'%3E%3Cpath d='M36 10c-8 10-12 20-11 30 6-5 11-8 16-9-2-8-3-14-5-21zm0 0c4 7 6 13 7 21 5 1 11 4 16 10-4-14-11-24-23-31z'/%3E%3C/g%3E%3C/svg%3E");
 }
 
 .vc-login-panel-inner {
+  position: relative;
+  z-index: 1;
   width: 100%;
   max-width: 420px;
-  animation: vc-login-rise 0.75s ease 0.08s both;
+  animation: vc-login-rise 0.8s ease 0.1s both;
+}
+
+.vc-login-mobile-brand {
+  text-align: center;
+  margin-bottom: 1.35rem;
 }
 
 .vc-login-mobile-logo {
   display: block;
-  height: 56px;
+  height: 84px;
   width: auto;
-  max-width: 220px;
+  max-width: 300px;
   object-fit: contain;
-  margin: 0 auto 1.25rem;
+  margin: 0 auto 0.45rem;
+}
+
+.vc-login-mobile-brand p {
+  margin: 0;
+  font-size: 0.82rem;
+  font-weight: 600;
+  color: #5f6b66;
+}
+
+.vc-login-card {
+  position: relative;
+  overflow: hidden;
+  background: rgba(255, 255, 255, 0.92);
+  border: 1px solid rgba(18, 131, 59, 0.1);
+  border-radius: 22px;
+  box-shadow:
+    0 1px 0 rgba(255, 255, 255, 0.8) inset,
+    0 22px 55px rgba(11, 92, 39, 0.1);
+  padding: clamp(1.6rem, 3.2vw, 2.15rem);
+  backdrop-filter: blur(8px);
+}
+
+.vc-login-card-accent {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 4px;
+  background: linear-gradient(90deg, #0B5C27 0%, #12833B 55%, #F5A623 100%);
 }
 
 .vc-login-card-head h1 {
-  margin: 0 0 0.35rem;
+  margin: 0.15rem 0 0.4rem;
   font-family: 'Nunito', 'Poppins', sans-serif;
-  font-size: 1.65rem;
+  font-size: clamp(1.55rem, 2.4vw, 1.8rem);
   font-weight: 800;
   color: #0B5C27;
-  letter-spacing: -0.02em;
+  letter-spacing: -0.03em;
 }
 
 .vc-login-card-head p {
-  margin: 0 0 1.35rem;
+  margin: 0 0 1.45rem;
   color: #5f6b66;
-  font-size: 0.95rem;
+  font-size: 0.92rem;
+  line-height: 1.45;
 }
 
 .vc-login-alert {
@@ -809,13 +958,13 @@ a.vc-kpi-link:focus {
 }
 
 .vc-login-field {
-  margin-bottom: 1rem;
+  margin-bottom: 1.05rem;
 }
 
 .vc-login-field label {
   display: block;
-  margin-bottom: 0.4rem;
-  font-size: 0.86rem;
+  margin-bottom: 0.42rem;
+  font-size: 0.84rem;
   font-weight: 700;
   color: #1E1F22;
 }
@@ -830,25 +979,34 @@ a.vc-kpi-link:focus {
   position: absolute;
   left: 14px;
   color: #12833B;
-  opacity: 0.75;
+  opacity: 0.8;
   pointer-events: none;
+  transition: opacity 0.2s ease;
+}
+
+.vc-login-input:focus-within > i {
+  opacity: 1;
 }
 
 .vc-login-input input {
   width: 100%;
-  border: 1px solid rgba(18, 131, 59, 0.18);
-  border-radius: 12px;
-  background: #F7FBF8;
-  padding: 0.78rem 2.6rem 0.78rem 2.55rem;
+  border: 1px solid rgba(18, 131, 59, 0.16);
+  border-radius: 14px;
+  background: #F4F9F5;
+  padding: 0.82rem 2.65rem 0.82rem 2.55rem;
   font-size: 0.95rem;
   color: #1E1F22;
   transition: border-color 0.2s ease, box-shadow 0.2s ease, background 0.2s ease;
 }
 
+.vc-login-input input::placeholder {
+  color: #8a9690;
+}
+
 .vc-login-input input:focus {
   outline: none;
   background: #fff;
-  border-color: rgba(18, 131, 59, 0.45);
+  border-color: rgba(18, 131, 59, 0.5);
   box-shadow: 0 0 0 4px rgba(18, 131, 59, 0.12);
 }
 
@@ -858,12 +1016,13 @@ a.vc-kpi-link:focus {
   width: 36px;
   height: 36px;
   border: 0;
-  border-radius: 8px;
+  border-radius: 10px;
   background: transparent;
   color: #5f6b66;
   display: inline-flex;
   align-items: center;
   justify-content: center;
+  transition: background 0.15s ease, color 0.15s ease;
 }
 
 .vc-login-eye:hover {
@@ -872,55 +1031,104 @@ a.vc-kpi-link:focus {
 }
 
 .vc-login-submit {
-  margin-top: 0.5rem;
+  margin-top: 0.55rem;
   width: 100%;
   border: 0;
-  border-radius: 12px;
-  padding: 0.85rem 1rem;
+  border-radius: 14px;
+  padding: 0.9rem 1rem;
   font-weight: 700;
   font-size: 1rem;
+  gap: 0.35rem;
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  box-shadow: 0 10px 24px rgba(18, 131, 59, 0.25);
-  transition: transform 0.15s ease, box-shadow 0.15s ease;
+  background: linear-gradient(180deg, #159344 0%, #12833B 55%, #0f7333 100%) !important;
+  box-shadow: 0 12px 26px rgba(18, 131, 59, 0.28);
+  transition: transform 0.18s ease, box-shadow 0.18s ease, filter 0.18s ease;
+}
+
+.vc-login-submit i {
+  transition: transform 0.18s ease;
 }
 
 .vc-login-submit:hover {
   transform: translateY(-1px);
-  box-shadow: 0 14px 28px rgba(18, 131, 59, 0.3);
+  filter: brightness(1.03);
+  box-shadow: 0 16px 32px rgba(18, 131, 59, 0.34);
+}
+
+.vc-login-submit:hover i {
+  transform: translateX(3px);
+}
+
+.vc-login-submit:active {
+  transform: translateY(0);
 }
 
 .vc-login-seed {
-  margin-top: 1.15rem;
+  margin-top: 1.2rem;
   border-radius: 12px;
-  background: #F7FBF8;
-  border: 1px solid rgba(18, 131, 59, 0.1);
+  background: #F4F9F5;
+  border: 1px dashed rgba(18, 131, 59, 0.22);
   overflow: hidden;
 }
 
 .vc-login-seed summary {
   cursor: pointer;
   padding: 0.7rem 0.9rem;
-  font-size: 0.82rem;
+  font-size: 0.8rem;
   font-weight: 700;
   color: #0B5C27;
   list-style: none;
+  user-select: none;
 }
 
 .vc-login-seed summary::-webkit-details-marker { display: none; }
 
+.vc-login-seed[open] summary {
+  border-bottom: 1px solid rgba(18, 131, 59, 0.08);
+}
+
 .vc-login-seed-body {
-  padding: 0 0.9rem 0.85rem;
+  padding: 0.75rem 0.9rem 0.9rem;
   font-size: 0.8rem;
   color: #5f6b66;
   line-height: 1.45;
 }
 
+.vc-login-secure {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.4rem;
+  margin: 1.1rem 0 0;
+  font-size: 0.78rem;
+  font-weight: 600;
+  color: #7a8780;
+}
+
+.vc-login-secure i {
+  color: #12833B;
+  font-size: 0.95rem;
+}
+
 @keyframes vc-login-rise {
-  from { opacity: 0; transform: translateY(12px); }
+  from { opacity: 0; transform: translateY(14px); }
   to { opacity: 1; transform: translateY(0); }
 }
+
+@keyframes vc-login-drift {
+  0%, 100% { transform: translate(0, 0) scale(1); }
+  50% { transform: translate(12px, -16px) scale(1.05); }
+}
+
+@keyframes vc-login-sway {
+  0%, 100% { transform: rotate(var(--base-rot, 18deg)) translateY(0); }
+  50% { transform: rotate(calc(var(--base-rot, 18deg) + 6deg)) translateY(-8px); }
+}
+
+.vc-login-leaf--a { --base-rot: 18deg; }
+.vc-login-leaf--b { --base-rot: -28deg; }
 
 @media (max-width: 991.98px) {
   .vc-login {
@@ -932,13 +1140,25 @@ a.vc-kpi-link:focus {
   .vc-login-panel {
     min-height: 100vh;
     background:
-      radial-gradient(ellipse at top, rgba(18, 131, 59, 0.12), transparent 50%),
-      linear-gradient(180deg, #F1F7F3, #FFFFFF);
+      radial-gradient(ellipse at top, rgba(18, 131, 59, 0.14), transparent 52%),
+      linear-gradient(180deg, #EAF4ED, #FFFFFF);
   }
 }
 
 @media (min-width: 1400px) {
   .vc-login-panel-inner { max-width: 440px; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .vc-login-brand-top,
+  .vc-login-brand-content,
+  .vc-login-brand-foot,
+  .vc-login-brand-points li,
+  .vc-login-panel-inner,
+  .vc-login-orb,
+  .vc-login-leaf {
+    animation: none !important;
+  }
 }
 
 .credits a { color: var(--vc-primary); }
