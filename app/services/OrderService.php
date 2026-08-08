@@ -14,7 +14,7 @@ class OrderService
         $this->orders = new Order($this->db);
     }
 
-    public function changeStatus(int $orderId, string $newStatus, int $adminId, ?string $note = null): void
+    public function changeStatus(int $orderId, string $newStatus, int $adminId, ?string $note = null, ?string $estimatedDeliveryDate = null): void
     {
         $order = $this->orders->find($orderId);
         if (!$order) {
@@ -33,6 +33,16 @@ class OrderService
             );
         }
 
+        if ($newStatus === 'delivery_date_set') {
+            $estimatedDeliveryDate = trim((string) $estimatedDeliveryDate);
+            if (!preg_match('/^\d{4}-\d{2}-\d{2}$/', $estimatedDeliveryDate)) {
+                throw new RuntimeException('Please select an estimated delivery date.');
+            }
+            if ($estimatedDeliveryDate < date('Y-m-d')) {
+                throw new RuntimeException('Delivery date cannot be in the past.');
+            }
+        }
+
         $this->db->beginTransaction();
         try {
             if ($newStatus === 'confirmed' && $current === 'placed') {
@@ -47,9 +57,19 @@ class OrderService
             if ($newStatus === 'delivered') {
                 $fields['delivered_at'] = date('Y-m-d H:i:s');
             }
+            if ($newStatus === 'delivery_date_set') {
+                $fields['estimated_delivery_date'] = $estimatedDeliveryDate;
+                $note = $note ?: ('ETA set to ' . $estimatedDeliveryDate);
+            }
             $this->orders->updateFields($orderId, $fields);
             $this->logStatus($orderId, $newStatus, $adminId, $note);
-            $this->notifyCustomer((int) $order['customer_id'], $orderId, $newStatus, $order['order_number']);
+            $this->notifyCustomer(
+                (int) $order['customer_id'],
+                $orderId,
+                $newStatus,
+                $order['order_number'],
+                $newStatus === 'delivery_date_set' ? $estimatedDeliveryDate : null
+            );
 
             $this->db->commit();
         } catch (Throwable $e) {

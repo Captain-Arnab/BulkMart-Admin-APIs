@@ -45,11 +45,16 @@ $success = $success ?? null; $error = $error ?? null;
       </table>
     </div>
     <?php if ($result['pages'] > 1): ?>
-      <ul class="pagination pagination-sm mb-0">
-        <?php for ($p=1;$p<=$result['pages'];$p++): ?>
-          <li class="page-item <?= $p===$result['page']?'active':'' ?>"><a class="page-link" href="<?= e(url('customers?'.http_build_query(array_filter(['q'=>$filters['q']?:null,'kyc_status'=>$filters['kyc_status']?:null,'page'=>$p])))) ?>"><?= $p ?></a></li>
-        <?php endfor; ?>
-      </ul>
+      <?php
+        $page = (int) $result['page'];
+        $pages = (int) $result['pages'];
+        $baseUrl = url('customers');
+        $query = [
+            'q' => $filters['q'] ?: null,
+            'kyc_status' => $filters['kyc_status'] ?: null,
+        ];
+        require VIEW_PATH . '/shared/pagination.php';
+      ?>
     <?php endif; ?>
   </div></div>
 </section>

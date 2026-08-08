@@ -20,6 +20,5 @@ $pageTitle = ($title ?? 'Login') . ' · ' . APP_NAME;
 <body class="vc-login-body">
   <?= $content ?>
   <script src="<?= e(asset('vendor/bootstrap/js/bootstrap.bundle.min.js')) ?>"></script>
-  <script src="<?= e(asset('js/main.js')) ?>"></script>
 </body>
 </html>

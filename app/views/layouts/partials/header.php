@@ -48,7 +48,6 @@ foreach (rbac_sidebar_items($user) as $item) {
              aria-autocomplete="list"
              aria-controls="vc-module-search-results"
              aria-expanded="false">
-      <kbd class="vc-search-kbd d-none d-xl-inline">⌘K</kbd>
       <button type="button" class="vc-search-clear" id="vc-module-search-clear" title="Clear" hidden>
         <i class="bi bi-x-lg"></i>
       </button>

@@ -19,6 +19,7 @@ class DashboardController extends Controller
                 'sparklines'    => $data['sparklines'],
                 'status_colors' => $data['status_colors'],
                 'status_labels' => $data['status_labels'],
+                'ordersUrl'     => url('orders'),
             ],
             'topProducts'   => $data['top_products'],
             'lowStock'      => $data['low_stock'],

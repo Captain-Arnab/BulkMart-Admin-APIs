@@ -20,6 +20,12 @@ $error = $error ?? null;
 <?php if ($error): ?><div class="alert alert-danger"><?= e($error) ?></div><?php endif; ?>
 
 <section class="section">
+  <div class="card vc-filter-card mb-3"><div class="card-body py-3">
+    <form class="row g-2 align-items-end" method="GET" action="<?= e(url('categories')) ?>">
+      <div class="col-md-6"><label class="form-label mb-1">Search</label><input type="text" name="q" value="<?= e($filters['q'] ?? '') ?>" class="form-control" placeholder="Category name"></div>
+      <div class="col-md-4 d-flex gap-2"><button class="btn btn-primary" type="submit">Filter</button><a class="btn btn-outline-secondary" href="<?= e(url('categories')) ?>">Reset</a></div>
+    </form>
+  </div></div>
   <div class="card">
     <div class="card-body pt-3">
       <div class="table-responsive">

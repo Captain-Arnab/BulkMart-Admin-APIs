@@ -16,9 +16,17 @@ class SupportTicket extends Model
             $where[] = 't.status = ?';
             $params[] = $filters['status'];
         }
+        if (!empty($filters['q'])) {
+            $where[] = '(c.business_name LIKE ? OR c.mobile LIKE ? OR t.subject_type LIKE ? OR CAST(t.id AS CHAR) LIKE ?)';
+            $like = '%' . $filters['q'] . '%';
+            array_push($params, $like, $like, $like, $like);
+        }
         $sqlWhere = implode(' AND ', $where);
         $total = (int) ($this->fetchOne(
-            "SELECT COUNT(*) AS c FROM support_tickets t WHERE $sqlWhere",
+            "SELECT COUNT(*) AS c
+             FROM support_tickets t
+             INNER JOIN customers c ON c.id = t.customer_id
+             WHERE $sqlWhere",
             $params
         )['c'] ?? 0);
         $pages = max(1, (int) ceil($total / $perPage));

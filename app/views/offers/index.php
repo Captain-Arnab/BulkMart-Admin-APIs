@@ -11,6 +11,20 @@
 <?php if ($error): ?><div class="alert alert-danger"><?= e($error) ?></div><?php endif; ?>
 
 <section class="section">
+  <div class="card vc-filter-card mb-3"><div class="card-body py-3">
+    <form class="row g-2 align-items-end" method="GET" action="<?= e(url('offers')) ?>">
+      <div class="col-md-5"><label class="form-label mb-1">Search</label><input type="text" name="q" value="<?= e($filters['q'] ?? '') ?>" class="form-control" placeholder="Title / coupon"></div>
+      <div class="col-md-3"><label class="form-label mb-1">Active</label>
+        <select name="active" class="form-select">
+          <option value="">All</option>
+          <option value="1" <?= ($filters['active'] ?? '') === '1' ? 'selected' : '' ?>>Active</option>
+          <option value="0" <?= ($filters['active'] ?? '') === '0' ? 'selected' : '' ?>>Inactive</option>
+        </select>
+      </div>
+      <div class="col-md-4 d-flex gap-2"><button class="btn btn-primary" type="submit">Filter</button><a class="btn btn-outline-secondary" href="<?= e(url('offers')) ?>">Reset</a></div>
+    </form>
+  </div></div>
+
   <div class="card mb-3"><div class="card-body">
     <h5 class="card-title">Banners</h5>
     <div class="table-responsive"><table class="table align-middle">

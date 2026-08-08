@@ -8,43 +8,56 @@ class DeliveryController extends Controller
         $tab = ($_GET['tab'] ?? 'queue') === 'history' ? 'history' : 'queue';
         $page = max(1, (int) ($_GET['page'] ?? 1));
 
-        $filters = [
-            'assigned_to' => (int) $user['id'],
-            'q'           => trim((string) ($_GET['q'] ?? '')),
+        $uiFilters = [
+            'q'          => trim((string) ($_GET['q'] ?? '')),
+            'status'     => trim((string) ($_GET['status'] ?? '')),
+            'eta_from'   => trim((string) ($_GET['eta_from'] ?? '')),
+            'eta_to'     => trim((string) ($_GET['eta_to'] ?? '')),
+            'manager_id' => trim((string) ($_GET['manager_id'] ?? '')),
+            'mine_only'  => !empty($_GET['mine_only']),
         ];
 
-        if ($user['role'] === 'super_admin' && empty($_GET['mine_only'])) {
-            // Super Admin can see all delivery-assigned orders; optional filter
-            if (!empty($_GET['manager_id'])) {
-                $filters['assigned_to'] = (int) $_GET['manager_id'];
+        $filters = [
+            'q'        => $uiFilters['q'],
+            'eta_from' => $uiFilters['eta_from'],
+            'eta_to'   => $uiFilters['eta_to'],
+        ];
+
+        $queueStatuses = ['confirmed', 'delivery_date_set', 'out_for_delivery'];
+        $historyStatuses = ['delivered', 'cancelled'];
+        $allowedStatuses = $tab === 'queue' ? $queueStatuses : $historyStatuses;
+
+        if ($uiFilters['status'] !== '' && in_array($uiFilters['status'], $allowedStatuses, true)) {
+            $filters['status'] = $uiFilters['status'];
+        } else {
+            $filters['statuses'] = $allowedStatuses;
+        }
+
+        if (($user['role'] ?? '') === 'super_admin') {
+            if ($uiFilters['mine_only']) {
+                $filters['assigned_to'] = (int) $user['id'];
+            } elseif ($uiFilters['manager_id'] !== '') {
+                $filters['assigned_to'] = (int) $uiFilters['manager_id'];
             } else {
-                unset($filters['assigned_to']);
-                // Only orders that have a DM assigned
                 $filters['has_assignee'] = true;
             }
         } else {
             $filters['assigned_to'] = (int) $user['id'];
         }
 
-        if ($tab === 'queue') {
-            $filters['statuses'] = ['confirmed', 'delivery_date_set', 'out_for_delivery'];
-        } else {
-            $filters['statuses'] = ['delivered', 'cancelled'];
-        }
-
         $model = new Order();
-        // Extend paginate for has_assignee via temporary filter handling
-        $result = $this->paginateDelivery($model, $filters, $page);
+        $result = $model->paginate($filters, $page, 20);
 
         $this->view('delivery/index', [
-            'title'    => 'Delivery Management',
-            'tab'      => $tab,
-            'result'   => $result,
-            'managers' => $user['role'] === 'super_admin' ? $model->deliveryManagers() : [],
-            'filters'  => $filters,
-            'success'  => flash('success'),
-            'error'    => flash('error'),
-            'codWarn'  => $_SESSION['cod_warn'] ?? null,
+            'title'      => 'Delivery Management',
+            'tab'        => $tab,
+            'result'     => $result,
+            'managers'   => ($user['role'] ?? '') === 'super_admin' ? $model->deliveryManagers() : [],
+            'filters'    => $uiFilters,
+            'statusOpts' => $allowedStatuses,
+            'success'    => flash('success'),
+            'error'      => flash('error'),
+            'codWarn'    => $_SESSION['cod_warn'] ?? null,
         ]);
         unset($_SESSION['cod_warn']);
     }
@@ -130,62 +143,5 @@ class DeliveryController extends Controller
             redirect('delivery');
         }
         return $order;
-    }
-
-    private function paginateDelivery(Order $model, array $filters, int $page): array
-    {
-        // Support has_assignee by wrapping query filters
-        if (!empty($filters['has_assignee'])) {
-            // Use assigned_to IS NOT NULL via custom statuses path — piggyback on model by SQL patch
-            return $this->paginateWithAssigneeRequired($filters, $page);
-        }
-        return $model->paginate($filters, $page, 20);
-    }
-
-    private function paginateWithAssigneeRequired(array $filters, int $page, int $perPage = 20): array
-    {
-        $pdo = db();
-        $where = ['o.assigned_delivery_manager_id IS NOT NULL'];
-        $params = [];
-        if (!empty($filters['statuses'])) {
-            $in = implode(',', array_fill(0, count($filters['statuses']), '?'));
-            $where[] = "o.status IN ($in)";
-            foreach ($filters['statuses'] as $s) {
-                $params[] = $s;
-            }
-        }
-        if (!empty($filters['q'])) {
-            $where[] = '(o.order_number LIKE ? OR c.business_name LIKE ?)';
-            $like = '%' . $filters['q'] . '%';
-            $params[] = $like;
-            $params[] = $like;
-        }
-        $sqlWhere = implode(' AND ', $where);
-        $stmt = $pdo->prepare("SELECT COUNT(*) FROM orders o INNER JOIN customers c ON c.id = o.customer_id WHERE $sqlWhere");
-        $stmt->execute($params);
-        $total = (int) $stmt->fetchColumn();
-        $pages = max(1, (int) ceil($total / $perPage));
-        $page = max(1, min($page, $pages));
-        $offset = ($page - 1) * $perPage;
-        $stmt = $pdo->prepare(
-            "SELECT o.*, c.business_name, c.owner_name, c.mobile, dm.name AS delivery_manager_name,
-                    (SELECT COUNT(*) FROM order_items oi WHERE oi.order_id = o.id) AS item_count,
-                    a.line1, a.city, a.pincode
-             FROM orders o
-             INNER JOIN customers c ON c.id = o.customer_id
-             INNER JOIN addresses a ON a.id = o.address_id
-             LEFT JOIN admin_users dm ON dm.id = o.assigned_delivery_manager_id
-             WHERE $sqlWhere
-             ORDER BY o.placed_at DESC
-             LIMIT $perPage OFFSET $offset"
-        );
-        $stmt->execute($params);
-        return [
-            'rows'     => $stmt->fetchAll(),
-            'total'    => $total,
-            'page'     => $page,
-            'per_page' => $perPage,
-            'pages'    => $pages,
-        ];
     }
 }

@@ -4,11 +4,20 @@ class MarketPriceController extends Controller
 {
     public function index(): void
     {
+        $filters = ['q' => trim((string) ($_GET['q'] ?? ''))];
+        $rows = (new MarketPrice())->listWithToday();
+        if ($filters['q'] !== '') {
+            $q = mb_strtolower($filters['q']);
+            $rows = array_values(array_filter($rows, static function (array $r) use ($q): bool {
+                return str_contains(mb_strtolower((string) $r['name']), $q);
+            }));
+        }
         $this->view('market_prices/index', [
-            'title'    => 'Market Prices',
-            'rows'     => (new MarketPrice())->listWithToday(),
-            'success'  => flash('success'),
-            'error'    => flash('error'),
+            'title'   => 'Market Prices',
+            'rows'    => $rows,
+            'filters' => $filters,
+            'success' => flash('success'),
+            'error'   => flash('error'),
         ]);
     }
 

@@ -4,10 +4,18 @@ class CategoryController extends Controller
 {
     public function index(): void
     {
-        $model = new Category();
+        $filters = ['q' => trim((string) ($_GET['q'] ?? ''))];
+        $categories = (new Category())->all();
+        if ($filters['q'] !== '') {
+            $q = mb_strtolower($filters['q']);
+            $categories = array_values(array_filter($categories, static function (array $c) use ($q): bool {
+                return str_contains(mb_strtolower((string) $c['name']), $q);
+            }));
+        }
         $this->view('categories/index', [
             'title'      => 'Categories',
-            'categories' => $model->all(),
+            'categories' => $categories,
+            'filters'    => $filters,
             'success'    => flash('success'),
             'error'      => flash('error'),
         ]);

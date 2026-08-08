@@ -152,7 +152,17 @@
               onClick(payload.keys[cfg.dataPointIndex]);
             }
           },
+          legendClick: function (_chart, seriesIndex) {
+            if (typeof onClick === 'function' && payload && payload.keys) {
+              onClick(payload.keys[seriesIndex]);
+              return false;
+            }
+          },
         },
+      },
+      states: {
+        hover: { filter: { type: 'lighten', value: 0.08 } },
+        active: { filter: { type: 'none' } },
       },
       series: (payload && payload.series) || [],
       labels: (payload && payload.labels) || [],
@@ -162,6 +172,7 @@
       stroke: { width: 2, colors: ['#fff'] },
       plotOptions: {
         pie: {
+          expandOnClick: false,
           donut: {
             size: '68%',
             labels: {

@@ -94,12 +94,15 @@ $codWarn = $codWarn ?? null;
           <h5 class="card-title">Actions</h5>
 
           <?php if (in_array($order['status'], ['confirmed', 'delivery_date_set'], true)): ?>
-            <form method="POST" action="<?= e(url('delivery/' . $order['id'] . '/set-date')) ?>" class="mb-3">
-              <label class="form-label">Estimated delivery date</label>
+            <form method="POST" action="<?= e(url('delivery/' . $order['id'] . '/set-date')) ?>" class="mb-3 vc-eta-field">
+              <label class="form-label fw-semibold"><i class="bi bi-calendar-event me-1"></i>Estimated delivery date</label>
               <input type="date" name="estimated_delivery_date" class="form-control mb-2" required
                      value="<?= e($order['estimated_delivery_date'] ?? '') ?>"
                      min="<?= e(date('Y-m-d')) ?>">
-              <button class="btn btn-outline-primary w-100" type="submit">Save delivery date</button>
+              <button class="btn btn-primary w-100" type="submit">
+                <?= $order['status'] === 'confirmed' ? 'Set date & move to schedule' : 'Update delivery date' ?>
+              </button>
+              <div class="form-text mt-2 mb-0">This is where you set the delivery date for this order.</div>
             </form>
           <?php endif; ?>
 

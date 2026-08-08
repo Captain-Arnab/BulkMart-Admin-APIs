@@ -4,9 +4,31 @@ class RoleController extends Controller
 {
     public function index(): void
     {
+        $filters = [
+            'q'        => trim((string) ($_GET['q'] ?? '')),
+            'role'     => trim((string) ($_GET['role'] ?? '')),
+            'active'   => trim((string) ($_GET['active'] ?? '')),
+        ];
+        $admins = (new AdminUser())->allWithModuleCounts();
+        if ($filters['q'] !== '') {
+            $q = mb_strtolower($filters['q']);
+            $admins = array_values(array_filter($admins, static function (array $a) use ($q): bool {
+                return str_contains(mb_strtolower($a['name']), $q)
+                    || str_contains(mb_strtolower($a['email']), $q);
+            }));
+        }
+        if ($filters['role'] !== '') {
+            $admins = array_values(array_filter($admins, static fn (array $a): bool => $a['role_type'] === $filters['role']));
+        }
+        if ($filters['active'] === '1' || $filters['active'] === '0') {
+            $want = (int) $filters['active'];
+            $admins = array_values(array_filter($admins, static fn (array $a): bool => (int) $a['is_active'] === $want));
+        }
+
         $this->view('roles/index', [
             'title'   => 'Roles & Sub-Admins',
-            'admins'  => (new AdminUser())->allWithModuleCounts(),
+            'admins'  => $admins,
+            'filters' => $filters,
             'success' => flash('success'),
             'error'   => flash('error'),
         ]);

@@ -37,12 +37,16 @@ $pager = static function (string $param, array $pageData) use ($qs): string {
     if ($pages <= 1) {
         return '';
     }
-    $html = '<nav class="vc-pager"><ul class="pagination pagination-sm mb-0">';
+    $html = '<nav class="vc-pagination vc-pagination--inline" aria-label="Pagination"><ul class="pagination vc-pager mb-0">';
+    $mk = static function (int $p) use ($qs, $param): string {
+        return e(url('reports?' . $qs([$param => $p])));
+    };
+    $html .= '<li class="page-item' . ($page <= 1 ? ' disabled' : '') . '"><a class="page-link" href="' . ($page <= 1 ? '#' : $mk($page - 1)) . '"><i class="bi bi-chevron-left"></i></a></li>';
     for ($i = 1; $i <= $pages; $i++) {
         $active = $i === $page ? ' active' : '';
-        $link = url('reports?' . $qs([$param => $i]));
-        $html .= '<li class="page-item' . $active . '"><a class="page-link" href="' . e($link) . '">' . $i . '</a></li>';
+        $html .= '<li class="page-item' . $active . '"><a class="page-link" href="' . $mk($i) . '">' . $i . '</a></li>';
     }
+    $html .= '<li class="page-item' . ($page >= $pages ? ' disabled' : '') . '"><a class="page-link" href="' . ($page >= $pages ? '#' : $mk($page + 1)) . '"><i class="bi bi-chevron-right"></i></a></li>';
     $html .= '</ul></nav>';
     return $html;
 };

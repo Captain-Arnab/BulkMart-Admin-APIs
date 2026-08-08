@@ -46,7 +46,12 @@ $reportsBase = url('reports');
   <div class="row g-3">
     <?php foreach ($kpis as $i => $kpi): ?>
       <div class="col-xxl-3 col-md-6">
-        <div class="card info-card vc-kpi-card vc-kpi-spark <?= e($kpi['class']) ?> vc-fade-up" style="--delay: <?= (int) $i * 60 ?>ms" data-tone="<?= e($kpi['tone'] ?? 'primary') ?>">
+        <?php $href = !empty($kpi['href']) ? url($kpi['href']) : ''; ?>
+        <<?= $href !== '' ? 'a href="' . e($href) . '"' : 'div' ?>
+           class="card info-card vc-kpi-card vc-kpi-spark vc-kpi-link <?= e($kpi['class']) ?> vc-fade-up"
+           style="--delay: <?= (int) $i * 60 ?>ms"
+           data-tone="<?= e($kpi['tone'] ?? 'primary') ?>"
+           <?= $href !== '' ? 'title="Open details"' : '' ?>>
           <div class="card-body">
             <h5 class="card-title"><?= e($kpi['label']) ?> <span>| Today</span></h5>
             <div class="d-flex align-items-center justify-content-between gap-2">
@@ -65,7 +70,7 @@ $reportsBase = url('reports');
               </div>
             </div>
           </div>
-        </div>
+        </<?= $href !== '' ? 'a' : 'div' ?>>
       </div>
     <?php endforeach; ?>
   </div>
@@ -97,7 +102,10 @@ $reportsBase = url('reports');
         <div class="card-body">
           <div class="d-flex align-items-center justify-content-between gap-2 mb-2">
             <h5 class="card-title mb-0">Order Status</h5>
-            <a class="vc-view-report" href="<?= e($reportsBase . '?preset=30d#section-status') ?>">View full report →</a>
+            <div class="d-flex align-items-center gap-2">
+              <span class="small text-muted">Click slice</span>
+              <a class="vc-view-report" href="<?= e($reportsBase . '?preset=30d#section-status') ?>">View full report →</a>
+            </div>
           </div>
           <div class="vc-chart-frame vc-chart-frame--donut">
             <div class="vc-skeleton vc-skeleton-donut" data-skeleton></div>

@@ -4,11 +4,15 @@ class OrderController extends Controller
 {
     public function index(): void
     {
+        $statusRaw = trim((string) ($_GET['status'] ?? ''));
+        $pending = !empty($_GET['pending']) || $statusRaw === '__pending__';
+        $status = ($pending || $statusRaw === '__pending__') ? '' : $statusRaw;
         $filters = [
-            'status'    => trim((string) ($_GET['status'] ?? '')),
+            'status'    => $status,
             'date_from' => trim((string) ($_GET['date_from'] ?? '')),
             'date_to'   => trim((string) ($_GET['date_to'] ?? '')),
             'q'         => trim((string) ($_GET['q'] ?? '')),
+            'pending'   => $pending,
         ];
         $page = max(1, (int) ($_GET['page'] ?? 1));
         $result = (new Order())->paginate($filters, $page, 15);
@@ -46,9 +50,31 @@ class OrderController extends Controller
     public function updateStatus(string $id): void
     {
         $status = trim((string) ($_POST['status'] ?? ''));
+        $eta = trim((string) ($_POST['estimated_delivery_date'] ?? ''));
         try {
-            (new OrderService())->changeStatus((int) $id, $status, (int) auth_user()['id']);
+            (new OrderService())->changeStatus(
+                (int) $id,
+                $status,
+                (int) auth_user()['id'],
+                null,
+                $eta !== '' ? $eta : null
+            );
             flash('success', 'Order status updated to ' . (Order::STATUS_LABELS[$status] ?? $status) . '.');
+        } catch (Throwable $e) {
+            flash('error', $e->getMessage());
+        }
+        redirect('orders/' . (int) $id);
+    }
+
+    public function setDate(string $id): void
+    {
+        try {
+            (new OrderService())->setDeliveryDate(
+                (int) $id,
+                trim((string) ($_POST['estimated_delivery_date'] ?? '')),
+                (int) auth_user()['id']
+            );
+            flash('success', 'Estimated delivery date saved.');
         } catch (Throwable $e) {
             flash('error', $e->getMessage());
         }

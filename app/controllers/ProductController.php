@@ -6,13 +6,24 @@ class ProductController extends Controller
     {
         $q = trim((string) ($_GET['q'] ?? ''));
         $categoryId = (int) ($_GET['category_id'] ?? 0) ?: null;
-        $products = (new Product())->allWithCategory($q !== '' ? $q : null, $categoryId);
+        $page = max(1, (int) ($_GET['page'] ?? 1));
+        $lowStock = !empty($_GET['low_stock']);
+        $result = (new Product())->paginateWithCategory(
+            $q !== '' ? $q : null,
+            $categoryId,
+            $page,
+            20,
+            $lowStock,
+            AnalyticsService::LOW_STOCK_THRESHOLD
+        );
         $this->view('products/index', [
             'title'      => 'Products & Stock',
-            'products'   => $products,
+            'products'   => $result['rows'],
+            'result'     => $result,
             'categories' => (new Category())->options(),
             'q'          => $q,
             'categoryId' => $categoryId,
+            'lowStock'   => $lowStock,
             'success'    => flash('success'),
             'error'      => flash('error'),
         ]);

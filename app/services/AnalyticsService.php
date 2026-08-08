@@ -188,6 +188,7 @@ class AnalyticsService
                 'icon'  => 'bi-cart3',
                 'tone'  => 'primary',
                 'class' => 'sales-card',
+                'href'  => 'orders?date_from=' . urlencode($today) . '&date_to=' . urlencode($today),
             ],
             [
                 'key'   => 'pending',
@@ -197,6 +198,7 @@ class AnalyticsService
                 'icon'  => 'bi-truck',
                 'tone'  => 'amber',
                 'class' => 'customers-card',
+                'href'  => 'orders?pending=1',
             ],
             [
                 'key'   => 'revenue',
@@ -206,6 +208,7 @@ class AnalyticsService
                 'icon'  => 'bi-currency-rupee',
                 'tone'  => 'primary',
                 'class' => 'revenue-card',
+                'href'  => 'reports?preset=today',
             ],
             [
                 'key'   => 'low_stock',
@@ -215,6 +218,7 @@ class AnalyticsService
                 'icon'  => 'bi-exclamation-triangle',
                 'tone'  => 'amber',
                 'class' => 'sales-card',
+                'href'  => 'products?low_stock=1',
             ],
         ];
     }

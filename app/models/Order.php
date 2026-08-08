@@ -83,6 +83,8 @@ class Order extends Model
         if (!empty($filters['status'])) {
             $where[] = 'o.status = ?';
             $params[] = $filters['status'];
+        } elseif (!empty($filters['pending'])) {
+            $where[] = "o.status IN ('placed','confirmed','delivery_date_set')";
         }
         if (!empty($filters['date_from'])) {
             $where[] = 'DATE(o.placed_at) >= ?';
@@ -100,6 +102,17 @@ class Order extends Model
         if (!empty($filters['assigned_to'])) {
             $where[] = 'o.assigned_delivery_manager_id = ?';
             $params[] = (int) $filters['assigned_to'];
+        }
+        if (!empty($filters['has_assignee'])) {
+            $where[] = 'o.assigned_delivery_manager_id IS NOT NULL';
+        }
+        if (!empty($filters['eta_from'])) {
+            $where[] = 'o.estimated_delivery_date >= ?';
+            $params[] = $filters['eta_from'];
+        }
+        if (!empty($filters['eta_to'])) {
+            $where[] = 'o.estimated_delivery_date <= ?';
+            $params[] = $filters['eta_to'];
         }
         if (!empty($filters['statuses']) && is_array($filters['statuses'])) {
             $in = implode(',', array_fill(0, count($filters['statuses']), '?'));

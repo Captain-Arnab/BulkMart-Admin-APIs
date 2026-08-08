@@ -1,10 +1,12 @@
 <?php
 /** @var array $products */
 /** @var array $categories */
+/** @var array $result */
 $success = $success ?? null;
 $error = $error ?? null;
 $q = $q ?? '';
 $categoryId = $categoryId ?? null;
+$result = $result ?? ['page' => 1, 'pages' => 1, 'total' => count($products ?? [])];
 ?>
 <div class="pagetitle d-flex flex-wrap justify-content-between align-items-center gap-2">
   <div>
@@ -16,7 +18,8 @@ $categoryId = $categoryId ?? null;
       </ol>
     </nav>
   </div>
-  <div class="d-flex flex-wrap gap-2">
+  <div class="d-flex flex-wrap gap-2 align-items-center">
+    <span class="text-muted small"><?= (int) $result['total'] ?> products · 20 / page</span>
     <a href="<?= e(url('products/bulk-upload')) ?>" class="btn btn-outline-primary btn-sm">Bulk Upload</a>
     <a href="<?= e(url('products/bulk-stock')) ?>" class="btn btn-outline-primary btn-sm">Bulk Stock</a>
     <a href="<?= e(url('products/add')) ?>" class="btn btn-primary btn-sm"><i class="bi bi-plus-lg me-1"></i>Add Product</a>
@@ -34,7 +37,7 @@ $categoryId = $categoryId ?? null;
           <label class="form-label mb-1">Search</label>
           <input type="text" name="q" value="<?= e($q) ?>" class="form-control" placeholder="Name, item code, batch…">
         </div>
-        <div class="col-md-4">
+        <div class="col-md-3">
           <label class="form-label mb-1">Category</label>
           <select name="category_id" class="form-select">
             <option value="">All categories</option>
@@ -43,6 +46,13 @@ $categoryId = $categoryId ?? null;
                 <?= e($cat['name']) ?>
               </option>
             <?php endforeach; ?>
+          </select>
+        </div>
+        <div class="col-md-3">
+          <label class="form-label mb-1">Stock</label>
+          <select name="low_stock" class="form-select">
+            <option value="">All</option>
+            <option value="1" <?= !empty($lowStock) ? 'selected' : '' ?>>Low stock only</option>
           </select>
         </div>
         <div class="col-md-3 d-flex gap-2">
@@ -111,6 +121,19 @@ $categoryId = $categoryId ?? null;
           </tbody>
         </table>
       </div>
+      <?php if (($result['pages'] ?? 1) > 1): ?>
+        <?php
+          $page = (int) $result['page'];
+          $pages = (int) $result['pages'];
+          $baseUrl = url('products');
+          $query = [
+              'q' => $q !== '' ? $q : null,
+              'category_id' => $categoryId ?: null,
+              'low_stock' => !empty($lowStock) ? '1' : null,
+          ];
+          require VIEW_PATH . '/shared/pagination.php';
+        ?>
+      <?php endif; ?>
     </div>
   </div>
 </section>

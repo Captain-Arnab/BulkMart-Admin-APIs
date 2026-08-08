@@ -4,7 +4,10 @@ class SupportController extends Controller
 {
     public function index(): void
     {
-        $filters = ['status' => trim((string) ($_GET['status'] ?? ''))];
+        $filters = [
+            'status' => trim((string) ($_GET['status'] ?? '')),
+            'q'      => trim((string) ($_GET['q'] ?? '')),
+        ];
         $page = max(1, (int) ($_GET['page'] ?? 1));
         $this->view('support/index', [
             'title'   => 'Support Tickets',

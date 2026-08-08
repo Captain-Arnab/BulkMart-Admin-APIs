@@ -16,10 +16,7 @@ if ($order['status'] === 'cancelled') {
 ?>
 <div class="pagetitle vc-pagetitle d-flex flex-wrap justify-content-between align-items-end gap-2">
   <div>
-    <h1 class="d-flex align-items-center gap-2 flex-wrap">
-      <span>Order</span>
-      <span class="vc-order-id-title"><?= e($order['order_number']) ?></span>
-    </h1>
+    <h1>Order details</h1>
     <nav>
       <ol class="breadcrumb mb-0">
         <li class="breadcrumb-item"><a href="<?= e(url('dashboard')) ?>">Home</a></li>
@@ -35,80 +32,78 @@ if ($order['status'] === 'cancelled') {
 <?php if ($error): ?><div class="alert alert-danger"><?= e($error) ?></div><?php endif; ?>
 
 <section class="section vc-order-detail">
-  <div class="vc-order-hero card mb-3">
-    <div class="card-body">
-      <div class="d-flex flex-wrap justify-content-between align-items-start gap-3">
-        <div>
-          <div class="vc-order-hero-label">Order ID</div>
-          <div class="vc-order-hero-id">#<?= e($order['order_number']) ?></div>
-          <div class="vc-order-hero-meta">
-            Placed <?= e(date('d M Y · H:i', strtotime($order['placed_at']))) ?>
-            <span class="dot"></span> COD
-            <?php if ($order['estimated_delivery_date']): ?>
-              <span class="dot"></span> ETA <?= e(date('d M Y', strtotime($order['estimated_delivery_date']))) ?>
-            <?php endif; ?>
-          </div>
-        </div>
-        <div class="text-end">
-          <span class="<?= e($badge['class']) ?> vc-status--lg">
-            <i class="bi <?= e($badge['icon']) ?>"></i>
-            <?= e($badge['label']) ?>
-          </span>
-          <div class="vc-order-hero-total mt-2">₹<?= e(number_format((float) $order['total'], 2)) ?></div>
-        </div>
-      </div>
-
-      <?php if ($order['status'] !== 'cancelled'): ?>
-        <div class="vc-status-stepper mt-4" aria-label="Order progress">
-          <?php foreach ($statusFlow as $i => $step): ?>
-            <?php
-              $stepBadge = Order::badge($step);
-              $state = 'upcoming';
-              if ($currentIdx !== false && $currentIdx !== -1) {
-                  if ($i < $currentIdx) $state = 'done';
-                  elseif ($i === $currentIdx) $state = 'current';
-              }
-            ?>
-            <div class="vc-step <?= e($state) ?>">
-              <div class="vc-step-dot"><i class="bi <?= e($stepBadge['icon']) ?>"></i></div>
-              <div class="vc-step-label"><?= e($stepBadge['label']) ?></div>
-            </div>
-          <?php endforeach; ?>
-        </div>
-      <?php else: ?>
-        <div class="vc-cancelled-banner mt-3">
-          <i class="bi bi-x-circle"></i> This order was cancelled.
-        </div>
-      <?php endif; ?>
-    </div>
-  </div>
-
   <div class="row g-3">
     <div class="col-lg-8">
-      <div class="card vc-detail-card mb-3">
+      <div class="card vc-order-summary mb-3">
         <div class="card-body">
-          <div class="row g-3">
-            <div class="col-md-6">
-              <div class="vc-info-block">
-                <div class="vc-info-label"><i class="bi bi-shop"></i> Customer</div>
-                <div class="vc-info-title"><?= e($order['business_name']) ?></div>
-                <div><?= e($order['owner_name']) ?></div>
-                <div class="text-muted"><i class="bi bi-phone"></i> <?= e($order['mobile']) ?></div>
-                <?php if ($order['customer_email']): ?>
-                  <div class="small text-muted"><?= e($order['customer_email']) ?></div>
+          <div class="vc-order-summary-top">
+            <div class="vc-order-summary-main">
+              <div class="vc-order-hero-label">Order ID</div>
+              <div class="vc-order-hero-id">#<?= e($order['order_number']) ?></div>
+              <div class="vc-order-hero-meta">
+                <span>Placed <?= e(date('d M Y · H:i', strtotime($order['placed_at']))) ?></span>
+                <span class="dot"></span>
+                <span>COD</span>
+                <?php if ($order['estimated_delivery_date']): ?>
+                  <span class="dot"></span>
+                  <span>ETA <?= e(date('d M Y', strtotime($order['estimated_delivery_date']))) ?></span>
                 <?php endif; ?>
               </div>
             </div>
-            <div class="col-md-6">
-              <div class="vc-info-block">
-                <div class="vc-info-label"><i class="bi bi-geo-alt"></i> Delivery address</div>
-                <div><?= e($order['line1']) ?></div>
-                <?php if ($order['line2']): ?><div><?= e($order['line2']) ?></div><?php endif; ?>
-                <div><?= e($order['city']) ?>, <?= e($order['state']) ?> — <?= e($order['pincode']) ?></div>
-                <?php if ($order['landmark']): ?>
-                  <div class="small text-muted">Landmark: <?= e($order['landmark']) ?></div>
-                <?php endif; ?>
-              </div>
+            <div class="vc-order-summary-side">
+              <span class="<?= e($badge['class']) ?> vc-status--lg">
+                <i class="bi <?= e($badge['icon']) ?>"></i>
+                <?= e($badge['label']) ?>
+              </span>
+              <div class="vc-order-hero-total">₹<?= e(number_format((float) $order['total'], 2)) ?></div>
+            </div>
+          </div>
+
+          <?php if ($order['status'] !== 'cancelled'): ?>
+            <div class="vc-status-stepper" aria-label="Order progress">
+              <?php foreach ($statusFlow as $i => $step): ?>
+                <?php
+                  $stepBadge = Order::badge($step);
+                  $state = 'upcoming';
+                  if ($currentIdx !== false && $currentIdx !== -1) {
+                      if ($i < $currentIdx) {
+                          $state = 'done';
+                      } elseif ($i === $currentIdx) {
+                          $state = 'current';
+                      }
+                  }
+                ?>
+                <div class="vc-step <?= e($state) ?>">
+                  <div class="vc-step-dot"><i class="bi <?= e($stepBadge['icon']) ?>"></i></div>
+                  <div class="vc-step-label"><?= e($stepBadge['label']) ?></div>
+                </div>
+              <?php endforeach; ?>
+            </div>
+          <?php else: ?>
+            <div class="vc-cancelled-banner" role="status">
+              <i class="bi bi-x-circle-fill"></i>
+              <span>This order was cancelled. No further delivery actions are available.</span>
+            </div>
+          <?php endif; ?>
+
+          <div class="vc-order-summary-grid">
+            <div class="vc-info-block">
+              <div class="vc-info-label"><i class="bi bi-shop"></i> Customer</div>
+              <div class="vc-info-title"><?= e($order['business_name']) ?></div>
+              <div><?= e($order['owner_name']) ?></div>
+              <div class="text-muted"><i class="bi bi-phone"></i> <?= e($order['mobile']) ?></div>
+              <?php if ($order['customer_email']): ?>
+                <div class="small text-muted"><?= e($order['customer_email']) ?></div>
+              <?php endif; ?>
+            </div>
+            <div class="vc-info-block">
+              <div class="vc-info-label"><i class="bi bi-geo-alt"></i> Delivery address</div>
+              <div><?= e($order['line1']) ?></div>
+              <?php if ($order['line2']): ?><div><?= e($order['line2']) ?></div><?php endif; ?>
+              <div><?= e($order['city']) ?>, <?= e($order['state']) ?> — <?= e($order['pincode']) ?></div>
+              <?php if ($order['landmark']): ?>
+                <div class="small text-muted">Landmark: <?= e($order['landmark']) ?></div>
+              <?php endif; ?>
             </div>
           </div>
         </div>
@@ -169,7 +164,6 @@ if ($order['status'] === 'cancelled') {
               <?php foreach ($log as $entry): ?>
                 <?php $b = Order::badge($entry['status']); ?>
                 <li class="vc-timeline-item">
-                  <span class="vc-timeline-rail" aria-hidden="true"></span>
                   <span class="<?= e($b['class']) ?>">
                     <i class="bi <?= e($b['icon']) ?>"></i>
                     <?= e($b['label']) ?>
@@ -196,21 +190,58 @@ if ($order['status'] === 'cancelled') {
           <?php if (!$next): ?>
             <p class="text-muted mb-0">No further status changes available.</p>
           <?php else: ?>
-            <form method="POST" action="<?= e(url('orders/' . $order['id'] . '/status')) ?>" class="d-grid gap-2">
+            <form method="POST" action="<?= e(url('orders/' . $order['id'] . '/status')) ?>" class="d-grid gap-2" id="order-status-form">
               <label class="form-label mb-0">Next step</label>
-              <select name="status" class="form-select" required>
+              <select name="status" id="order-next-status" class="form-select" required>
                 <option value="">Select next status</option>
                 <?php foreach ($next as $s): ?>
                   <?php $nb = Order::badge($s); ?>
                   <option value="<?= e($s) ?>"><?= e($nb['label']) ?></option>
                 <?php endforeach; ?>
               </select>
+
+              <div id="eta-field-wrap" class="vc-eta-field" hidden>
+                <label class="form-label mb-1" for="estimated_delivery_date">
+                  <i class="bi bi-calendar-event me-1"></i>Estimated delivery date
+                </label>
+                <input type="date"
+                       name="estimated_delivery_date"
+                       id="estimated_delivery_date"
+                       class="form-control"
+                       min="<?= e(date('Y-m-d')) ?>"
+                       value="<?= e($order['estimated_delivery_date'] ?? '') ?>">
+                <div class="form-text">Required when moving to “Delivery date set”.</div>
+              </div>
+
               <button class="btn btn-primary" type="submit">Apply status</button>
             </form>
             <p class="small text-muted mt-2 mb-0">Forward-only. Cancel stays available until out for delivery.</p>
           <?php endif; ?>
         </div>
       </div>
+
+      <?php if (in_array($order['status'], ['confirmed', 'delivery_date_set'], true)): ?>
+      <div class="card vc-detail-card mb-3">
+        <div class="card-body">
+          <h5 class="card-title">Delivery date (ETA)</h5>
+          <form method="POST" action="<?= e(url('orders/' . $order['id'] . '/set-date')) ?>" class="d-grid gap-2">
+            <label class="form-label mb-0">Estimated delivery date</label>
+            <input type="date"
+                   name="estimated_delivery_date"
+                   class="form-control"
+                   required
+                   min="<?= e(date('Y-m-d')) ?>"
+                   value="<?= e($order['estimated_delivery_date'] ?? '') ?>">
+            <button class="btn btn-outline-primary" type="submit">
+              <?= $order['status'] === 'confirmed' ? 'Set date &amp; advance status' : 'Update delivery date' ?>
+            </button>
+          </form>
+          <p class="small text-muted mt-2 mb-0">
+            Set the delivery date here. If the order is still Confirmed, saving the date also advances status to “Delivery date set”.
+          </p>
+        </div>
+      </div>
+      <?php endif; ?>
 
       <div class="card vc-detail-card">
         <div class="card-body">
@@ -249,3 +280,18 @@ if ($order['status'] === 'cancelled') {
     </div>
   </div>
 </section>
+<script>
+(function () {
+  var select = document.getElementById('order-next-status');
+  var wrap = document.getElementById('eta-field-wrap');
+  var input = document.getElementById('estimated_delivery_date');
+  if (!select || !wrap || !input) return;
+  function sync() {
+    var need = select.value === 'delivery_date_set';
+    wrap.hidden = !need;
+    input.required = need;
+  }
+  select.addEventListener('change', sync);
+  sync();
+})();
+</script>

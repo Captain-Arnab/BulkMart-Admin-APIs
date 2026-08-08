@@ -68,6 +68,7 @@ $router->get('/orders', [OrderController::class, 'index'], [require_module('orde
 $router->get('/orders/{id}', [OrderController::class, 'show'], [require_module('orders')]);
 $router->post('/orders/{id}/status', [OrderController::class, 'updateStatus'], [require_module('orders')]);
 $router->post('/orders/{id}/assign', [OrderController::class, 'assign'], [require_module('orders')]);
+$router->post('/orders/{id}/set-date', [OrderController::class, 'setDate'], [require_module('orders')]);
 
 $router->get('/delivery', [DeliveryController::class, 'index'], [require_module('delivery')]);
 $router->get('/delivery/{id}', [DeliveryController::class, 'show'], [require_module('delivery')]);

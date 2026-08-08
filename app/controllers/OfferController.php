@@ -4,10 +4,30 @@ class OfferController extends Controller
 {
     public function index(): void
     {
+        $filters = [
+            'q'      => trim((string) ($_GET['q'] ?? '')),
+            'active' => trim((string) ($_GET['active'] ?? '')),
+        ];
+        $banners = (new Banner())->all();
+        $offers = (new Offer())->all();
+        if ($filters['q'] !== '') {
+            $q = mb_strtolower($filters['q']);
+            $banners = array_values(array_filter($banners, static fn (array $b): bool => str_contains(mb_strtolower((string) ($b['title'] ?? '')), $q)));
+            $offers = array_values(array_filter($offers, static function (array $o) use ($q): bool {
+                return str_contains(mb_strtolower((string) $o['title']), $q)
+                    || str_contains(mb_strtolower((string) ($o['coupon_code'] ?? '')), $q);
+            }));
+        }
+        if ($filters['active'] === '1' || $filters['active'] === '0') {
+            $want = (int) $filters['active'];
+            $banners = array_values(array_filter($banners, static fn (array $b): bool => (int) $b['is_active'] === $want));
+            $offers = array_values(array_filter($offers, static fn (array $o): bool => (int) $o['is_active'] === $want));
+        }
         $this->view('offers/index', [
             'title'   => 'Offers & Banners',
-            'banners' => (new Banner())->all(),
-            'offers'  => (new Offer())->all(),
+            'banners' => $banners,
+            'offers'  => $offers,
+            'filters' => $filters,
             'success' => flash('success'),
             'error'   => flash('error'),
         ]);

@@ -1,11 +1,12 @@
-<?php $success=$success??null; $error=$error??null; ?>
+<?php $success=$success??null; $error=$error??null; $filters=$filters??['status'=>'','q'=>'']; ?>
 <div class="pagetitle"><h1>Support Tickets</h1>
 <nav><ol class="breadcrumb"><li class="breadcrumb-item"><a href="<?= e(url('dashboard')) ?>">Home</a></li><li class="breadcrumb-item active">Support</li></ol></nav></div>
 <?php if ($success): ?><div class="alert alert-success"><?= e($success) ?></div><?php endif; ?>
 <?php if ($error): ?><div class="alert alert-danger"><?= e($error) ?></div><?php endif; ?>
 <section class="section">
-  <div class="card mb-3"><div class="card-body py-3">
+  <div class="card vc-filter-card mb-3"><div class="card-body py-3">
     <form class="row g-2 align-items-end" method="GET" action="<?= e(url('support')) ?>">
+      <div class="col-md-4"><label class="form-label mb-1">Search</label><input type="text" name="q" value="<?= e($filters['q'] ?? '') ?>" class="form-control" placeholder="Customer / subject / ticket #"></div>
       <div class="col-md-3"><label class="form-label mb-1">Status</label>
         <select name="status" class="form-select">
           <option value="">All</option>
@@ -14,7 +15,7 @@
           <?php endforeach; ?>
         </select>
       </div>
-      <div class="col-md-3"><button class="btn btn-primary" type="submit">Filter</button></div>
+      <div class="col-md-3 d-flex gap-2"><button class="btn btn-primary" type="submit">Filter</button><a class="btn btn-outline-secondary" href="<?= e(url('support')) ?>">Reset</a></div>
     </form>
   </div></div>
   <div class="card"><div class="card-body pt-3">

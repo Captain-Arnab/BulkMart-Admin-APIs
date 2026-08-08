@@ -55,7 +55,11 @@
       });
     });
 
-    VCCharts.statusDonut('#chart-status', data.status, 200);
+    VCCharts.statusDonut('#chart-status', data.status, 200, function (statusKey) {
+      if (!statusKey) return;
+      var base = data.ordersUrl || '/orders';
+      window.location.href = base + (base.indexOf('?') >= 0 ? '&' : '?') + 'status=' + encodeURIComponent(statusKey);
+    });
     VCCharts.categoryBars('#chart-categories', data.categories, 280);
   });
 })();

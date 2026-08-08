@@ -8,26 +8,67 @@ class Product extends Model
 
     public function allWithCategory(?string $q = null, ?int $categoryId = null): array
     {
-        $sql = "SELECT p.*, c.name AS category_name
-                FROM products p
-                INNER JOIN categories c ON c.id = p.category_id
-                WHERE 1=1";
+        return $this->paginateWithCategory($q, $categoryId, 1, 10000)['rows'];
+    }
+
+    /**
+     * @return array{rows: array, total: int, page: int, per_page: int, pages: int}
+     */
+    public function paginateWithCategory(
+        ?string $q = null,
+        ?int $categoryId = null,
+        int $page = 1,
+        int $perPage = 20,
+        bool $lowStockOnly = false,
+        int $lowStockThreshold = 20
+    ): array {
+        $where = ['1=1'];
         $params = [];
 
         if ($q !== null && $q !== '') {
-            $sql .= " AND (p.name LIKE ? OR p.item_code LIKE ? OR p.batch_no LIKE ?)";
+            $where[] = '(p.name LIKE ? OR p.item_code LIKE ? OR p.batch_no LIKE ?)';
             $like = '%' . $q . '%';
-            $params[] = $like;
-            $params[] = $like;
-            $params[] = $like;
+            array_push($params, $like, $like, $like);
         }
         if ($categoryId) {
-            $sql .= " AND p.category_id = ?";
+            $where[] = 'p.category_id = ?';
             $params[] = $categoryId;
         }
+        if ($lowStockOnly) {
+            $where[] = 'p.is_active = 1 AND p.stock < ?';
+            $params[] = $lowStockThreshold;
+        }
 
-        $sql .= " ORDER BY p.name ASC";
-        return $this->fetchAll($sql, $params);
+        $sqlWhere = implode(' AND ', $where);
+        $total = (int) ($this->fetchOne(
+            "SELECT COUNT(*) AS c
+             FROM products p
+             INNER JOIN categories c ON c.id = p.category_id
+             WHERE {$sqlWhere}",
+            $params
+        )['c'] ?? 0);
+
+        $pages = max(1, (int) ceil($total / $perPage));
+        $page = max(1, min($page, $pages));
+        $offset = ($page - 1) * $perPage;
+
+        $rows = $this->fetchAll(
+            "SELECT p.*, c.name AS category_name
+             FROM products p
+             INNER JOIN categories c ON c.id = p.category_id
+             WHERE {$sqlWhere}
+             ORDER BY " . ($lowStockOnly ? 'p.stock ASC, p.name ASC' : 'p.name ASC') . "
+             LIMIT {$perPage} OFFSET {$offset}",
+            $params
+        );
+
+        return [
+            'rows'     => $rows,
+            'total'    => $total,
+            'page'     => $page,
+            'per_page' => $perPage,
+            'pages'    => $pages,
+        ];
     }
 
     public function find(int $id): ?array

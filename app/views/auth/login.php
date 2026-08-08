@@ -1,61 +1,93 @@
 <?php
 /** @var string|null $error */
 $error = $error ?? flash('error');
+$showSeedHints = defined('APP_DEBUG') && APP_DEBUG;
 ?>
-<main>
-  <div class="container">
-    <section class="section register min-vh-100 d-flex flex-column align-items-center justify-content-center py-4">
-      <div class="container">
-        <div class="row justify-content-center">
-          <div class="col-lg-4 col-md-6 d-flex flex-column align-items-center justify-content-center">
+<div class="vc-login">
+  <aside class="vc-login-brand" aria-hidden="false">
+    <div class="vc-login-brand-bg" aria-hidden="true"></div>
+    <div class="vc-login-brand-content">
+      <img src="<?= e(asset('img/logo-on-light.png')) ?>" alt="VeggiiCart" class="vc-login-brand-logo">
+      <p class="vc-login-brand-tag">Your reliable B2B produce partner</p>
+      <ul class="vc-login-brand-points">
+        <li><i class="bi bi-box-seam"></i> Products &amp; stock control</li>
+        <li><i class="bi bi-truck"></i> Orders &amp; delivery ops</li>
+        <li><i class="bi bi-graph-up-arrow"></i> Live wholesale analytics</li>
+      </ul>
+    </div>
+    <p class="vc-login-brand-foot">&copy; <?= date('Y') ?> VeggiiCart</p>
+  </aside>
 
-            <div class="d-flex justify-content-center py-4">
-              <a href="<?= e(url('login')) ?>" class="logo d-flex align-items-center w-auto flex-column text-center">
-                <img src="<?= e(asset('img/logo-on-light.png')) ?>" alt="VeggiiCart" class="login-logo">
-              </a>
-            </div>
-
-            <div class="card mb-3 vc-login-card">
-              <div class="card-body">
-                <div class="pt-4 pb-2">
-                  <h5 class="card-title text-center pb-0 fs-4">Admin Sign In</h5>
-                  <p class="text-center small">Wholesale operations console</p>
-                </div>
-
-                <?php if ($error): ?>
-                  <div class="alert alert-danger py-2" role="alert"><?= e($error) ?></div>
-                <?php endif; ?>
-
-                <form class="row g-3" method="POST" action="<?= e(url('login')) ?>" autocomplete="on">
-                  <div class="col-12">
-                    <label for="identity" class="form-label">Email or username</label>
-                    <div class="input-group has-validation">
-                      <span class="input-group-text"><i class="bi bi-person"></i></span>
-                      <input type="text" name="identity" class="form-control" id="identity"
-                             value="<?= e($_POST['identity'] ?? 'admin@veggiicart.com') ?>"
-                             required autofocus>
-                    </div>
-                  </div>
-
-                  <div class="col-12">
-                    <label for="password" class="form-label">Password</label>
-                    <input type="password" name="password" class="form-control" id="password" required>
-                  </div>
-
-                  <div class="col-12">
-                    <button class="btn btn-primary w-100" type="submit">Login</button>
-                  </div>
-                </form>
-
-                <div class="mt-3 small text-muted vc-temp-creds">
-                  <strong>TEMP seed logins</strong> (change/remove before go-live):<br>
-                  Super Admin: <?= e(SEED_ADMIN_EMAIL) ?> / <?= e(SEED_ADMIN_PASSWORD) ?><br>
-                  TEST Delivery Mgr: delivery@veggiicart.com / Delivery@123
-                </div>
-              </div>
-          </div>
-        </div>
+  <main class="vc-login-panel">
+    <div class="vc-login-panel-inner">
+      <div class="vc-login-mobile-brand d-lg-none">
+        <img src="<?= e(asset('img/logo-on-light.png')) ?>" alt="VeggiiCart" class="vc-login-mobile-logo">
       </div>
-    </section>
-  </div>
-</main>
+
+      <div class="vc-login-card">
+        <div class="vc-login-card-head">
+          <h1>Admin sign in</h1>
+          <p>Wholesale operations console</p>
+        </div>
+
+        <?php if ($error): ?>
+          <div class="alert alert-danger vc-login-alert" role="alert">
+            <i class="bi bi-exclamation-circle me-1"></i><?= e($error) ?>
+          </div>
+        <?php endif; ?>
+
+        <form class="vc-login-form" method="POST" action="<?= e(url('login')) ?>" autocomplete="on">
+          <div class="vc-login-field">
+            <label for="identity">Email or username</label>
+            <div class="vc-login-input">
+              <i class="bi bi-person" aria-hidden="true"></i>
+              <input type="text" name="identity" id="identity"
+                     value="<?= e($_POST['identity'] ?? ($showSeedHints ? SEED_ADMIN_EMAIL : '')) ?>"
+                     placeholder="you@veggiicart.com"
+                     required autofocus>
+            </div>
+          </div>
+
+          <div class="vc-login-field">
+            <label for="password">Password</label>
+            <div class="vc-login-input">
+              <i class="bi bi-lock" aria-hidden="true"></i>
+              <input type="password" name="password" id="password" placeholder="Enter your password" required>
+              <button type="button" class="vc-login-eye" id="toggle-password" aria-label="Show password" title="Show password">
+                <i class="bi bi-eye" aria-hidden="true"></i>
+              </button>
+            </div>
+          </div>
+
+          <button class="btn btn-primary vc-login-submit" type="submit">
+            Sign in <i class="bi bi-arrow-right ms-1"></i>
+          </button>
+        </form>
+
+        <?php if ($showSeedHints): ?>
+          <details class="vc-login-seed">
+            <summary>Demo accounts (debug)</summary>
+            <div class="vc-login-seed-body">
+              <div><strong>Super Admin</strong><br><?= e(SEED_ADMIN_EMAIL) ?> / <?= e(SEED_ADMIN_PASSWORD) ?></div>
+              <div class="mt-2"><strong>TEST Delivery Mgr</strong><br>delivery@veggiicart.com / Delivery@123</div>
+            </div>
+          </details>
+        <?php endif; ?>
+      </div>
+    </div>
+  </main>
+</div>
+<script>
+(function () {
+  var btn = document.getElementById('toggle-password');
+  var input = document.getElementById('password');
+  if (!btn || !input) return;
+  btn.addEventListener('click', function () {
+    var show = input.type === 'password';
+    input.type = show ? 'text' : 'password';
+    btn.innerHTML = show ? '<i class="bi bi-eye-slash" aria-hidden="true"></i>' : '<i class="bi bi-eye" aria-hidden="true"></i>';
+    btn.setAttribute('aria-label', show ? 'Hide password' : 'Show password');
+    btn.title = show ? 'Hide password' : 'Show password';
+  });
+})();
+</script>

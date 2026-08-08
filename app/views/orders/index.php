@@ -38,8 +38,9 @@ $totalShown = count($result['rows'] ?? []);
           <label class="form-label mb-1">Status</label>
           <select name="status" class="form-select">
             <option value="">All statuses</option>
+            <option value="__pending__" <?= !empty($filters['pending']) ? 'selected' : '' ?>>Pending dispatch</option>
             <?php foreach (Order::STATUS_LABELS as $key => $label): ?>
-              <option value="<?= e($key) ?>" <?= $filters['status'] === $key ? 'selected' : '' ?>><?= e($label) ?></option>
+              <option value="<?= e($key) ?>" <?= empty($filters['pending']) && $filters['status'] === $key ? 'selected' : '' ?>><?= e($label) ?></option>
             <?php endforeach; ?>
           </select>
         </div>
@@ -122,24 +123,19 @@ $totalShown = count($result['rows'] ?? []);
       </div>
 
       <?php if ($result['pages'] > 1): ?>
-        <nav class="mt-3">
-          <ul class="pagination pagination-sm mb-0 vc-pager">
-            <?php for ($p = 1; $p <= $result['pages']; $p++): ?>
-              <?php
-                $qs = http_build_query(array_filter([
-                    'q' => $filters['q'] ?: null,
-                    'status' => $filters['status'] ?: null,
-                    'date_from' => $filters['date_from'] ?: null,
-                    'date_to' => $filters['date_to'] ?: null,
-                    'page' => $p,
-                ]));
-              ?>
-              <li class="page-item <?= $p === $result['page'] ? 'active' : '' ?>">
-                <a class="page-link" href="<?= e(url('orders?' . $qs)) ?>"><?= $p ?></a>
-              </li>
-            <?php endfor; ?>
-          </ul>
-        </nav>
+        <?php
+          $page = (int) $result['page'];
+          $pages = (int) $result['pages'];
+          $baseUrl = url('orders');
+          $query = [
+              'q' => $filters['q'] ?: null,
+              'status' => !empty($filters['pending']) ? null : ($filters['status'] ?: null),
+              'pending' => !empty($filters['pending']) ? '1' : null,
+              'date_from' => $filters['date_from'] ?: null,
+              'date_to' => $filters['date_to'] ?: null,
+          ];
+          require VIEW_PATH . '/shared/pagination.php';
+        ?>
       <?php endif; ?>
     </div>
   </div>
