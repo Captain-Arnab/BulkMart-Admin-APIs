@@ -15,6 +15,14 @@ Core PHP + MySQL admin shell built on the NiceAdmin (Bootstrap 5) UI kit.
 3. Ensure Apache `mod_rewrite` is enabled.
 4. Open: `http://localhost/VGS/veggiicart/public/login`
 
+### Customer REST API (Flutter / website)
+
+- Base: `http://localhost/VGS/veggiicart/public/api/v1`
+- Docs + curl examples: [`docs/api/README.md`](docs/api/README.md)
+- Postman: [`docs/api/VeggiiCart_API_v1.postman_collection.json`](docs/api/VeggiiCart_API_v1.postman_collection.json)
+- Smoke test: `php scripts/verify_api.php`
+- OTP SMS uses **DEV MODE** (returns `dev_otp`) until `sms.*` is configured in `config.local.php`
+
 ### Super Admin
 
 - Email: `admin@veggiicart.com`
@@ -44,6 +52,7 @@ Core PHP + MySQL admin shell built on the NiceAdmin (Bootstrap 5) UI kit.
 - `php scripts/verify_orders.php` — smoke test orders/delivery + stock
 - `php scripts/verify_modules.php` — smoke test Step 11 modules + sub-admin gating
 - `php scripts/verify_analytics.php` — smoke test Dashboard + Reports charts
+- `php scripts/verify_api.php` — smoke test customer REST API core flow
 
 ### Bulk templates
 

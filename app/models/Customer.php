@@ -50,6 +50,111 @@ class Customer extends Model
         return $this->fetchOne('SELECT * FROM customers WHERE id = ?', [$id]);
     }
 
+    public function findByMobile(string $mobile): ?array
+    {
+        return $this->fetchOne('SELECT * FROM customers WHERE mobile = ?', [$mobile]);
+    }
+
+    public function findByEmail(string $email): ?array
+    {
+        return $this->fetchOne('SELECT * FROM customers WHERE email = ?', [$email]);
+    }
+
+    /** Create a stub customer after first OTP verify (registration completes later). */
+    public function createFromMobile(string $mobile): int
+    {
+        $this->execute(
+            "INSERT INTO customers
+              (mobile, business_name, owner_name, business_type, kyc_status)
+             VALUES (?,?,?,?, 'pending')",
+            [$mobile, 'Pending registration', 'Pending', 'unregistered']
+        );
+        return (int) $this->db->lastInsertId();
+    }
+
+    public function updateProfile(int $id, array $d): bool
+    {
+        $fields = [];
+        $params = [];
+        foreach (['email', 'owner_name', 'business_name', 'avatar_url', 'gst_number', 'fssai_number', 'pan_number'] as $col) {
+            if (array_key_exists($col, $d)) {
+                $fields[] = "`$col` = ?";
+                $params[] = $d[$col];
+            }
+        }
+        if ($fields === []) {
+            return true;
+        }
+        $params[] = $id;
+        return $this->execute('UPDATE customers SET ' . implode(', ', $fields) . ' WHERE id = ?', $params);
+    }
+
+    public function submitRegistration(int $id, array $d): bool
+    {
+        return $this->execute(
+            "UPDATE customers SET
+                business_name = ?, owner_name = ?, business_type = ?,
+                gst_number = ?, fssai_number = ?, pan_number = ?,
+                email = COALESCE(?, email),
+                kyc_status = 'pending', kyc_rejection_reason = NULL
+             WHERE id = ?",
+            [
+                $d['business_name'],
+                $d['owner_name'],
+                $d['business_type'],
+                $d['gst_number'] ?? null,
+                $d['fssai_number'] ?? null,
+                $d['pan_number'] ?? null,
+                $d['email'] ?? null,
+                $id,
+            ]
+        );
+    }
+
+    public function addDocument(int $customerId, string $type, string $fileUrl): int
+    {
+        $this->execute(
+            'INSERT INTO customer_documents (customer_id, document_type, file_url) VALUES (?,?,?)',
+            [$customerId, $type, $fileUrl]
+        );
+        return (int) $this->db->lastInsertId();
+    }
+
+    /** After rejection — reset to pending for re-review. */
+    public function resubmitKyc(int $id): bool
+    {
+        return $this->execute(
+            "UPDATE customers SET kyc_status = 'pending', kyc_rejection_reason = NULL WHERE id = ? AND kyc_status = 'rejected'",
+            [$id]
+        );
+    }
+
+    public function clearAvatar(int $id): bool
+    {
+        return $this->execute('UPDATE customers SET avatar_url = NULL WHERE id = ?', [$id]);
+    }
+
+    public function publicProfile(array $row): array
+    {
+        return [
+            'id'                   => (int) $row['id'],
+            'mobile'               => $row['mobile'],
+            'email'                => $row['email'],
+            'business_name'        => $row['business_name'],
+            'owner_name'           => $row['owner_name'],
+            'business_type'        => $row['business_type'],
+            'gst_number'           => $row['gst_number'],
+            'fssai_number'         => $row['fssai_number'] ?? null,
+            'pan_number'           => $row['pan_number'] ?? null,
+            'avatar_url'           => $row['avatar_url'] ? media($row['avatar_url']) : null,
+            'kyc_status'           => $row['kyc_status'],
+            'kyc_rejection_reason' => $row['kyc_rejection_reason'],
+            'is_blocked'           => (int) ($row['is_blocked'] ?? 0) === 1,
+            'registration_complete'=> !in_array(($row['business_type'] ?? ''), ['unregistered', ''], true)
+                && ($row['business_name'] ?? '') !== 'Pending registration',
+        ];
+    }
+
     public function documents(int $customerId): array
     {
         return $this->fetchAll(

@@ -14,6 +14,21 @@ class Router
         return $this->add('POST', $path, $handler, $middleware);
     }
 
+    public function put(string $path, callable|array $handler, array $middleware = []): self
+    {
+        return $this->add('PUT', $path, $handler, $middleware);
+    }
+
+    public function patch(string $path, callable|array $handler, array $middleware = []): self
+    {
+        return $this->add('PATCH', $path, $handler, $middleware);
+    }
+
+    public function delete(string $path, callable|array $handler, array $middleware = []): self
+    {
+        return $this->add('DELETE', $path, $handler, $middleware);
+    }
+
     public function add(string $method, string $path, callable|array $handler, array $middleware = []): self
     {
         $path = '/' . trim($path, '/');
@@ -32,6 +47,14 @@ class Router
     public function dispatch(string $method, string $uri): void
     {
         $method = strtoupper($method);
+        // Method override for clients that can't send PUT/DELETE
+        if ($method === 'POST') {
+            $override = $_SERVER['HTTP_X_HTTP_METHOD_OVERRIDE'] ?? ($_POST['_method'] ?? '');
+            if (is_string($override) && $override !== '') {
+                $method = strtoupper($override);
+            }
+        }
+
         $path = parse_url($uri, PHP_URL_PATH) ?? '/';
 
         $base = app_base_url();
@@ -43,6 +66,8 @@ class Router
         if ($path !== '/') {
             $path = rtrim($path, '/');
         }
+
+        $isApi = str_starts_with($path, '/api/');
 
         foreach ($this->routes as $route) {
             if ($route['method'] !== $method) {
@@ -75,6 +100,16 @@ class Router
         }
 
         http_response_code(404);
+        if ($isApi) {
+            header('Content-Type: application/json; charset=utf-8');
+            echo json_encode([
+                'success' => false,
+                'data'    => null,
+                'error'   => ['code' => 'NOT_FOUND', 'message' => 'Endpoint not found.'],
+            ], JSON_UNESCAPED_SLASHES);
+            return;
+        }
+
         if (is_file(VIEW_PATH . '/errors/404.php')) {
             require VIEW_PATH . '/errors/404.php';
         } else {

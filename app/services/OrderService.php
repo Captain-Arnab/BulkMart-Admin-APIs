@@ -70,6 +70,7 @@ class OrderService
                 $order['order_number'],
                 $newStatus === 'delivery_date_set' ? $estimatedDeliveryDate : null
             );
+            $this->triggerSms((int) $order['customer_id'], $newStatus, $order['order_number'], $estimatedDeliveryDate);
 
             $this->db->commit();
         } catch (Throwable $e) {
@@ -196,6 +197,44 @@ class OrderService
         return ['needs_confirm' => false];
     }
 
+    /**
+     * Customer cancel — same pre-dispatch rule as Order::canCancel / admin panel.
+     */
+    public function cancelByCustomer(int $orderId, int $customerId, ?string $reason = null): void
+    {
+        $order = $this->orders->find($orderId);
+        if (!$order || (int) $order['customer_id'] !== $customerId) {
+            throw new DomainException('Order not found.');
+        }
+        if (!Order::canCancel((string) $order['status'])) {
+            throw new DomainException(
+                'This order can no longer be cancelled (status: ' . (Order::STATUS_LABELS[$order['status']] ?? $order['status']) . ').'
+            );
+        }
+
+        $current = (string) $order['status'];
+        $this->db->beginTransaction();
+        try {
+            if ($this->wasStockDeducted($orderId, $current)) {
+                $this->restoreStock($orderId);
+            }
+            $this->orders->updateFields($orderId, ['status' => 'cancelled']);
+            $note = $reason ? ('Cancelled by customer: ' . $reason) : 'Cancelled by customer';
+            $stmt = $this->db->prepare(
+                'INSERT INTO order_status_log (order_id, status, changed_by_admin_id, note) VALUES (?,?,NULL,?)'
+            );
+            $stmt->execute([$orderId, 'cancelled', $note]);
+
+            $this->notifyCustomer($customerId, $orderId, 'cancelled', $order['order_number']);
+            $this->db->commit();
+        } catch (Throwable $e) {
+            if ($this->db->inTransaction()) {
+                $this->db->rollBack();
+            }
+            throw $e;
+        }
+    }
+
     private function deductStock(int $orderId): void
     {
         $items = $this->orders->items($orderId);
@@ -292,6 +331,22 @@ class OrderService
             'INSERT INTO notifications (customer_id, title, body, type, related_id, is_read) VALUES (?,?,?,?,?,0)'
         );
         $stmt->execute([$customerId, $title, $body, $type, $relatedId]);
+    }
+
+    private function triggerSms(int $customerId, string $status, string $orderNumber, ?string $eta = null): void
+    {
+        $stmt = $this->db->prepare('SELECT mobile FROM customers WHERE id = ?');
+        $stmt->execute([$customerId]);
+        $mobile = (string) ($stmt->fetchColumn() ?: '');
+        if ($mobile === '') {
+            return;
+        }
+
+        match ($status) {
+            'confirmed', 'delivery_date_set' => SmsService::sendOrderShipped($mobile, $orderNumber, $eta),
+            'out_for_delivery' => SmsService::sendOutForDelivery($mobile, $orderNumber),
+            default => null,
+        };
     }
 
     private function fetchOne(string $sql, array $params = []): ?array

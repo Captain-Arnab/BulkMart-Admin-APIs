@@ -43,6 +43,30 @@ define('SEED_ADMIN_NAME', 'Super Admin');
 define('SEED_ADMIN_ROLE', 'super_admin');
 
 /**
+ * Nested config lookup: app_config('jwt.secret'), app_config('sms.enabled')
+ */
+function app_config(string $key, mixed $default = null): mixed
+{
+    static $cfg = null;
+    if ($cfg === null) {
+        $cfg = [];
+        $localFile = __DIR__ . '/config.local.php';
+        if (is_file($localFile)) {
+            $cfg = require $localFile;
+        }
+    }
+    $parts = explode('.', $key);
+    $cursor = $cfg;
+    foreach ($parts as $part) {
+        if (!is_array($cursor) || !array_key_exists($part, $cursor)) {
+            return $default;
+        }
+        $cursor = $cursor[$part];
+    }
+    return $cursor;
+}
+
+/**
  * Resolve public base URL (no trailing slash), e.g. /VGS/veggiicart/public
  */
 function app_base_url(): string

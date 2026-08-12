@@ -1,0 +1,229 @@
+<?php
+
+class BusinessApiController extends ApiController
+{
+    public const BUSINESS_TYPES = [
+        ['key' => 'retailer', 'label' => 'Retailer'],
+        ['key' => 'kirana', 'label' => 'Kirana'],
+        ['key' => 'hotel', 'label' => 'Hotel'],
+        ['key' => 'restaurant', 'label' => 'Restaurant'],
+        ['key' => 'wholesaler', 'label' => 'Wholesaler'],
+        ['key' => 'caterer', 'label' => 'Caterer'],
+        ['key' => 'other', 'label' => 'Other'],
+    ];
+
+    private Customer $customers;
+
+    public function __construct()
+    {
+        $this->customers = new Customer();
+    }
+
+    public function businessTypes(): never
+    {
+        $this->ok(['business_types' => self::BUSINESS_TYPES]);
+    }
+
+    public function register(): never
+    {
+        try {
+            $body = $this->input();
+            $fields = [];
+            $businessName = trim((string) ($body['business_name'] ?? ''));
+            $ownerName = trim((string) ($body['owner_name'] ?? ''));
+            $businessType = trim((string) ($body['business_type'] ?? ''));
+            if ($businessName === '') {
+                $fields['business_name'] = 'Business name is required.';
+            }
+            if ($ownerName === '') {
+                $fields['owner_name'] = 'Owner name is required.';
+            }
+            if ($businessType === '') {
+                $fields['business_type'] = 'Business type is required.';
+            }
+            $validKeys = array_column(self::BUSINESS_TYPES, 'key');
+            $validLabels = array_column(self::BUSINESS_TYPES, 'label');
+            if ($businessType !== '' && !in_array(strtolower($businessType), $validKeys, true)
+                && !in_array($businessType, $validLabels, true)) {
+                $fields['business_type'] = 'Invalid business type.';
+            }
+            if ($fields !== []) {
+                $this->validationError($fields);
+            }
+
+            // Normalize to label for storage consistency with admin seeds
+            $map = [];
+            foreach (self::BUSINESS_TYPES as $t) {
+                $map[$t['key']] = $t['label'];
+                $map[strtolower($t['label'])] = $t['label'];
+            }
+            $normalized = $map[strtolower($businessType)] ?? $businessType;
+
+            $id = $this->customerId();
+            $this->customers->submitRegistration($id, [
+                'business_name' => $businessName,
+                'owner_name'    => $ownerName,
+                'business_type' => $normalized,
+                'gst_number'    => trim((string) ($body['gst_number'] ?? '')) ?: null,
+                'fssai_number'  => trim((string) ($body['fssai_number'] ?? '')) ?: null,
+                'pan_number'    => trim((string) ($body['pan_number'] ?? '')) ?: null,
+                'email'         => trim((string) ($body['email'] ?? '')) ?: null,
+            ]);
+
+            NotificationService::notifyCustomer(
+                $id,
+                'Registration received',
+                'Your business registration is under review.',
+                'verification',
+                $id
+            );
+
+            $fresh = $this->customers->find($id);
+            $this->ok([
+                'message' => 'Registration submitted. KYC is pending review.',
+                'customer' => $this->customers->publicProfile($fresh ?? []),
+            ]);
+        } catch (Throwable $e) {
+            $this->handleException($e);
+        }
+    }
+
+    public function uploadDocument(): never
+    {
+        try {
+            $type = trim((string) ($_POST['document_type'] ?? ($this->input()['document_type'] ?? '')));
+            if ($type === '' || !isset(Customer::DOC_LABELS[$type])) {
+                $this->validationError(['document_type' => 'Valid document_type is required.']);
+            }
+            if (empty($_FILES['file'])) {
+                $this->validationError(['file' => 'Document file is required.']);
+            }
+
+            $file = $_FILES['file'];
+            $path = $this->storeDocument($file, 'kyc/' . $this->customerId());
+            $docId = $this->customers->addDocument($this->customerId(), $type, $path);
+
+            $this->ok([
+                'id'            => $docId,
+                'document_type' => $type,
+                'label'         => Customer::DOC_LABELS[$type],
+                'file_url'      => $this->absoluteMedia($path),
+            ], 201);
+        } catch (RuntimeException $e) {
+            $this->fail('UPLOAD_ERROR', $e->getMessage(), 422);
+        } catch (Throwable $e) {
+            $this->handleException($e);
+        }
+    }
+
+    public function listDocuments(): never
+    {
+        $docs = $this->customers->documents($this->customerId());
+        $this->ok([
+            'documents' => array_map(function (array $d) {
+                return [
+                    'id'            => (int) $d['id'],
+                    'document_type' => $d['document_type'],
+                    'label'         => Customer::DOC_LABELS[$d['document_type']] ?? $d['document_type'],
+                    'file_url'      => $this->absoluteMedia($d['file_url']),
+                    'uploaded_at'   => $d['uploaded_at'],
+                ];
+            }, $docs),
+        ]);
+    }
+
+    /** Re-submit KYC after rejection (resets status to pending). */
+    public function resubmit(): never
+    {
+        try {
+            $customer = $this->requireCustomer();
+            if (($customer['kyc_status'] ?? '') !== 'rejected') {
+                $this->fail('VALIDATION_ERROR', 'Re-submit is only allowed after a KYC rejection.', 422);
+            }
+            $body = $this->input();
+            // Optional: update registration fields again
+            if (!empty($body['business_name']) || !empty($body['owner_name']) || !empty($body['business_type'])) {
+                $this->customers->submitRegistration($this->customerId(), [
+                    'business_name' => trim((string) ($body['business_name'] ?? $customer['business_name'])),
+                    'owner_name'    => trim((string) ($body['owner_name'] ?? $customer['owner_name'])),
+                    'business_type' => trim((string) ($body['business_type'] ?? $customer['business_type'])),
+                    'gst_number'    => array_key_exists('gst_number', $body) ? (trim((string) $body['gst_number']) ?: null) : $customer['gst_number'],
+                    'fssai_number'  => array_key_exists('fssai_number', $body) ? (trim((string) $body['fssai_number']) ?: null) : ($customer['fssai_number'] ?? null),
+                    'pan_number'    => array_key_exists('pan_number', $body) ? (trim((string) $body['pan_number']) ?: null) : ($customer['pan_number'] ?? null),
+                    'email'         => array_key_exists('email', $body) ? (trim((string) $body['email']) ?: null) : $customer['email'],
+                ]);
+            } else {
+                $ok = $this->customers->resubmitKyc($this->customerId());
+                if (!$ok) {
+                    $this->fail('VALIDATION_ERROR', 'Unable to re-submit KYC.', 422);
+                }
+            }
+
+            NotificationService::notifyCustomer(
+                $this->customerId(),
+                'KYC re-submitted',
+                'Your verification has been re-submitted for review.',
+                'verification',
+                $this->customerId()
+            );
+
+            $fresh = $this->customers->find($this->customerId());
+            $this->ok([
+                'message'  => 'KYC re-submitted for review.',
+                'customer' => $this->customers->publicProfile($fresh ?? []),
+            ]);
+        } catch (Throwable $e) {
+            $this->handleException($e);
+        }
+    }
+
+    public function verificationStatus(): never
+    {
+        $customer = $this->requireCustomer();
+        $docs = $this->customers->documents((int) $customer['id']);
+        $this->ok([
+            'kyc_status'           => $customer['kyc_status'],
+            'kyc_rejection_reason' => $customer['kyc_rejection_reason'],
+            'documents'            => array_map(function (array $d) {
+                return [
+                    'id'            => (int) $d['id'],
+                    'document_type' => $d['document_type'],
+                    'label'         => Customer::DOC_LABELS[$d['document_type']] ?? $d['document_type'],
+                    'file_url'      => $this->absoluteMedia($d['file_url']),
+                    'uploaded_at'   => $d['uploaded_at'],
+                ];
+            }, $docs),
+        ]);
+    }
+
+    private function storeDocument(array $file, string $subdir): string
+    {
+        if (($file['error'] ?? UPLOAD_ERR_NO_FILE) !== UPLOAD_ERR_OK) {
+            throw new RuntimeException('Document upload failed.');
+        }
+        if (($file['size'] ?? 0) > 5 * 1024 * 1024) {
+            throw new RuntimeException('Document must be 5MB or smaller.');
+        }
+        $finfo = new finfo(FILEINFO_MIME_TYPE);
+        $mime = $finfo->file($file['tmp_name']);
+        $map = [
+            'image/jpeg'      => 'jpg',
+            'image/png'       => 'png',
+            'image/webp'      => 'webp',
+            'application/pdf' => 'pdf',
+        ];
+        if (!isset($map[$mime])) {
+            throw new RuntimeException('Only JPG, PNG, WEBP, or PDF files are allowed.');
+        }
+        $dir = PUBLIC_PATH . '/uploads/' . trim($subdir, '/');
+        if (!is_dir($dir) && !mkdir($dir, 0775, true) && !is_dir($dir)) {
+            throw new RuntimeException('Unable to create upload directory.');
+        }
+        $name = date('YmdHis') . '_' . bin2hex(random_bytes(4)) . '.' . $map[$mime];
+        $dest = $dir . '/' . $name;
+        if (!move_uploaded_file($file['tmp_name'], $dest)) {
+            throw new RuntimeException('Failed to save uploaded document.');
+        }
+        return 'uploads/' . trim($subdir, '/') . '/' . $name;
+    }
+}

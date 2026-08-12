@@ -12,6 +12,15 @@ class AppSetting extends Model
         return $out;
     }
 
+    public function get(string $key, ?string $default = null): ?string
+    {
+        $row = $this->fetchOne('SELECT setting_value FROM app_settings WHERE setting_key = ?', [$key]);
+        if (!$row) {
+            return $default;
+        }
+        return $row['setting_value'] !== null ? (string) $row['setting_value'] : $default;
+    }
+
     public function set(string $key, ?string $value): void
     {
         $existing = $this->fetchOne('SELECT id FROM app_settings WHERE setting_key = ?', [$key]);

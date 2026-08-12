@@ -220,4 +220,39 @@ class Order extends Model
         $params[] = $id;
         return $this->execute('UPDATE orders SET ' . implode(', ', $sets) . ' WHERE id = ?', $params);
     }
+
+    /**
+     * Customer-facing order list.
+     * @return array{rows: array, total: int, page: int, per_page: int, pages: int}
+     */
+    public function paginateForCustomer(int $customerId, int $page = 1, int $perPage = 15): array
+    {
+        $total = (int) ($this->fetchOne(
+            'SELECT COUNT(*) AS c FROM orders WHERE customer_id = ?',
+            [$customerId]
+        )['c'] ?? 0);
+        $pages = max(1, (int) ceil($total / $perPage));
+        $page = max(1, min($page, $pages));
+        $offset = ($page - 1) * $perPage;
+        $rows = $this->fetchAll(
+            "SELECT o.id, o.order_number, o.status, o.subtotal, o.delivery_fee, o.discount_amount, o.coupon_code, o.total,
+                    o.payment_method, o.estimated_delivery_date, o.placed_at, o.delivered_at,
+                    (SELECT COUNT(*) FROM order_items oi WHERE oi.order_id = o.id) AS item_count
+             FROM orders o
+             WHERE o.customer_id = ?
+             ORDER BY o.placed_at DESC
+             LIMIT {$perPage} OFFSET {$offset}",
+            [$customerId]
+        );
+        return compact('rows', 'total', 'page', 'pages') + ['per_page' => $perPage];
+    }
+
+    public function findForCustomer(int $id, int $customerId): ?array
+    {
+        $order = $this->find($id);
+        if (!$order || (int) $order['customer_id'] !== $customerId) {
+            return null;
+        }
+        return $order;
+    }
 }

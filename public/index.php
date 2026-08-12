@@ -10,12 +10,14 @@ require_once dirname(__DIR__) . '/app/config/app.php';
 require_once dirname(__DIR__) . '/app/config/db.php';
 require_once dirname(__DIR__) . '/app/middleware/auth.php';
 require_once dirname(__DIR__) . '/app/middleware/rbac.php';
+require_once dirname(__DIR__) . '/app/middleware/api_auth.php';
 require_once dirname(__DIR__) . '/app/core/Router.php';
 require_once dirname(__DIR__) . '/app/core/Controller.php';
 require_once dirname(__DIR__) . '/app/core/Model.php';
 
 spl_autoload_register(static function (string $class): void {
     $map = [
+        APP_PATH . '/controllers/api/' . $class . '.php',
         APP_PATH . '/controllers/' . $class . '.php',
         APP_PATH . '/models/' . $class . '.php',
         APP_PATH . '/services/' . $class . '.php',
@@ -29,9 +31,98 @@ spl_autoload_register(static function (string $class): void {
     }
 });
 
-auth_start_session();
+$uriPath = parse_url($_SERVER['REQUEST_URI'] ?? '/', PHP_URL_PATH) ?: '/';
+$base = app_base_url();
+$relPath = $uriPath;
+if ($base !== '' && str_starts_with($relPath, $base)) {
+    $relPath = substr($relPath, strlen($base)) ?: '/';
+}
+$isApi = str_starts_with('/' . trim($relPath, '/'), '/api');
+
+if ($isApi) {
+    api_apply_cors();
+} else {
+    auth_start_session();
+}
 
 $router = new Router();
+
+// ---------------------------------------------------------------------------
+// REST API v1 (JSON + JWT) — customer / Flutter / website
+// ---------------------------------------------------------------------------
+$apiAuth = ['require_api_auth'];
+
+$router->post('/api/v1/auth/send-otp', [AuthApiController::class, 'sendOtp']);
+$router->post('/api/v1/auth/resend-otp', [AuthApiController::class, 'resendOtp']);
+$router->post('/api/v1/auth/verify-otp', [AuthApiController::class, 'verifyOtp']);
+$router->post('/api/v1/auth/email-login', [AuthApiController::class, 'emailLogin']);
+$router->post('/api/v1/auth/refresh-token', [AuthApiController::class, 'refreshToken']);
+$router->post('/api/v1/auth/logout', [AuthApiController::class, 'logout']); // refresh_token in body; Bearer optional
+
+$router->get('/api/v1/business-types', [BusinessApiController::class, 'businessTypes']);
+$router->post('/api/v1/business/register', [BusinessApiController::class, 'register'], $apiAuth);
+$router->post('/api/v1/business/documents', [BusinessApiController::class, 'uploadDocument'], $apiAuth);
+$router->get('/api/v1/business/documents', [BusinessApiController::class, 'listDocuments'], $apiAuth);
+$router->post('/api/v1/business/resubmit', [BusinessApiController::class, 'resubmit'], $apiAuth);
+$router->get('/api/v1/business/verification-status', [BusinessApiController::class, 'verificationStatus'], $apiAuth);
+
+$router->get('/api/v1/profile', [ProfileApiController::class, 'show'], $apiAuth);
+$router->put('/api/v1/profile', [ProfileApiController::class, 'update'], $apiAuth);
+$router->post('/api/v1/profile', [ProfileApiController::class, 'update'], $apiAuth); // clients without PUT
+$router->post('/api/v1/profile/avatar', [ProfileApiController::class, 'uploadAvatar'], $apiAuth);
+$router->delete('/api/v1/profile/avatar', [ProfileApiController::class, 'removeAvatar'], $apiAuth);
+
+$router->get('/api/v1/addresses', [AddressApiController::class, 'index'], $apiAuth);
+$router->post('/api/v1/addresses', [AddressApiController::class, 'store'], $apiAuth);
+$router->put('/api/v1/addresses/{id}', [AddressApiController::class, 'update'], $apiAuth);
+$router->post('/api/v1/addresses/{id}', [AddressApiController::class, 'update'], $apiAuth);
+$router->delete('/api/v1/addresses/{id}', [AddressApiController::class, 'destroy'], $apiAuth);
+$router->post('/api/v1/addresses/{id}/default', [AddressApiController::class, 'setDefault'], $apiAuth);
+
+$router->get('/api/v1/categories', [CatalogApiController::class, 'categories']);
+$router->get('/api/v1/categories/{id}', [CatalogApiController::class, 'categoryDetail']);
+$router->get('/api/v1/products', [CatalogApiController::class, 'products']);
+$router->get('/api/v1/products/search', [CatalogApiController::class, 'search']);
+$router->get('/api/v1/products/market-prices', [CatalogApiController::class, 'marketPrices']);
+$router->get('/api/v1/products/{id}/similar', [CatalogApiController::class, 'similar']);
+$router->get('/api/v1/products/{id}/frequently-bought-together', [CatalogApiController::class, 'frequentlyBought']);
+$router->get('/api/v1/products/{id}', [CatalogApiController::class, 'productDetail']);
+$router->get('/api/v1/banners', [CatalogApiController::class, 'banners']);
+$router->get('/api/v1/offers', [CatalogApiController::class, 'offers']);
+
+$router->get('/api/v1/cart', [CartApiController::class, 'show'], $apiAuth);
+$router->post('/api/v1/cart/items', [CartApiController::class, 'addItem'], $apiAuth);
+$router->put('/api/v1/cart/items/{id}', [CartApiController::class, 'updateItem'], $apiAuth);
+$router->post('/api/v1/cart/items/{id}', [CartApiController::class, 'updateItem'], $apiAuth);
+$router->delete('/api/v1/cart/items/{id}', [CartApiController::class, 'removeItem'], $apiAuth);
+$router->post('/api/v1/cart/coupon', [CartApiController::class, 'applyCoupon'], $apiAuth);
+$router->delete('/api/v1/cart/coupon', [CartApiController::class, 'removeCoupon'], $apiAuth);
+
+$router->get('/api/v1/wishlist', [WishlistApiController::class, 'index'], $apiAuth);
+$router->post('/api/v1/wishlist', [WishlistApiController::class, 'add'], $apiAuth);
+$router->delete('/api/v1/wishlist/{id}', [WishlistApiController::class, 'remove'], $apiAuth);
+$router->post('/api/v1/wishlist/{id}/move-to-cart', [WishlistApiController::class, 'moveToCart'], $apiAuth);
+
+$router->get('/api/v1/notifications', [NotificationApiController::class, 'index'], $apiAuth);
+$router->post('/api/v1/notifications/read-all', [NotificationApiController::class, 'markAllRead'], $apiAuth);
+$router->post('/api/v1/notifications/{id}/read', [NotificationApiController::class, 'markRead'], $apiAuth);
+
+$router->get('/api/v1/support/faqs', [SupportApiController::class, 'faqs']);
+$router->post('/api/v1/support/tickets', [SupportApiController::class, 'createTicket'], $apiAuth);
+$router->get('/api/v1/support/tickets', [SupportApiController::class, 'myTickets'], $apiAuth);
+$router->get('/api/v1/support/tickets/{id}', [SupportApiController::class, 'ticketDetail'], $apiAuth);
+
+$router->get('/api/v1/delivery-slots', [OrderApiController::class, 'deliverySlots'], $apiAuth);
+$router->post('/api/v1/orders', [OrderApiController::class, 'place'], $apiAuth);
+$router->get('/api/v1/orders', [OrderApiController::class, 'index'], $apiAuth);
+$router->get('/api/v1/orders/{id}/invoice', [OrderApiController::class, 'invoice'], $apiAuth);
+$router->post('/api/v1/orders/{id}/reorder', [OrderApiController::class, 'reorder'], $apiAuth);
+$router->post('/api/v1/orders/{id}/cancel', [OrderApiController::class, 'cancel'], $apiAuth);
+$router->get('/api/v1/orders/{id}', [OrderApiController::class, 'show'], $apiAuth);
+
+// ---------------------------------------------------------------------------
+// Admin panel (session auth)
+// ---------------------------------------------------------------------------
 
 // Public
 $router->get('/login', [AuthController::class, 'showLogin']);

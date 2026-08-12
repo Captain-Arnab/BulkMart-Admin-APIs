@@ -7,6 +7,18 @@ class Banner extends Model
         return $this->fetchAll('SELECT * FROM banners ORDER BY sort_order ASC, id DESC');
     }
 
+    /** Home banners currently within active window. */
+    public function activeHome(): array
+    {
+        return $this->fetchAll(
+            "SELECT * FROM banners
+             WHERE is_active = 1
+               AND (active_from IS NULL OR active_from <= NOW())
+               AND (active_to IS NULL OR active_to >= NOW())
+             ORDER BY sort_order ASC, id DESC"
+        );
+    }
+
     public function find(int $id): ?array
     {
         return $this->fetchOne('SELECT * FROM banners WHERE id = ?', [$id]);

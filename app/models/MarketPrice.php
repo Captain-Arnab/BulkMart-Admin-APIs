@@ -36,4 +36,21 @@ class MarketPrice extends Model
             );
         }
     }
+
+    /** Today's market price overrides only (API). */
+    public function todaysOverrides(): array
+    {
+        $today = date('Y-m-d');
+        return $this->fetchAll(
+            "SELECT p.id AS product_id, p.name, p.unit, p.moq, p.price AS catalog_price,
+                    p.image_url, p.stock, p.in_stock, c.name AS category_name,
+                    mp.price AS market_price, mp.effective_date
+             FROM market_prices mp
+             INNER JOIN products p ON p.id = mp.product_id AND p.is_active = 1
+             INNER JOIN categories c ON c.id = p.category_id
+             WHERE mp.effective_date = ?
+             ORDER BY p.name ASC",
+            [$today]
+        );
+    }
 }

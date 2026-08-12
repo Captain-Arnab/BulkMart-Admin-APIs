@@ -51,4 +51,18 @@ class Offer extends Model
     {
         return $this->execute('DELETE FROM offers WHERE id = ?', [$id]);
     }
+
+    /** Active offers currently within validity window. */
+    public function activeList(): array
+    {
+        return $this->fetchAll(
+            "SELECT o.*, c.name AS category_name
+             FROM offers o
+             LEFT JOIN categories c ON c.id = o.category_id
+             WHERE o.is_active = 1
+               AND (o.valid_from IS NULL OR o.valid_from <= NOW())
+               AND (o.valid_till IS NULL OR o.valid_till >= NOW())
+             ORDER BY o.id DESC"
+        );
+    }
 }

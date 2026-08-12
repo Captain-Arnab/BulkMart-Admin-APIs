@@ -1,0 +1,101 @@
+{
+  "info": {
+    "name": "VeggiiCart API v1 (P1+P2+P3)",
+    "description": "Customer REST API — JWT auth. Base: {{baseUrl}}",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "variable": [
+    { "key": "baseUrl", "value": "http://localhost/VGS/veggiicart/public/api/v1" },
+    { "key": "accessToken", "value": "" },
+    { "key": "refreshToken", "value": "" },
+    { "key": "mobile", "value": "9876500001" },
+    { "key": "otp", "value": "" },
+    { "key": "productId", "value": "1" },
+    { "key": "cartItemId", "value": "1" },
+    { "key": "addressId", "value": "1" },
+    { "key": "orderId", "value": "1" },
+    { "key": "wishlistId", "value": "1" },
+    { "key": "ticketId", "value": "1" },
+    { "key": "notificationId", "value": "1" },
+    { "key": "couponCode", "value": "GREEN10" }
+  ],
+  "item": [
+    {
+      "name": "Auth",
+      "item": [
+        {
+          "name": "Send OTP",
+          "event": [{ "listen": "test", "script": { "exec": ["const j=pm.response.json(); if(j.data&&j.data.dev_otp) pm.collectionVariables.set('otp', j.data.dev_otp);"] } }],
+          "request": { "method": "POST", "header": [{ "key": "Content-Type", "value": "application/json" }], "body": { "mode": "raw", "raw": "{\n  \"mobile\": \"{{mobile}}\"\n}" }, "url": "{{baseUrl}}/auth/send-otp" }
+        },
+        {
+          "name": "Verify OTP",
+          "event": [{ "listen": "test", "script": { "exec": ["const j=pm.response.json(); if(j.data){ pm.collectionVariables.set('accessToken', j.data.access_token||''); pm.collectionVariables.set('refreshToken', j.data.refresh_token||''); }"] } }],
+          "request": { "method": "POST", "header": [{ "key": "Content-Type", "value": "application/json" }], "body": { "mode": "raw", "raw": "{\n  \"mobile\": \"{{mobile}}\",\n  \"otp\": \"{{otp}}\"\n}" }, "url": "{{baseUrl}}/auth/verify-otp" }
+        },
+        { "name": "Refresh Token", "request": { "method": "POST", "header": [{ "key": "Content-Type", "value": "application/json" }], "body": { "mode": "raw", "raw": "{\n  \"refresh_token\": \"{{refreshToken}}\"\n}" }, "url": "{{baseUrl}}/auth/refresh-token" } },
+        { "name": "Logout", "request": { "method": "POST", "header": [{ "key": "Content-Type", "value": "application/json" }, { "key": "Authorization", "value": "Bearer {{accessToken}}" }], "body": { "mode": "raw", "raw": "{\n  \"refresh_token\": \"{{refreshToken}}\"\n}" }, "url": "{{baseUrl}}/auth/logout" } }
+      ]
+    },
+    {
+      "name": "Catalog",
+      "item": [
+        { "name": "Categories", "request": { "method": "GET", "url": "{{baseUrl}}/categories" } },
+        { "name": "Category Detail", "request": { "method": "GET", "url": "{{baseUrl}}/categories/1" } },
+        { "name": "Products", "request": { "method": "GET", "url": "{{baseUrl}}/products?per_page=10" } },
+        { "name": "Product Detail", "request": { "method": "GET", "url": "{{baseUrl}}/products/{{productId}}" } },
+        { "name": "Similar Products", "request": { "method": "GET", "url": "{{baseUrl}}/products/{{productId}}/similar" } },
+        { "name": "Frequently Bought Together", "request": { "method": "GET", "url": "{{baseUrl}}/products/{{productId}}/frequently-bought-together" } },
+        { "name": "Market Prices Today", "request": { "method": "GET", "url": "{{baseUrl}}/products/market-prices" } },
+        { "name": "Search", "request": { "method": "GET", "url": "{{baseUrl}}/products/search?q=tomato" } },
+        { "name": "Banners", "request": { "method": "GET", "url": "{{baseUrl}}/banners" } },
+        { "name": "Offers", "request": { "method": "GET", "url": "{{baseUrl}}/offers" } }
+      ]
+    },
+    {
+      "name": "Cart & Wishlist",
+      "item": [
+        { "name": "Add Cart Item", "request": { "method": "POST", "header": [{ "key": "Content-Type", "value": "application/json" }, { "key": "Authorization", "value": "Bearer {{accessToken}}" }], "body": { "mode": "raw", "raw": "{\n  \"product_id\": {{productId}},\n  \"quantity\": 5,\n  \"replace\": true\n}" }, "url": "{{baseUrl}}/cart/items" } },
+        { "name": "Get Cart", "request": { "method": "GET", "header": [{ "key": "Authorization", "value": "Bearer {{accessToken}}" }], "url": "{{baseUrl}}/cart" } },
+        { "name": "Apply Coupon", "request": { "method": "POST", "header": [{ "key": "Content-Type", "value": "application/json" }, { "key": "Authorization", "value": "Bearer {{accessToken}}" }], "body": { "mode": "raw", "raw": "{\n  \"coupon_code\": \"{{couponCode}}\"\n}" }, "url": "{{baseUrl}}/cart/coupon" } },
+        { "name": "Remove Coupon", "request": { "method": "DELETE", "header": [{ "key": "Authorization", "value": "Bearer {{accessToken}}" }], "url": "{{baseUrl}}/cart/coupon" } },
+        { "name": "Wishlist Add", "request": { "method": "POST", "header": [{ "key": "Content-Type", "value": "application/json" }, { "key": "Authorization", "value": "Bearer {{accessToken}}" }], "body": { "mode": "raw", "raw": "{\n  \"product_id\": {{productId}}\n}" }, "url": "{{baseUrl}}/wishlist" } },
+        { "name": "Wishlist Get", "request": { "method": "GET", "header": [{ "key": "Authorization", "value": "Bearer {{accessToken}}" }], "url": "{{baseUrl}}/wishlist" } },
+        { "name": "Wishlist Move to Cart", "request": { "method": "POST", "header": [{ "key": "Authorization", "value": "Bearer {{accessToken}}" }], "url": "{{baseUrl}}/wishlist/{{wishlistId}}/move-to-cart" } },
+        { "name": "Wishlist Remove", "request": { "method": "DELETE", "header": [{ "key": "Authorization", "value": "Bearer {{accessToken}}" }], "url": "{{baseUrl}}/wishlist/{{wishlistId}}" } }
+      ]
+    },
+    {
+      "name": "Checkout & Orders",
+      "item": [
+        { "name": "Delivery Slots", "request": { "method": "GET", "header": [{ "key": "Authorization", "value": "Bearer {{accessToken}}" }], "url": "{{baseUrl}}/delivery-slots" } },
+        { "name": "Place Order COD", "request": { "method": "POST", "header": [{ "key": "Content-Type", "value": "application/json" }, { "key": "Authorization", "value": "Bearer {{accessToken}}" }], "body": { "mode": "raw", "raw": "{\n  \"address_id\": {{addressId}}\n}" }, "url": "{{baseUrl}}/orders" } },
+        { "name": "My Orders", "request": { "method": "GET", "header": [{ "key": "Authorization", "value": "Bearer {{accessToken}}" }], "url": "{{baseUrl}}/orders" } },
+        { "name": "Order Detail", "request": { "method": "GET", "header": [{ "key": "Authorization", "value": "Bearer {{accessToken}}" }], "url": "{{baseUrl}}/orders/{{orderId}}" } },
+        { "name": "Invoice JSON", "request": { "method": "GET", "header": [{ "key": "Authorization", "value": "Bearer {{accessToken}}" }], "url": "{{baseUrl}}/orders/{{orderId}}/invoice" } },
+        { "name": "Invoice HTML", "request": { "method": "GET", "header": [{ "key": "Authorization", "value": "Bearer {{accessToken}}" }], "url": "{{baseUrl}}/orders/{{orderId}}/invoice?format=html" } },
+        { "name": "Reorder", "request": { "method": "POST", "header": [{ "key": "Authorization", "value": "Bearer {{accessToken}}" }], "url": "{{baseUrl}}/orders/{{orderId}}/reorder" } },
+        { "name": "Cancel Order", "request": { "method": "POST", "header": [{ "key": "Content-Type", "value": "application/json" }, { "key": "Authorization", "value": "Bearer {{accessToken}}" }], "body": { "mode": "raw", "raw": "{\n  \"reason\": \"Changed mind\"\n}" }, "url": "{{baseUrl}}/orders/{{orderId}}/cancel" } }
+      ]
+    },
+    {
+      "name": "Profile Business Support",
+      "item": [
+        { "name": "Get Profile", "request": { "method": "GET", "header": [{ "key": "Authorization", "value": "Bearer {{accessToken}}" }], "url": "{{baseUrl}}/profile" } },
+        { "name": "Remove Avatar", "request": { "method": "DELETE", "header": [{ "key": "Authorization", "value": "Bearer {{accessToken}}" }], "url": "{{baseUrl}}/profile/avatar" } },
+        { "name": "List Addresses", "request": { "method": "GET", "header": [{ "key": "Authorization", "value": "Bearer {{accessToken}}" }], "url": "{{baseUrl}}/addresses" } },
+        { "name": "Business Types", "request": { "method": "GET", "url": "{{baseUrl}}/business-types" } },
+        { "name": "List Documents", "request": { "method": "GET", "header": [{ "key": "Authorization", "value": "Bearer {{accessToken}}" }], "url": "{{baseUrl}}/business/documents" } },
+        { "name": "Verification Status", "request": { "method": "GET", "header": [{ "key": "Authorization", "value": "Bearer {{accessToken}}" }], "url": "{{baseUrl}}/business/verification-status" } },
+        { "name": "KYC Resubmit", "request": { "method": "POST", "header": [{ "key": "Content-Type", "value": "application/json" }, { "key": "Authorization", "value": "Bearer {{accessToken}}" }], "body": { "mode": "raw", "raw": "{}" }, "url": "{{baseUrl}}/business/resubmit" } },
+        { "name": "FAQs", "request": { "method": "GET", "url": "{{baseUrl}}/support/faqs?q=order" } },
+        { "name": "Create Ticket", "request": { "method": "POST", "header": [{ "key": "Content-Type", "value": "application/json" }, { "key": "Authorization", "value": "Bearer {{accessToken}}" }], "body": { "mode": "raw", "raw": "{\n  \"subject_type\": \"Order issue\",\n  \"description\": \"Need help with delivery timing.\"\n}" }, "url": "{{baseUrl}}/support/tickets" } },
+        { "name": "My Tickets", "request": { "method": "GET", "header": [{ "key": "Authorization", "value": "Bearer {{accessToken}}" }], "url": "{{baseUrl}}/support/tickets" } },
+        { "name": "Ticket Detail", "request": { "method": "GET", "header": [{ "key": "Authorization", "value": "Bearer {{accessToken}}" }], "url": "{{baseUrl}}/support/tickets/{{ticketId}}" } },
+        { "name": "Notifications", "request": { "method": "GET", "header": [{ "key": "Authorization", "value": "Bearer {{accessToken}}" }], "url": "{{baseUrl}}/notifications" } },
+        { "name": "Mark Notification Read", "request": { "method": "POST", "header": [{ "key": "Authorization", "value": "Bearer {{accessToken}}" }], "url": "{{baseUrl}}/notifications/{{notificationId}}/read" } },
+        { "name": "Mark All Notifications Read", "request": { "method": "POST", "header": [{ "key": "Authorization", "value": "Bearer {{accessToken}}" }], "url": "{{baseUrl}}/notifications/read-all" } }
+      ]
+    }
+  ]
+}

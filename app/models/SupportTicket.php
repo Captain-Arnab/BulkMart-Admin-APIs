@@ -81,4 +81,44 @@ class SupportTicket extends Model
     {
         return $this->execute('UPDATE support_tickets SET status = ? WHERE id = ?', [$status, $id]);
     }
+
+    public function create(int $customerId, string $subjectType, string $description, ?int $relatedOrderId = null): int
+    {
+        $this->execute(
+            'INSERT INTO support_tickets (customer_id, subject_type, description, related_order_id, status)
+             VALUES (?,?,?,?,\'open\')',
+            [$customerId, $subjectType, $description, $relatedOrderId]
+        );
+        return (int) $this->db->lastInsertId();
+    }
+
+    public function paginateForCustomer(int $customerId, int $page = 1, int $perPage = 15): array
+    {
+        $total = (int) ($this->fetchOne(
+            'SELECT COUNT(*) AS c FROM support_tickets WHERE customer_id = ?',
+            [$customerId]
+        )['c'] ?? 0);
+        $pages = max(1, (int) ceil($total / $perPage));
+        $page = max(1, min($page, $pages));
+        $offset = ($page - 1) * $perPage;
+        $rows = $this->fetchAll(
+            "SELECT t.*, o.order_number
+             FROM support_tickets t
+             LEFT JOIN orders o ON o.id = t.related_order_id
+             WHERE t.customer_id = ?
+             ORDER BY t.created_at DESC
+             LIMIT {$perPage} OFFSET {$offset}",
+            [$customerId]
+        );
+        return compact('rows', 'total', 'page', 'pages') + ['per_page' => $perPage];
+    }
+
+    public function findForCustomer(int $id, int $customerId): ?array
+    {
+        $row = $this->find($id);
+        if (!$row || (int) $row['customer_id'] !== $customerId) {
+            return null;
+        }
+        return $row;
+    }
 }

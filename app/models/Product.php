@@ -20,7 +20,9 @@ class Product extends Model
         int $page = 1,
         int $perPage = 20,
         bool $lowStockOnly = false,
-        int $lowStockThreshold = 20
+        int $lowStockThreshold = 20,
+        bool $activeOnly = false,
+        bool $inStockOnly = false
     ): array {
         $where = ['1=1'];
         $params = [];
@@ -33,6 +35,12 @@ class Product extends Model
         if ($categoryId) {
             $where[] = 'p.category_id = ?';
             $params[] = $categoryId;
+        }
+        if ($activeOnly) {
+            $where[] = 'p.is_active = 1';
+        }
+        if ($inStockOnly) {
+            $where[] = 'p.in_stock = 1 AND p.stock > 0';
         }
         if ($lowStockOnly) {
             $where[] = 'p.is_active = 1 AND p.stock < ?';
@@ -182,5 +190,42 @@ class Product extends Model
             'low' => ['label' => 'Low stock', 'class' => 'bg-warning text-dark'],
             default => ['label' => 'In stock', 'class' => 'bg-success'],
         };
+    }
+
+    /** Same-category active products excluding self. */
+    public function similar(int $productId, int $limit = 8): array
+    {
+        $product = $this->find($productId);
+        if (!$product) {
+            return [];
+        }
+        return $this->fetchAll(
+            "SELECT p.*, c.name AS category_name
+             FROM products p
+             INNER JOIN categories c ON c.id = p.category_id
+             WHERE p.is_active = 1 AND p.category_id = ? AND p.id <> ?
+             ORDER BY p.in_stock DESC, p.name ASC
+             LIMIT " . (int) $limit,
+            [(int) $product['category_id'], $productId]
+        );
+    }
+
+    /**
+     * Products frequently bought together — co-occurrence in order_items.
+     */
+    public function frequentlyBoughtTogether(int $productId, int $limit = 8): array
+    {
+        return $this->fetchAll(
+            "SELECT p.*, c.name AS category_name, COUNT(*) AS together_count
+             FROM order_items oi1
+             INNER JOIN order_items oi2 ON oi2.order_id = oi1.order_id AND oi2.product_id <> oi1.product_id
+             INNER JOIN products p ON p.id = oi2.product_id AND p.is_active = 1
+             INNER JOIN categories c ON c.id = p.category_id
+             WHERE oi1.product_id = ?
+             GROUP BY p.id
+             ORDER BY together_count DESC, p.name ASC
+             LIMIT " . (int) $limit,
+            [$productId]
+        );
     }
 }
