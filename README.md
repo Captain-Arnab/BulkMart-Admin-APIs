@@ -23,23 +23,15 @@ Core PHP + MySQL admin shell built on the NiceAdmin (Bootstrap 5) UI kit.
 - Smoke test: `php scripts/verify_api.php`
 - OTP SMS uses **DEV MODE** (returns `dev_otp`) until `sms.*` is configured in `config.local.php`
 
-### Super Admin
+### ⚠️ TEST-ONLY admin accounts (local/dev — rotate or delete before go-live)
 
-- Email: `admin@veggiicart.com`
-- Password: `ChangeMe@123` (change before go-live)
+These passwords are for XAMPP seeding only. Login always requires a real `admin_users` row (no seed bypass). Demo hints on `/login` appear **only when `APP_DEBUG` is true**.
 
-### TEST Delivery Manager (remove before go-live)
-
-- Email: `delivery@veggiicart.com`
-- Password: `Delivery@123`
-- Seed with: `php scripts/seed_orders.php`
-
-### TEST Sub-Admin (remove before go-live)
-
-- Email: `subadmin@veggiicart.com`
-- Password: `SubAdmin@123`
-- Modules: `products` + `customers` only (+ Dashboard / Settings for password)
-- Seed with: `php scripts/seed_modules.php`
+| Role | Email | Password | Seed |
+|------|-------|----------|------|
+| Super Admin (TEST) | `admin@veggiicart.com` | `ChangeMe@123` | `php scripts/seed.php` |
+| Delivery Manager (TEST) | `delivery@veggiicart.com` | `Delivery@123` | `php scripts/seed_orders.php` |
+| Sub-Admin (TEST) | `subadmin@veggiicart.com` | `SubAdmin@123` | `php scripts/seed_modules.php` (modules: products + customers) |
 
 ### Useful scripts
 

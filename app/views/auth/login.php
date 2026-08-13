@@ -106,10 +106,12 @@ $showSeedHints = defined('APP_DEBUG') && APP_DEBUG;
 
         <?php if ($showSeedHints): ?>
           <details class="vc-login-seed">
-            <summary><i class="bi bi-key me-1" aria-hidden="true"></i> Demo accounts (debug)</summary>
+            <summary><i class="bi bi-key me-1" aria-hidden="true"></i> TEST-ONLY accounts (APP_DEBUG)</summary>
             <div class="vc-login-seed-body">
-              <div><strong>Super Admin</strong><br><?= e(SEED_ADMIN_EMAIL) ?> / <?= e(SEED_ADMIN_PASSWORD) ?></div>
-              <div class="mt-2"><strong>TEST Delivery Mgr</strong><br>delivery@veggiicart.com / Delivery@123</div>
+              <p class="small text-danger mb-2"><?= e(TEST_ONLY_ADMIN_NOTE) ?></p>
+              <div><strong>Super Admin (TEST)</strong><br><?= e(SEED_ADMIN_EMAIL) ?> / <?= e(SEED_ADMIN_PASSWORD) ?></div>
+              <div class="mt-2"><strong>Delivery Mgr (TEST)</strong><br>delivery@veggiicart.com / Delivery@123</div>
+              <div class="mt-2"><strong>Sub-Admin (TEST)</strong><br>subadmin@veggiicart.com / SubAdmin@123</div>
             </div>
           </details>
         <?php endif; ?>

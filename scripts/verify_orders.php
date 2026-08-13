@@ -8,6 +8,23 @@ declare(strict_types=1);
 
 $base = getenv('VC_BASE') ?: 'http://localhost/VGS/veggiicart/public';
 
+require_once dirname(__DIR__) . '/app/config/app.php';
+require_once dirname(__DIR__) . '/app/config/db.php';
+require_once dirname(__DIR__) . '/app/core/Model.php';
+
+spl_autoload_register(static function (string $class): void {
+    foreach ([
+        APP_PATH . '/services/' . $class . '.php',
+        APP_PATH . '/models/' . $class . '.php',
+        APP_PATH . '/core/' . $class . '.php',
+    ] as $file) {
+        if (is_file($file)) {
+            require_once $file;
+            return;
+        }
+    }
+});
+
 function req(string $method, string $url, string $cookie, $post = null): array
 {
     $ch = curl_init($url);
@@ -46,11 +63,6 @@ function ok(string $l, bool $p): void
     }
 }
 
-require dirname(__DIR__) . '/app/config/db.php';
-require dirname(__DIR__) . '/app/core/Model.php';
-require dirname(__DIR__) . '/app/models/Order.php';
-require dirname(__DIR__) . '/app/services/OrderService.php';
-
 $pdo = db();
 
 // --- Role gating via HTTP ---
@@ -80,7 +92,7 @@ ok('SA orders list', $r['code'] === 200 && str_contains($r['body'], 'VC-'));
 $r = req('GET', "$base/delivery", $cAdmin);
 ok('SA delivery view', $r['code'] === 200);
 
-// --- Stock lifecycle via service ---
+// --- Stock lifecycle via service (autoload resolves SmsService / NotificationService) ---
 $dmId = (int) $pdo->query("SELECT id FROM admin_users WHERE email='delivery@veggiicart.com'")->fetchColumn();
 $adminId = (int) $pdo->query("SELECT id FROM admin_users WHERE email='admin@veggiicart.com'")->fetchColumn();
 $customerId = (int) $pdo->query('SELECT id FROM customers ORDER BY id LIMIT 1')->fetchColumn();

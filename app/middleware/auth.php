@@ -64,7 +64,7 @@ function require_auth(): void
 }
 
 /**
- * Login against admin_users. Falls back to TEMP seed constants if DB user missing.
+ * Login against admin_users only (no hard-coded seed fallback).
  */
 function attempt_login(string $identity, string $password): bool
 {
@@ -76,7 +76,7 @@ function attempt_login(string $identity, string $password): bool
     try {
         $admins = new AdminUser();
         $email = strtolower($identity);
-        // allow username "admin" → seed email
+        // Convenience: username "admin" maps to seeded super-admin email in DB
         if ($email === strtolower(SEED_ADMIN_USERNAME)) {
             $email = strtolower(SEED_ADMIN_EMAIL);
         }
@@ -103,28 +103,10 @@ function attempt_login(string $identity, string $password): bool
             return true;
         }
     } catch (Throwable $e) {
-        // DB not ready — fall through to seed login
+        if (defined('APP_DEBUG') && APP_DEBUG) {
+            error_log('attempt_login DB error: ' . $e->getMessage());
+        }
     }
 
-    return attempt_seed_login($identity, $password);
-}
-
-/** @deprecated keep for fallback before seed/migrate */
-function attempt_seed_login(string $identity, string $password): bool
-{
-    $identity = trim(strtolower($identity));
-    $okIdentity = ($identity === strtolower(SEED_ADMIN_EMAIL) || $identity === strtolower(SEED_ADMIN_USERNAME));
-    if (!$okIdentity || !hash_equals(SEED_ADMIN_PASSWORD, $password)) {
-        return false;
-    }
-
-    auth_login([
-        'id'                 => 1,
-        'name'               => SEED_ADMIN_NAME,
-        'email'              => SEED_ADMIN_EMAIL,
-        'username'           => SEED_ADMIN_USERNAME,
-        'role'               => SEED_ADMIN_ROLE,
-        'module_permissions' => null,
-    ]);
-    return true;
+    return false;
 }

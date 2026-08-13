@@ -55,9 +55,14 @@ ok('Login', in_array($r['code'], [302, 301], true));
 
 $r = req('GET', "$base/products", $cookie);
 ok('Products list 200', $r['code'] === 200);
-ok('Seeded Tomato visible', str_contains($r['body'], 'Tomato'));
-ok('Seeded Potato visible', str_contains($r['body'], 'Potato'));
 ok('Stock badge present', str_contains($r['body'], 'In stock') || str_contains($r['body'], 'Low stock'));
+
+// List is name-sorted + paginated (20/page) — Tomato/Potato may not be on page 1.
+// Assert via search query (same index action) instead of first-page HTML.
+$r = req('GET', "$base/products?q=" . rawurlencode('Tomato'), $cookie);
+ok('Seeded Tomato visible (search)', $r['code'] === 200 && str_contains($r['body'], 'Tomato'));
+$r = req('GET', "$base/products?q=" . rawurlencode('Potato'), $cookie);
+ok('Seeded Potato visible (search)', $r['code'] === 200 && str_contains($r['body'], 'Potato'));
 
 $r = req('GET', "$base/categories", $cookie);
 ok('Categories list 200', $r['code'] === 200);

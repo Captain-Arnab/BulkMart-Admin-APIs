@@ -16,3 +16,7 @@ tmp/
 cache/
 storage/logs/*
 !storage/logs/.gitignore
+
+# cPanel production packaging (built separately; never commit)
+deploy_package/
+deploy_package.zip

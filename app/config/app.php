@@ -33,14 +33,17 @@ define('BRAND_ACCENT', '#F5A623');
 define('BRAND_ERROR', '#D64545');
 
 /**
- * TEMP seeded Super Admin — CHANGE BEFORE GOING LIVE.
- * Used until admin_users / roles tables exist.
+ * Local seed / TEST-ONLY admin credentials used by scripts/seed*.php.
+ * These are NEVER a login bypass — auth requires a real admin_users row.
+ * Do not use these passwords in production; rotate before go-live.
+ * Demo login hints on /login only render when APP_DEBUG is true.
  */
 define('SEED_ADMIN_EMAIL', 'admin@veggiicart.com');
 define('SEED_ADMIN_USERNAME', 'admin');
-define('SEED_ADMIN_PASSWORD', 'ChangeMe@123'); // TEMP — change before production
+define('SEED_ADMIN_PASSWORD', 'ChangeMe@123'); // TEST-ONLY — rotate before production
 define('SEED_ADMIN_NAME', 'Super Admin');
 define('SEED_ADMIN_ROLE', 'super_admin');
+define('TEST_ONLY_ADMIN_NOTE', 'TEST-ONLY credentials for local/dev — remove or rotate before go-live');
 
 /**
  * Nested config lookup: app_config('jwt.secret'), app_config('sms.enabled')
