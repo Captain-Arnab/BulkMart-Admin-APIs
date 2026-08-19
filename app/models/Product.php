@@ -169,12 +169,6 @@ class Product extends Model
         return $this->execute('UPDATE products SET is_active = ? WHERE id = ?', [$active ? 1 : 0, $id]);
     }
 
-    public function hasOrderItems(int $id): bool
-    {
-        $row = $this->fetchOne('SELECT COUNT(*) AS c FROM order_items WHERE product_id = ?', [$id]);
-        return (int) ($row['c'] ?? 0) > 0;
-    }
-
     public function delete(int $id): bool
     {
         return $this->execute('DELETE FROM products WHERE id = ?', [$id]);

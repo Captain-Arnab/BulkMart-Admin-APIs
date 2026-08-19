@@ -70,7 +70,7 @@ $result = $result ?? ['page' => 1, 'pages' => 1, 'total' => count($products ?? [
       <div class="d-flex flex-wrap justify-content-between align-items-center gap-2 mb-2">
         <div class="text-muted small" id="vcSelectedCount">0 selected</div>
         <button class="btn btn-sm btn-outline-danger" type="submit" form="vcBulkDeleteForm" id="vcBulkDeleteBtn" disabled
-                onclick="return confirm('Delete the selected products? Items used in orders will be skipped.');">
+                onclick="return confirm('Delete the selected products? Past orders keep item names and prices.');">
           <i class="bi bi-trash me-1"></i>Delete selected
         </button>
       </div>
@@ -135,7 +135,7 @@ $result = $result ?? ['page' => 1, 'pages' => 1, 'total' => count($products ?? [
                   </button>
                 </form>
                 <form class="d-inline" method="POST" action="<?= e(url('products/' . $p['id'] . '/delete')) ?>"
-                      onsubmit="return confirm('Delete this product? This cannot be undone. Products used in orders cannot be deleted.');">
+                      onsubmit="return confirm('Delete this product? Past orders keep the item name and price.');">
                   <button class="btn btn-sm btn-outline-danger" type="submit">Delete</button>
                 </form>
               </td>

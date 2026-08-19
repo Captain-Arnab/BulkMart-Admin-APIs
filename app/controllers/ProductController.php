@@ -152,14 +152,9 @@ class ProductController extends Controller
         $model = new Product();
         $images = new ProductImage();
         $deleted = 0;
-        $skipped = [];
         foreach ($ids as $id) {
             $product = $model->find($id);
             if (!$product) {
-                continue;
-            }
-            if ($model->hasOrderItems($id)) {
-                $skipped[] = (string) $product['name'];
                 continue;
             }
             try {
@@ -169,16 +164,17 @@ class ProductController extends Controller
             } catch (Throwable $e) {
                 // product_images may be absent on older DBs
             }
-            $model->delete($id);
-            $deleted++;
+            try {
+                $model->delete($id);
+                $deleted++;
+            } catch (Throwable $e) {
+                flash('error', 'Could not delete "' . $product['name'] . '". Run database migration 007 (order items SET NULL) if this product is on past orders.');
+                return;
+            }
         }
         if ($deleted > 0) {
             flash('success', $deleted === 1 ? 'Product deleted.' : $deleted . ' products deleted.');
-        }
-        if ($skipped !== []) {
-            flash('error', 'Could not delete (used in orders): ' . implode(', ', $skipped) . '. Deactivate them instead.');
-        }
-        if ($deleted === 0 && $skipped === []) {
+        } else {
             flash('error', 'No matching products to delete.');
         }
     }

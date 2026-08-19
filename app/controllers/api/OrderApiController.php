@@ -177,9 +177,14 @@ class OrderApiController extends ApiController
             $added = [];
             $skipped = [];
             foreach ($items as $line) {
-                $product = $this->products->find((int) $line['product_id']);
+                $pid = isset($line['product_id']) ? (int) $line['product_id'] : 0;
+                $product = $pid > 0 ? $this->products->find($pid) : null;
                 if (!$product || !(int) $product['is_active']) {
-                    $skipped[] = ['product_id' => (int) $line['product_id'], 'reason' => 'unavailable'];
+                    $skipped[] = [
+                        'product_id' => $pid ?: null,
+                        'name'       => $line['product_name_snapshot'] ?? null,
+                        'reason'     => 'unavailable',
+                    ];
                     continue;
                 }
                 $qty = (float) $line['quantity'];
@@ -371,7 +376,7 @@ Order ' . $esc($invoice['order_number']) . ' · ' . $esc($invoice['placed_at']) 
             'items' => array_map(static function (array $i) {
                 return [
                     'id'          => (int) $i['id'],
-                    'product_id'  => (int) $i['product_id'],
+                    'product_id'  => $i['product_id'] !== null && $i['product_id'] !== '' ? (int) $i['product_id'] : null,
                     'name'        => $i['product_name_snapshot'],
                     'unit'        => $i['unit_snapshot'],
                     'quantity'    => (float) $i['quantity'],

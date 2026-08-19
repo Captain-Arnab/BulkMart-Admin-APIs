@@ -166,7 +166,7 @@ CREATE TABLE IF NOT EXISTS `orders` (
 CREATE TABLE IF NOT EXISTS `order_items` (
   `id` INT UNSIGNED NOT NULL AUTO_INCREMENT,
   `order_id` INT UNSIGNED NOT NULL,
-  `product_id` INT UNSIGNED NOT NULL,
+  `product_id` INT UNSIGNED NULL,
   `product_name_snapshot` VARCHAR(160) NOT NULL,
   `unit_snapshot` VARCHAR(60) NOT NULL,
   `quantity` DECIMAL(12,2) NOT NULL,
@@ -180,7 +180,7 @@ CREATE TABLE IF NOT EXISTS `order_items` (
     ON UPDATE CASCADE ON DELETE CASCADE,
   CONSTRAINT `fk_order_items_product`
     FOREIGN KEY (`product_id`) REFERENCES `products` (`id`)
-    ON UPDATE CASCADE ON DELETE RESTRICT
+    ON UPDATE CASCADE ON DELETE SET NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 CREATE TABLE IF NOT EXISTS `role_permissions` (

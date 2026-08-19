@@ -133,7 +133,7 @@ $images = $images ?? [];
       </form>
       <?php if ($isEdit): ?>
         <form method="POST" action="<?= e(url('products/' . (int) $p['id'] . '/delete')) ?>" class="mt-3"
-              onsubmit="return confirm('Delete this product? This cannot be undone. Products used in orders cannot be deleted.');">
+              onsubmit="return confirm('Delete this product? Past orders keep the item name and price.');">
           <button class="btn btn-outline-danger" type="submit"><i class="bi bi-trash me-1"></i>Delete product</button>
         </form>
       <?php endif; ?>
