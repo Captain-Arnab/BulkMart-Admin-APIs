@@ -31,8 +31,8 @@ foreach (rbac_sidebar_items($user) as $item) {
 <header id="header" class="header fixed-top d-flex align-items-center">
   <div class="d-flex align-items-center justify-content-between">
     <a href="<?= e(url('dashboard')) ?>" class="logo d-flex align-items-center">
-      <img src="<?= e(asset('img/logo-mark.png')) ?>" alt="VeggiiCart" class="logo-icon">
-      <img src="<?= e(asset('img/logo-on-light.png')) ?>" alt="VeggiiCart" class="logo-full">
+      <img src="<?= e(admin_logo_mark_src()) ?>" alt="VeggiiCart" class="logo-icon">
+      <img src="<?= e(admin_logo_src()) ?>" alt="VeggiiCart" class="logo-full">
     </a>
     <i class="bi bi-list toggle-sidebar-btn"></i>
   </div>

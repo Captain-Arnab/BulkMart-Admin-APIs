@@ -65,6 +65,16 @@ function require_settings_access(): void
     redirect(auth_home_path());
 }
 
+function require_super_admin(): void
+{
+    require_auth();
+    if (!auth_is_super_admin()) {
+        http_response_code(403);
+        flash('error', 'Only Super Admin can change the admin logo and favicon.');
+        redirect('settings');
+    }
+}
+
 /**
  * Middleware factory: require a module key.
  */

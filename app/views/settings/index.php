@@ -22,4 +22,43 @@
       <div class="col-12"><button class="btn btn-primary" type="submit">Save settings</button></div>
     </form>
   </div></div></div>
+  <div class="col-12"><div class="card"><div class="card-body">
+    <h5 class="card-title">Admin logo &amp; favicon</h5>
+    <p class="text-muted small">These files appear only on the admin panel (sidebar, login, and browser tab). The customer website keeps its own logo. Only Super Admin can change them.</p>
+    <?php if (!empty($canBrand)): ?>
+    <form method="POST" action="<?= e(url('settings/branding')) ?>" enctype="multipart/form-data" class="row g-3">
+      <div class="col-md-6">
+        <label class="form-label">Logo</label>
+        <input type="file" name="admin_logo" class="form-control" accept="<?= e(media_brand_accept_attr()) ?>">
+        <div class="form-text">Shown in the admin header. JPG, PNG, GIF, WEBP, AVIF, BMP, or ICO. Max 5MB.</div>
+        <div class="vc-admin-gallery mt-2"><div class="vc-admin-gallery-card"><img src="<?= e(admin_logo_src()) ?>" alt="Admin logo"></div></div>
+        <?php if (!empty($settings['admin_logo_url'])): ?>
+          <div class="form-check mt-2">
+            <input class="form-check-input" type="checkbox" name="remove_admin_logo" value="1" id="remove_admin_logo">
+            <label class="form-check-label" for="remove_admin_logo">Restore default logo</label>
+          </div>
+        <?php endif; ?>
+      </div>
+      <div class="col-md-6">
+        <label class="form-label">Favicon</label>
+        <input type="file" name="admin_favicon" class="form-control" accept="<?= e(media_brand_accept_attr()) ?>">
+        <div class="form-text">Browser tab icon. Also used as the small collapsed-sidebar mark. Square PNG or ICO works best.</div>
+        <div class="vc-admin-gallery mt-2"><div class="vc-admin-gallery-card"><img src="<?= e(admin_favicon_src()) ?>" alt="Favicon"></div></div>
+        <?php if (!empty($settings['admin_favicon_url'])): ?>
+          <div class="form-check mt-2">
+            <input class="form-check-input" type="checkbox" name="remove_admin_favicon" value="1" id="remove_admin_favicon">
+            <label class="form-check-label" for="remove_admin_favicon">Restore default favicon</label>
+          </div>
+        <?php endif; ?>
+      </div>
+      <div class="col-12"><button class="btn btn-primary" type="submit">Save branding</button></div>
+    </form>
+    <?php else: ?>
+      <div class="d-flex flex-wrap gap-3 align-items-center">
+        <div class="vc-admin-gallery-card"><img src="<?= e(admin_logo_src()) ?>" alt="Admin logo"></div>
+        <div class="vc-admin-gallery-card"><img src="<?= e(admin_favicon_src()) ?>" alt="Favicon"></div>
+        <p class="text-muted mb-0">Ask a Super Admin to change the admin logo or favicon.</p>
+      </div>
+    <?php endif; ?>
+  </div></div></div>
 </div></section>

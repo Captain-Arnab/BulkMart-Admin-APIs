@@ -21,7 +21,7 @@ $showSeedHints = defined('APP_DEBUG') && APP_DEBUG;
     </div>
 
     <div class="vc-login-brand-top">
-      <img src="<?= e(asset('img/logo-on-light.png')) ?>" alt="VeggiiCart" class="vc-login-brand-logo">
+      <img src="<?= e(admin_logo_src()) ?>" alt="VeggiiCart" class="vc-login-brand-logo">
     </div>
 
     <div class="vc-login-brand-content">
@@ -59,7 +59,7 @@ $showSeedHints = defined('APP_DEBUG') && APP_DEBUG;
   <main class="vc-login-panel">
     <div class="vc-login-panel-inner">
       <div class="vc-login-mobile-brand d-lg-none">
-        <img src="<?= e(asset('img/logo-on-light.png')) ?>" alt="VeggiiCart" class="vc-login-mobile-logo">
+        <img src="<?= e(admin_logo_src()) ?>" alt="VeggiiCart" class="vc-login-mobile-logo">
         <p>Wholesale operations</p>
       </div>
 

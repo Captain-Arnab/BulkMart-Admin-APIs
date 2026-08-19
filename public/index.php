@@ -216,5 +216,6 @@ $router->get('/reports/export', [ReportController::class, 'export'], [require_mo
 $router->get('/settings', [SettingsController::class, 'index'], ['require_settings_access']);
 $router->post('/settings/password', [SettingsController::class, 'updatePassword'], ['require_settings_access']);
 $router->post('/settings/app', [SettingsController::class, 'updateApp'], ['require_settings_access']);
+$router->post('/settings/branding', [SettingsController::class, 'updateBranding'], ['require_super_admin']);
 
 $router->dispatch($_SERVER['REQUEST_METHOD'] ?? 'GET', $_SERVER['REQUEST_URI'] ?? '/');

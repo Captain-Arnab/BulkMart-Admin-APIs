@@ -49,3 +49,68 @@ function media_preview_html(?string $path): string
     }
     return '<img src="' . $url . '" alt="">';
 }
+
+function app_settings_keyed(): array
+{
+    static $cache = null;
+    if ($cache !== null) {
+        return $cache;
+    }
+    $cache = [];
+    try {
+        if (class_exists('AppSetting')) {
+            $cache = (new AppSetting())->allKeyed();
+        }
+    } catch (Throwable $e) {
+        $cache = [];
+    }
+    return $cache;
+}
+
+function admin_brand_src(string $key, string $fallbackAsset): string
+{
+    $v = trim((string) (app_settings_keyed()[$key] ?? ''));
+    if ($v === '') {
+        return asset($fallbackAsset);
+    }
+    $url = media($v);
+    $rev = trim((string) (app_settings_keyed()['admin_brand_rev'] ?? ''));
+    if ($rev !== '') {
+        $url .= (str_contains($url, '?') ? '&' : '?') . 'v=' . rawurlencode($rev);
+    }
+    return $url;
+}
+
+function admin_logo_src(): string
+{
+    return admin_brand_src('admin_logo_url', 'img/logo-on-light.png');
+}
+
+function admin_favicon_src(): string
+{
+    return admin_brand_src('admin_favicon_url', 'img/logo-mark.png');
+}
+
+function admin_logo_mark_src(): string
+{
+    $fav = trim((string) (app_settings_keyed()['admin_favicon_url'] ?? ''));
+    if ($fav !== '') {
+        return admin_brand_src('admin_favicon_url', 'img/logo-mark.png');
+    }
+    $logo = trim((string) (app_settings_keyed()['admin_logo_url'] ?? ''));
+    if ($logo !== '') {
+        return admin_brand_src('admin_logo_url', 'img/logo-mark.png');
+    }
+    return asset('img/logo-mark.png');
+}
+
+function auth_is_super_admin(?array $user = null): bool
+{
+    $user = $user ?? (function_exists('auth_user') ? auth_user() : null);
+    return is_array($user) && ($user['role'] ?? '') === 'super_admin';
+}
+
+function media_brand_accept_attr(): string
+{
+    return '.jpg,.jpeg,.png,.gif,.webp,.avif,.bmp,.ico,image/jpeg,image/png,image/gif,image/webp,image/avif,image/bmp,image/x-icon';
+}

@@ -4,7 +4,7 @@ class UploadService
 {
     public const MAX_BYTES = 5242880;
 
-    public static function storeImage(array $file, string $subdir, int $maxBytes = self::MAX_BYTES): ?string
+    public static function storeImage(array $file, string $subdir, int $maxBytes = self::MAX_BYTES, ?array $allowedExt = null): ?string
     {
         $err = (int) ($file['error'] ?? UPLOAD_ERR_NO_FILE);
         if ($err === UPLOAD_ERR_NO_FILE) {
@@ -22,8 +22,12 @@ class UploadService
 
         $tmp = (string) ($file['tmp_name'] ?? '');
         $ext = self::detectImageExtension($tmp);
-        if ($ext === null) {
-            throw new RuntimeException('Only JPG, JPEG, PNG, GIF, WEBP, AVIF, BMP, or PDF files are allowed.');
+        if ($ext === null || ($allowedExt !== null && !in_array($ext, $allowedExt, true))) {
+            throw new RuntimeException(
+                $allowedExt
+                    ? 'Use a JPG, PNG, GIF, WEBP, AVIF, BMP, or ICO image.'
+                    : 'Only JPG, JPEG, PNG, GIF, WEBP, AVIF, BMP, or PDF files are allowed.'
+            );
         }
 
         $dir = PUBLIC_PATH . '/uploads/' . trim($subdir, '/');
@@ -51,7 +55,14 @@ class UploadService
         }
 
         $head = file_get_contents($path, false, null, 0, 32);
-        if (!is_string($head) || strlen($head) < 8) {
+        if (!is_string($head) || strlen($head) < 4) {
+            return null;
+        }
+
+        if (str_starts_with($head, "\x00\x00\x01\x00")) {
+            return 'ico';
+        }
+        if (strlen($head) < 8) {
             return null;
         }
 
@@ -89,6 +100,7 @@ class UploadService
             'image/webp', 'image/x-webp' => 'webp',
             'image/avif' => 'avif',
             'image/bmp', 'image/x-ms-bmp', 'image/x-bmp' => 'bmp',
+            'image/x-icon', 'image/vnd.microsoft.icon', 'image/ico' => 'ico',
             'application/pdf', 'application/x-pdf' => 'pdf',
             default => null,
         };
