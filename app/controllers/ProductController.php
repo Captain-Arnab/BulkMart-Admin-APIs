@@ -128,6 +128,67 @@ class ProductController extends Controller
         redirect('products');
     }
 
+    public function delete(string $id): void
+    {
+        $this->deleteByIds([(int) $id]);
+        redirect('products');
+    }
+
+    public function bulkDelete(): void
+    {
+        $ids = $this->postedIds();
+        $this->deleteByIds($ids);
+        redirect('products');
+    }
+
+    /** @param array<int,int> $ids */
+    private function deleteByIds(array $ids): void
+    {
+        $ids = array_values(array_unique(array_filter($ids, static fn (int $id): bool => $id > 0)));
+        if ($ids === []) {
+            flash('error', 'Select at least one product to delete.');
+            return;
+        }
+        $model = new Product();
+        $images = new ProductImage();
+        $deleted = 0;
+        $skipped = [];
+        foreach ($ids as $id) {
+            $product = $model->find($id);
+            if (!$product) {
+                continue;
+            }
+            if ($model->hasOrderItems($id)) {
+                $skipped[] = (string) $product['name'];
+                continue;
+            }
+            try {
+                foreach ($images->forProduct($id) as $img) {
+                    $images->deleteForProduct((int) $img['id'], $id);
+                }
+            } catch (Throwable $e) {
+                // product_images may be absent on older DBs
+            }
+            $model->delete($id);
+            $deleted++;
+        }
+        if ($deleted > 0) {
+            flash('success', $deleted === 1 ? 'Product deleted.' : $deleted . ' products deleted.');
+        }
+        if ($skipped !== []) {
+            flash('error', 'Could not delete (used in orders): ' . implode(', ', $skipped) . '. Deactivate them instead.');
+        }
+        if ($deleted === 0 && $skipped === []) {
+            flash('error', 'No matching products to delete.');
+        }
+    }
+
+    /** @return array<int,int> */
+    private function postedIds(): array
+    {
+        return array_map('intval', (array) ($_POST['ids'] ?? []));
+    }
+
     public function bulkUpload(): void
     {
         $this->view('products/bulk_upload', [

@@ -39,6 +39,12 @@ $error = $error ?? null;
           <a href="<?= e(url('categories')) ?>" class="btn btn-outline-secondary">Cancel</a>
         </div>
       </form>
+      <?php if ($isEdit): ?>
+        <form method="POST" action="<?= e(url('categories/' . (int) $category['id'] . '/delete')) ?>" class="mt-3"
+              onsubmit="return confirm('Delete this category? Categories that still have products cannot be deleted.');">
+          <button class="btn btn-outline-danger" type="submit"><i class="bi bi-trash me-1"></i>Delete category</button>
+        </form>
+      <?php endif; ?>
     </div>
   </div>
 </section>

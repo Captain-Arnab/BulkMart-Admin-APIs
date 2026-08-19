@@ -16,6 +16,8 @@ $error = $error ?? null;
   <a href="<?= e(url('categories/create')) ?>" class="btn btn-primary"><i class="bi bi-plus-lg me-1"></i>Add Category</a>
 </div>
 
+<form id="vcBulkDeleteForm" method="POST" action="<?= e(url('categories/bulk-delete')) ?>"></form>
+
 <?php if ($success): ?><div class="alert alert-success"><?= e($success) ?></div><?php endif; ?>
 <?php if ($error): ?><div class="alert alert-danger"><?= e($error) ?></div><?php endif; ?>
 
@@ -28,10 +30,20 @@ $error = $error ?? null;
   </div></div>
   <div class="card">
     <div class="card-body pt-3">
+      <div class="d-flex flex-wrap justify-content-between align-items-center gap-2 mb-2">
+        <div class="text-muted small" id="vcSelectedCount">0 selected</div>
+        <button class="btn btn-sm btn-outline-danger" type="submit" form="vcBulkDeleteForm" id="vcBulkDeleteBtn" disabled
+                onclick="return confirm('Delete the selected categories? Categories that still have products will be skipped.');">
+          <i class="bi bi-trash me-1"></i>Delete selected
+        </button>
+      </div>
       <div class="table-responsive">
         <table class="table table-hover align-middle">
           <thead>
             <tr>
+              <th style="width:36px">
+                <input class="form-check-input" type="checkbox" id="vcSelectAll" title="Select all" form="vcBulkDeleteForm">
+              </th>
               <th>Image</th>
               <th>Name</th>
               <th>Products</th>
@@ -41,10 +53,13 @@ $error = $error ?? null;
           </thead>
           <tbody>
           <?php if (!$categories): ?>
-            <tr><td colspan="5" class="text-center text-muted py-4">No categories yet.</td></tr>
+            <tr><td colspan="6" class="text-center text-muted py-4">No categories yet.</td></tr>
           <?php endif; ?>
           <?php foreach ($categories as $cat): ?>
             <tr>
+              <td>
+                <input class="form-check-input vc-row-check" type="checkbox" name="ids[]" value="<?= (int) $cat['id'] ?>" form="vcBulkDeleteForm">
+              </td>
               <td style="width:64px">
                 <?php if (!empty($cat['image_url'])): ?>
                   <img src="<?= e(media($cat['image_url'])) ?>" alt="" class="rounded" style="width:48px;height:48px;object-fit:cover">
@@ -57,7 +72,7 @@ $error = $error ?? null;
               <td class="text-muted small"><?= e(date('d M Y', strtotime($cat['updated_at']))) ?></td>
               <td class="text-end">
                 <a class="btn btn-sm btn-outline-primary" href="<?= e(url('categories/' . $cat['id'] . '/edit')) ?>">Edit</a>
-                <form class="d-inline" method="POST" action="<?= e(url('categories/' . $cat['id'] . '/delete')) ?>" onsubmit="return confirm('Delete this category?');">
+                <form class="d-inline" method="POST" action="<?= e(url('categories/' . $cat['id'] . '/delete')) ?>" onsubmit="return confirm('Delete this category? Categories that still have products cannot be deleted.');">
                   <button class="btn btn-sm btn-outline-danger" type="submit">Delete</button>
                 </form>
               </td>
@@ -69,3 +84,26 @@ $error = $error ?? null;
     </div>
   </div>
 </section>
+<script>
+(function () {
+  var all = document.getElementById('vcSelectAll');
+  var boxes = document.querySelectorAll('.vc-row-check');
+  var count = document.getElementById('vcSelectedCount');
+  var btn = document.getElementById('vcBulkDeleteBtn');
+  function sync() {
+    var n = 0;
+    boxes.forEach(function (b) { if (b.checked) n++; });
+    if (count) count.textContent = n + ' selected';
+    if (btn) btn.disabled = n === 0;
+    if (all) all.checked = boxes.length > 0 && n === boxes.length;
+  }
+  if (all) {
+    all.addEventListener('change', function () {
+      boxes.forEach(function (b) { b.checked = all.checked; });
+      sync();
+    });
+  }
+  boxes.forEach(function (b) { b.addEventListener('change', sync); });
+  sync();
+})();
+</script>

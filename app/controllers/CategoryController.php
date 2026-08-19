@@ -101,6 +101,44 @@ class CategoryController extends Controller
         redirect('categories');
     }
 
+    public function bulkDelete(): void
+    {
+        $ids = array_values(array_unique(array_filter(
+            array_map('intval', (array) ($_POST['ids'] ?? [])),
+            static fn (int $id): bool => $id > 0
+        )));
+        if ($ids === []) {
+            flash('error', 'Select at least one category to delete.');
+            redirect('categories');
+        }
+        $model = new Category();
+        $deleted = 0;
+        $skipped = [];
+        foreach ($ids as $id) {
+            $category = $model->find($id);
+            if (!$category) {
+                continue;
+            }
+            $count = $model->productCount($id);
+            if ($count > 0) {
+                $skipped[] = $category['name'] . ' (' . $count . ')';
+                continue;
+            }
+            $model->delete($id);
+            $deleted++;
+        }
+        if ($deleted > 0) {
+            flash('success', $deleted === 1 ? 'Category deleted.' : $deleted . ' categories deleted.');
+        }
+        if ($skipped !== []) {
+            flash('error', 'Could not delete (still have products): ' . implode(', ', $skipped) . '. Move or delete those products first.');
+        }
+        if ($deleted === 0 && $skipped === []) {
+            flash('error', 'No matching categories to delete.');
+        }
+        redirect('categories');
+    }
+
     private function validated(): array
     {
         $name = trim((string) ($_POST['name'] ?? ''));

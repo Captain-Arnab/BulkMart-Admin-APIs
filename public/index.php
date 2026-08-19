@@ -151,14 +151,17 @@ $router->post('/products/bulk-upload', [ProductController::class, 'bulkUploadSto
 $router->get('/products/bulk-stock', [ProductController::class, 'bulkStock'], [require_module('products')]);
 $router->post('/products/bulk-stock', [ProductController::class, 'bulkStockStore'], [require_module('products')]);
 $router->get('/products/templates/{type}', [ProductController::class, 'downloadTemplate'], [require_module('products')]);
+$router->post('/products/bulk-delete', [ProductController::class, 'bulkDelete'], [require_module('products')]);
 $router->get('/products/{id}/edit', [ProductController::class, 'edit'], [require_module('products')]);
 $router->post('/products/{id}/update', [ProductController::class, 'update'], [require_module('products')]);
 $router->post('/products/{id}/deactivate', [ProductController::class, 'deactivate'], [require_module('products')]);
+$router->post('/products/{id}/delete', [ProductController::class, 'delete'], [require_module('products')]);
 $router->post('/products/{id}/stock', [ProductController::class, 'updateStock'], [require_module('products')]);
 
 $router->get('/categories', [CategoryController::class, 'index'], [require_module('categories')]);
 $router->get('/categories/create', [CategoryController::class, 'create'], [require_module('categories')]);
 $router->post('/categories', [CategoryController::class, 'store'], [require_module('categories')]);
+$router->post('/categories/bulk-delete', [CategoryController::class, 'bulkDelete'], [require_module('categories')]);
 $router->get('/categories/{id}/edit', [CategoryController::class, 'edit'], [require_module('categories')]);
 $router->post('/categories/{id}/update', [CategoryController::class, 'update'], [require_module('categories')]);
 $router->post('/categories/{id}/delete', [CategoryController::class, 'delete'], [require_module('categories')]);

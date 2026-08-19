@@ -26,6 +26,8 @@ $result = $result ?? ['page' => 1, 'pages' => 1, 'total' => count($products ?? [
   </div>
 </div>
 
+<form id="vcBulkDeleteForm" method="POST" action="<?= e(url('products/bulk-delete')) ?>"></form>
+
 <?php if ($success): ?><div class="alert alert-success"><?= e($success) ?></div><?php endif; ?>
 <?php if ($error): ?><div class="alert alert-danger"><?= e($error) ?></div><?php endif; ?>
 
@@ -65,10 +67,20 @@ $result = $result ?? ['page' => 1, 'pages' => 1, 'total' => count($products ?? [
 
   <div class="card">
     <div class="card-body pt-3">
+      <div class="d-flex flex-wrap justify-content-between align-items-center gap-2 mb-2">
+        <div class="text-muted small" id="vcSelectedCount">0 selected</div>
+        <button class="btn btn-sm btn-outline-danger" type="submit" form="vcBulkDeleteForm" id="vcBulkDeleteBtn" disabled
+                onclick="return confirm('Delete the selected products? Items used in orders will be skipped.');">
+          <i class="bi bi-trash me-1"></i>Delete selected
+        </button>
+      </div>
       <div class="table-responsive">
         <table class="table table-hover align-middle vc-products-table">
           <thead>
             <tr>
+              <th style="width:36px">
+                <input class="form-check-input" type="checkbox" id="vcSelectAll" title="Select all" form="vcBulkDeleteForm">
+              </th>
               <th>Product</th>
               <th>Category</th>
               <th>Item Code</th>
@@ -82,11 +94,14 @@ $result = $result ?? ['page' => 1, 'pages' => 1, 'total' => count($products ?? [
           </thead>
           <tbody>
           <?php if (!$products): ?>
-            <tr><td colspan="9" class="text-center text-muted py-4">No products found.</td></tr>
+            <tr><td colspan="10" class="text-center text-muted py-4">No products found.</td></tr>
           <?php endif; ?>
           <?php foreach ($products as $p): ?>
             <?php $badge = Product::stockBadge($p); ?>
             <tr class="<?= (int)$p['is_active'] === 1 ? '' : 'table-secondary' ?>">
+              <td>
+                <input class="form-check-input vc-row-check" type="checkbox" name="ids[]" value="<?= (int) $p['id'] ?>" form="vcBulkDeleteForm">
+              </td>
               <td>
                 <div class="d-flex align-items-center gap-2">
                   <?php if (!empty($p['image_url'])): ?>
@@ -119,6 +134,10 @@ $result = $result ?? ['page' => 1, 'pages' => 1, 'total' => count($products ?? [
                     <?= (int)$p['is_active'] === 1 ? 'Deactivate' : 'Activate' ?>
                   </button>
                 </form>
+                <form class="d-inline" method="POST" action="<?= e(url('products/' . $p['id'] . '/delete')) ?>"
+                      onsubmit="return confirm('Delete this product? This cannot be undone. Products used in orders cannot be deleted.');">
+                  <button class="btn btn-sm btn-outline-danger" type="submit">Delete</button>
+                </form>
               </td>
             </tr>
           <?php endforeach; ?>
@@ -141,3 +160,26 @@ $result = $result ?? ['page' => 1, 'pages' => 1, 'total' => count($products ?? [
     </div>
   </div>
 </section>
+<script>
+(function () {
+  var all = document.getElementById('vcSelectAll');
+  var boxes = document.querySelectorAll('.vc-row-check');
+  var count = document.getElementById('vcSelectedCount');
+  var btn = document.getElementById('vcBulkDeleteBtn');
+  function sync() {
+    var n = 0;
+    boxes.forEach(function (b) { if (b.checked) n++; });
+    if (count) count.textContent = n + ' selected';
+    if (btn) btn.disabled = n === 0;
+    if (all) all.checked = boxes.length > 0 && n === boxes.length;
+  }
+  if (all) {
+    all.addEventListener('change', function () {
+      boxes.forEach(function (b) { b.checked = all.checked; });
+      sync();
+    });
+  }
+  boxes.forEach(function (b) { b.addEventListener('change', sync); });
+  sync();
+})();
+</script>
