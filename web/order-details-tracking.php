@@ -170,7 +170,7 @@ VEGIICART ORDER DETAILS & TRACKING
 
                     <div>
                         <small>Your Delivery Partner</small>
-                        <h4>Rahul Sharma</h4>
+                        <h4 id="vcTrackingAgent">Assigned after dispatch</h4>
 
                         <span>
                             <i class="fa-solid fa-star"></i>
@@ -451,26 +451,17 @@ VEGIICART ORDER DETAILS & TRACKING
                             <i class="fa-solid fa-location-dot"></i>
                         </div>
 
-                        <div class="vc-address-content">
+                        <div class="vc-address-content" id="vcTrackAddress">
 
                             <div class="vc-address-title">
 
-                                <h3>Sam</h3>
+                                <h3 id="vcTrackAddrName">—</h3>
 
-                                <span>HOME</span>
+                                <span id="vcTrackAddrLabel">—</span>
 
                             </div>
 
-                            <p>
-                                215 Green Valley Apartments,<br>
-                                Main Road, Rishikesh,<br>
-                                Uttarakhand – 249201
-                            </p>
-
-                            <strong>
-                                <i class="fa-solid fa-phone"></i>
-                                +91 99999 99999
-                            </strong>
+                            <p id="vcTrackAddrText">—</p>
 
                         </div>
 

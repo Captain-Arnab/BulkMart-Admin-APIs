@@ -49,8 +49,8 @@
 
                     <div>
                         <span>Welcome Back</span>
-                        <h3>Rahul Sharma</h3>
-                        <p>rahul@example.com</p>
+                        <h3>—</h3>
+                        <p>—</p>
                     </div>
 
                 </div>
@@ -58,7 +58,7 @@
 
                 <nav class="vc-account-menu">
 
-                    <a href="my-account.php" class="active">
+                    <a href="account-dashboard.php" class="active">
                         <i class="fa-solid fa-table-columns"></i>
                         Dashboard
                     </a>
@@ -66,16 +66,16 @@
                     <a href="my-orders.php">
                         <i class="fa-solid fa-bag-shopping"></i>
                         My Orders
-                        <span class="vc-menu-count">12</span>
+                        <span class="vc-menu-count" id="vcMenuOrderCount">0</span>
                     </a>
 
                     <a href="wishlist.php">
                         <i class="fa-regular fa-heart"></i>
                         Wishlist
-                        <span class="vc-menu-count">5</span>
+                        <span class="vc-menu-count" id="vcMenuWishCount">0</span>
                     </a>
 
-                    <a href="addresses.php">
+                    <a href="manage-address.php">
                         <i class="fa-solid fa-location-dot"></i>
                         My Addresses
                     </a>
@@ -111,7 +111,7 @@
 
                     <div class="vc-welcome-content">
 
-                        <span>Hello Rahul 👋</span>
+                        <span id="vcDashHello">Hello 👋</span>
 
                         <h2>Welcome to your Vegiicart account</h2>
 
@@ -120,7 +120,7 @@
                             manage your delivery addresses and update your account.
                         </p>
 
-                        <a href="products.php" class="vc-shop-btn">
+                        <a href="product.php" class="vc-shop-btn">
                             Shop Fresh Products
                             <i class="fa-solid fa-arrow-right"></i>
                         </a>
@@ -145,7 +145,7 @@
 
                         <div>
                             <span>Total Orders</span>
-                            <strong>12</strong>
+                            <strong id="vcDashOrderCount">0</strong>
                             <small>View all orders</small>
                         </div>
 
@@ -161,7 +161,7 @@
 
                         <div>
                             <span>Active Orders</span>
-                            <strong>03</strong>
+                            <strong id="vcDashActiveCount">0</strong>
                             <small>Track your orders</small>
                         </div>
 
@@ -177,14 +177,14 @@
 
                         <div>
                             <span>Wishlist</span>
-                            <strong>05</strong>
+                            <strong id="vcDashWishCount">0</strong>
                             <small>Saved products</small>
                         </div>
 
                     </a>
 
 
-                    <a href="addresses.php"
+                    <a href="manage-address.php"
                        class="vc-account-stat-card">
 
                         <div class="vc-stat-icon vc-stat-address">
@@ -193,7 +193,7 @@
 
                         <div>
                             <span>Addresses</span>
-                            <strong>02</strong>
+                            <strong id="vcDashAddrCount">0</strong>
                             <small>Manage addresses</small>
                         </div>
 
@@ -220,148 +220,14 @@
                     </div>
 
 
-                    <div class="vc-recent-orders">
-
-                        <!-- Order -->
-                        <div class="vc-recent-order">
-
-                            <div class="vc-order-product-image">
-
-                                <img
-                                    src="https://images.unsplash.com/photo-1447175008436-054170c2e979?auto=format&fit=crop&w=220&q=80"
-                                    alt="Fresh vegetables"
-                                >
-
-                            </div>
-
-                            <div class="vc-recent-order-info">
-
-                                <span class="vc-order-number">
-                                    Order #VGC10258
-                                </span>
-
-                                <h3>Fresh Vegetable Combo</h3>
-
-                                <p>
-                                    3 Items • 10 Aug 2026
-                                </p>
-
-                            </div>
-
-                            <div class="vc-recent-order-price">
-                                <span>Total</span>
-                                <strong>₹319</strong>
-                            </div>
-
-                            <span class="vc-dashboard-status shipped">
-                                Shipped
-                            </span>
-
-                            <a href="order-details.php"
-                               class="vc-view-order">
-
-                                View Order
-
-                            </a>
-
-                        </div>
-
-
-                        <!-- Order -->
-                        <div class="vc-recent-order">
-
-                            <div class="vc-order-product-image">
-
-                                <img
-                                    src="https://images.unsplash.com/photo-1601493700631-2b16ec4b4716?auto=format&fit=crop&w=220&q=80"
-                                    alt="Fresh fruits"
-                                >
-
-                            </div>
-
-                            <div class="vc-recent-order-info">
-
-                                <span class="vc-order-number">
-                                    Order #VGC10198
-                                </span>
-
-                                <h3>Premium Fruit Basket</h3>
-
-                                <p>
-                                    4 Items • 02 Aug 2026
-                                </p>
-
-                            </div>
-
-                            <div class="vc-recent-order-price">
-                                <span>Total</span>
-                                <strong>₹599</strong>
-                            </div>
-
-                            <span class="vc-dashboard-status delivered">
-                                Delivered
-                            </span>
-
-                            <a href="order-details.php"
-                               class="vc-view-order">
-
-                                View Order
-
-                            </a>
-
-                        </div>
-
-
-                        <!-- Order -->
-                        <div class="vc-recent-order">
-
-                            <div class="vc-order-product-image">
-
-                                <img
-                                    src="https://images.unsplash.com/photo-1615485500704-8e990f9900f7?auto=format&fit=crop&w=220&q=80"
-                                    alt="Fresh grocery products"
-                                >
-
-                            </div>
-
-                            <div class="vc-recent-order-info">
-
-                                <span class="vc-order-number">
-                                    Order #VGC10271
-                                </span>
-
-                                <h3>Daily Kitchen Essentials</h3>
-
-                                <p>
-                                    5 Items • 11 Aug 2026
-                                </p>
-
-                            </div>
-
-                            <div class="vc-recent-order-price">
-                                <span>Total</span>
-                                <strong>₹428</strong>
-                            </div>
-
-                            <span class="vc-dashboard-status processing">
-                                Processing
-                            </span>
-
-                            <a href="order-details.php"
-                               class="vc-view-order">
-
-                                View Order
-
-                            </a>
-
-                        </div>
-
+                    <div class="vc-recent-orders" id="vcDashOrders">
+                        <p class="vc-live-empty">Loading orders…</p>
                     </div>
 
                 </div>
 
 
-                <!-- Bottom Grid -->
+                                <!-- Bottom Grid -->
                 <div class="vc-dashboard-bottom">
 
                     <!-- Address -->
@@ -381,24 +247,18 @@
                         </div>
 
 
-                        <div class="vc-address-details">
+                        <div class="vc-address-details" id="vcDashAddress">
 
-                            <strong>Rahul Sharma</strong>
+                            <strong>—</strong>
 
-                            <p>
-                                24 Green Park Road,<br>
-                                Rishikesh, Uttarakhand 249201
-                            </p>
+                            <p>No default address saved.</p>
 
-                            <p>
-                                <i class="fa-solid fa-phone"></i>
-                                +91 98765 43210
-                            </p>
+                            <p></p>
 
                         </div>
 
 
-                        <a href="addresses.php"
+                        <a href="manage-address.php"
                            class="vc-panel-link">
 
                             Manage Address
@@ -428,21 +288,21 @@
 
                         <div class="vc-account-info-row">
                             <span>Name</span>
-                            <strong>Rahul Sharma</strong>
+                            <strong id="vcDashInfoName">—</strong>
                         </div>
 
                         <div class="vc-account-info-row">
                             <span>Email</span>
-                            <strong>rahul@example.com</strong>
+                            <strong id="vcDashInfoEmail">—</strong>
                         </div>
 
                         <div class="vc-account-info-row">
                             <span>Phone</span>
-                            <strong>+91 98765 43210</strong>
+                            <strong id="vcDashInfoPhone">—</strong>
                         </div>
 
 
-                        <a href="profile.php"
+                        <a href="my-profile.php"
                            class="vc-panel-link">
 
                             Edit Profile

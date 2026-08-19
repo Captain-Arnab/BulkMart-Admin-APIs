@@ -58,13 +58,13 @@
 
                     </div>
 
-                    <h3>Sam Mamgain</h3>
+                    <h3>—</h3>
 
-                    <p>sam@example.com</p>
+                    <p>—</p>
 
-                    <span class="vg-verified-badge">
-                        <i class="fa-solid fa-circle-check"></i>
-                        Verified Customer
+                    <span class="vg-verified-badge" id="vcProfileKycBadge">
+                        <i class="fa-solid fa-clock"></i>
+                        Pending verification
                     </span>
 
                 </div>
@@ -195,7 +195,7 @@
                             <div class="vg-form-group">
 
                                 <label>
-                                    First Name
+                                    First / owner name
                                 </label>
 
                                 <div class="vg-input-wrap">
@@ -203,8 +203,9 @@
                                     <i class="fa-regular fa-user"></i>
 
                                     <input type="text"
-                                           value="Sam"
-                                           placeholder="Enter first name">
+                                           name="owner_name"
+                                           value=""
+                                           placeholder="Enter full name">
 
                                 </div>
 
@@ -214,7 +215,7 @@
                             <div class="vg-form-group">
 
                                 <label>
-                                    Last Name
+                                    Business name
                                 </label>
 
                                 <div class="vg-input-wrap">
@@ -222,8 +223,9 @@
                                     <i class="fa-regular fa-user"></i>
 
                                     <input type="text"
-                                           value="Mamgain"
-                                           placeholder="Enter last name">
+                                           name="business_name"
+                                           value=""
+                                           placeholder="Enter business name">
 
                                 </div>
 
@@ -241,7 +243,8 @@
                                     <i class="fa-regular fa-envelope"></i>
 
                                     <input type="email"
-                                           value="sam@example.com"
+                                           name="email"
+                                           value=""
                                            placeholder="Enter email">
 
                                 </div>
@@ -260,8 +263,10 @@
                                     <i class="fa-solid fa-phone"></i>
 
                                     <input type="tel"
-                                           value="+91 98765 43210"
-                                           placeholder="Enter mobile number">
+                                           name="mobile"
+                                           value=""
+                                           placeholder="Enter mobile number"
+                                           readonly>
 
                                 </div>
 
@@ -357,7 +362,7 @@
                         </div>
 
 
-                        <a href="addresses.php"
+                        <a href="manage-address.php"
                            class="vg-card-edit-link">
 
                             Manage Addresses
@@ -369,52 +374,8 @@
                     </div>
 
 
-                    <div class="vg-address-card">
-
-                        <div class="vg-address-top">
-
-                            <div>
-
-                                <span class="vg-address-type">
-
-                                    <i class="fa-solid fa-house"></i>
-
-                                    Home
-
-                                </span>
-
-                                <span class="vg-default-badge">
-                                    Default
-                                </span>
-
-                            </div>
-
-                            <button type="button"
-                                    class="vg-address-edit">
-
-                                <i class="fa-regular fa-pen-to-square"></i>
-
-                            </button>
-
-                        </div>
-
-
-                        <h3>Sam Mamgain</h3>
-
-                        <p>
-                            123 Green Valley Road,<br>
-                            Rishikesh, Uttarakhand - 249201
-                        </p>
-
-                        <div class="vg-address-contact">
-
-                            <span>
-                                <i class="fa-solid fa-phone"></i>
-                                +91 98765 43210
-                            </span>
-
-                        </div>
-
+                    <div class="vg-address-card" id="vcProfileAddressCard">
+                        <p class="vc-live-empty">Loading address…</p>
                     </div>
 
                 </div>

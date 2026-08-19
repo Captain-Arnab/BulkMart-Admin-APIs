@@ -663,36 +663,11 @@
                     </div>
 
 
-                    <div class="vg-delivery-address">
+                    <div class="vg-delivery-address" id="vcOrderAddress">
 
-                        <div class="vg-address-heading-row">
+                        <h3 id="vcOrderAddrName">—</h3>
 
-                            <span class="vg-address-type">
-                                <i class="fa-solid fa-house"></i>
-                                Home
-                            </span>
-
-                        </div>
-
-
-                        <h3>
-                            Sam Mamgain
-                        </h3>
-
-                        <p>
-                            123 Green Valley Road,<br>
-                            Near Main Market,<br>
-                            Rishikesh, Uttarakhand - 249201
-                        </p>
-
-
-                        <div class="vg-address-phone">
-
-                            <i class="fa-solid fa-phone"></i>
-
-                            +91 98765 43210
-
-                        </div>
+                        <p id="vcOrderAddrText">—</p>
 
                     </div>
 

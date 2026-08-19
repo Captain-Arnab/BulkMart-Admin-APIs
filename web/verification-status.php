@@ -344,15 +344,13 @@
                         </span>
 
                         <div>
-                            <small>Verified Business</small>
-                            <h3>Fresh Mart Retail</h3>
+                            <small id="vcApprovedEyebrow">Business</small>
+                            <h3 id="vcApprovedBizName">—</h3>
 
-                            <p>
-                                Retail Shop · Rishikesh, Uttarakhand
-                            </p>
+                            <p id="vcApprovedBizMeta">—</p>
                         </div>
 
-                        <strong>
+                        <strong id="vcApprovedSeal">
                             <i class="fa-solid fa-circle-check"></i>
                             Verified
                         </strong>

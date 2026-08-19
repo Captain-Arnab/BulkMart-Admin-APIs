@@ -22,7 +22,7 @@
 
                 <span class="vc-wishlist-count">
                     <i class="fa-regular fa-heart"></i>
-                    <strong id="vcWishlistCount">6</strong>
+                    <strong id="vcWishlistCount">0</strong>
                     Items
                 </span>
 

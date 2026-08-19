@@ -40,7 +40,7 @@
 
                 <div class="vc-success-order-number">
                     <span>Order Number</span>
-                    <strong>#VC-20260814-1025</strong>
+                    <strong id="vcSuccessOrderNo">—</strong>
                 </div>
 
             </div>
@@ -57,7 +57,7 @@
 
                     <div>
                         <small>Order Date</small>
-                        <strong>14 August 2026</strong>
+                        <strong id="vcSuccessOrderDate">—</strong>
                     </div>
 
                 </div>
@@ -71,7 +71,7 @@
 
                     <div>
                         <small>Expected Delivery</small>
-                        <strong>15 August 2026</strong>
+                        <strong id="vcSuccessEta">—</strong>
                     </div>
 
                 </div>
@@ -85,7 +85,7 @@
 
                     <div>
                         <small>Payment Method</small>
-                        <strong>Cash on Delivery</strong>
+                        <strong id="vcSuccessPay">—</strong>
                     </div>
 
                 </div>
@@ -99,7 +99,7 @@
 
                     <div>
                         <small>Total Amount</small>
-                        <strong>₹1,047</strong>
+                        <strong id="vcSuccessTotal">—</strong>
                     </div>
 
                 </div>
@@ -125,14 +125,12 @@
                                 <h2>Your Items</h2>
                             </div>
 
-                            <span class="vc-item-count">
-                                3 Items
-                            </span>
+                            <span class="vc-item-count" id="vcSuccessItemCount">0 Items</span>
 
                         </div>
 
 
-                        <div class="vc-success-products">
+                        <div class="vc-success-products" id="vcSuccessItems">
 
 
                             <!-- ITEM -->
@@ -375,27 +373,15 @@
 
                         </div>
 
-                        <strong>
-                            Rahul Sharma
-                        </strong>
+                        <strong id="vcSuccessName">—</strong>
 
-                        <p>
-                            124 Green Park Colony,<br>
-                            Near Main Market,<br>
-                            Rishikesh, Uttarakhand – 249201
-                        </p>
+                        <p id="vcSuccessAddr">—</p>
 
                         <div class="vc-address-contact">
 
-                            <span>
-                                <i class="fa-solid fa-phone"></i>
-                                +91 98765 43210
-                            </span>
+                            <span id="vcSuccessPhone">—</span>
 
-                            <span>
-                                <i class="fa-solid fa-envelope"></i>
-                                customer@example.com
-                            </span>
+                            <span id="vcSuccessEmail">—</span>
 
                         </div>
 

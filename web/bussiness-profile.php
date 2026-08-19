@@ -57,22 +57,20 @@
                     <div class="vc-bp-summary-top">
 
                         <div>
-                            <span class="vc-bp-business-type">
-                                Retail Shop
-                            </span>
+                            <span class="vc-bp-business-type" id="vcBpType">—</span>
 
-                            <h2>Fresh Mart Retail</h2>
+                            <h2 id="vcBpName">—</h2>
 
                             <p>
                                 Business ID:
-                                <strong>VC-BIZ-2026-1024</strong>
+                                <strong id="vcBpId">—</strong>
                             </p>
                         </div>
 
 
-                        <span class="vc-bp-status approved">
-                            <i class="fa-solid fa-circle-check"></i>
-                            Verified Business
+                        <span class="vc-bp-status pending" id="vcBpStatusBadge">
+                            <i class="fa-solid fa-clock"></i>
+                            <span id="vcBpStatusText">Pending verification</span>
                         </span>
 
                     </div>
@@ -85,7 +83,7 @@
 
                             <span>
                                 <small>Owner</small>
-                                <strong>Rahul Sharma</strong>
+                                <strong id="vcBpOwner">—</strong>
                             </span>
                         </div>
 
@@ -95,7 +93,7 @@
 
                             <span>
                                 <small>Mobile</small>
-                                <strong>+91 98765 43210</strong>
+                                <strong id="vcBpMobile">—</strong>
                             </span>
                         </div>
 
@@ -105,7 +103,7 @@
 
                             <span>
                                 <small>Email</small>
-                                <strong>business@example.com</strong>
+                                <strong id="vcBpEmail">—</strong>
                             </span>
                         </div>
 
@@ -115,7 +113,7 @@
 
                             <span>
                                 <small>Location</small>
-                                <strong>Rishikesh, Uttarakhand</strong>
+                                <strong id="vcBpLocation">—</strong>
                             </span>
                         </div>
 
@@ -154,42 +152,42 @@
 
                             <div class="vc-bp-detail-item">
                                 <span>Business Name</span>
-                                <strong>Fresh Mart Retail</strong>
+                                <strong id="vcBpDetailName">—</strong>
                             </div>
 
                             <div class="vc-bp-detail-item">
                                 <span>Business Type</span>
-                                <strong>Retail Shop</strong>
+                                <strong id="vcBpDetailType">—</strong>
                             </div>
 
                             <div class="vc-bp-detail-item">
                                 <span>Owner Name</span>
-                                <strong>Rahul Sharma</strong>
+                                <strong id="vcBpDetailOwner">—</strong>
                             </div>
 
                             <div class="vc-bp-detail-item">
                                 <span>Mobile Number</span>
-                                <strong>+91 98765 43210</strong>
+                                <strong id="vcBpDetailMobile">—</strong>
                             </div>
 
                             <div class="vc-bp-detail-item">
                                 <span>Email Address</span>
-                                <strong>business@example.com</strong>
+                                <strong id="vcBpDetailEmail">—</strong>
                             </div>
 
                             <div class="vc-bp-detail-item">
                                 <span>GST Number</span>
-                                <strong>05ABCDE1234F1Z5</strong>
+                                <strong id="vcBpGst">—</strong>
                             </div>
 
                             <div class="vc-bp-detail-item">
                                 <span>FSSAI Licence</span>
-                                <strong>12345678901234</strong>
+                                <strong id="vcBpFssai">—</strong>
                             </div>
 
                             <div class="vc-bp-detail-item">
                                 <span>PAN Number</span>
-                                <strong>ABCDE1234F</strong>
+                                <strong id="vcBpPan">—</strong>
                             </div>
 
                         </div>
@@ -222,19 +220,13 @@
                             </span>
 
                             <div>
-                                <strong>
-                                    Fresh Mart Retail
-                                </strong>
+                                <strong id="vcBpAddrName">—</strong>
 
-                                <p>
-                                    Shop No. 12, Green Market Complex,<br>
-                                    Near Railway Road,<br>
-                                    Rishikesh, Uttarakhand – 249201
-                                </p>
+                                <p id="vcBpAddrText">No address saved yet.</p>
 
-                                <a href="#">
+                                <a href="manage-address.php">
                                     <i class="fa-solid fa-map-location-dot"></i>
-                                    View on Google Maps
+                                    Manage addresses
                                 </a>
                             </div>
 
@@ -266,246 +258,8 @@
                         </div>
 
 
-                        <div class="vc-bp-documents">
-
-                            <!-- GST -->
-                            <div class="vc-bp-document">
-
-                                <div class="vc-bp-doc-info">
-
-                                    <span class="vc-bp-doc-icon">
-                                        <i class="fa-solid fa-file-pdf"></i>
-                                    </span>
-
-                                    <div>
-                                        <strong>GST Certificate</strong>
-                                        <small>gst-certificate.pdf</small>
-
-                                        <span>
-                                            Uploaded: 14 Aug 2026
-                                        </span>
-                                    </div>
-
-                                </div>
-
-
-                                <span class="vc-bp-doc-status verified">
-                                    <i class="fa-solid fa-check"></i>
-                                    Verified
-                                </span>
-
-
-                                <button
-                                    type="button"
-                                    class="vc-bp-doc-action">
-
-                                    <i class="fa-solid fa-eye"></i>
-                                    View
-
-                                </button>
-
-                            </div>
-
-
-                            <!-- FSSAI -->
-                            <div class="vc-bp-document">
-
-                                <div class="vc-bp-doc-info">
-
-                                    <span class="vc-bp-doc-icon">
-                                        <i class="fa-solid fa-certificate"></i>
-                                    </span>
-
-                                    <div>
-                                        <strong>FSSAI Licence</strong>
-                                        <small>fssai-license.pdf</small>
-
-                                        <span>
-                                            Uploaded: 14 Aug 2026
-                                        </span>
-                                    </div>
-
-                                </div>
-
-
-                                <span class="vc-bp-doc-status verified">
-                                    <i class="fa-solid fa-check"></i>
-                                    Verified
-                                </span>
-
-
-                                <button
-                                    type="button"
-                                    class="vc-bp-doc-action">
-
-                                    <i class="fa-solid fa-eye"></i>
-                                    View
-
-                                </button>
-
-                            </div>
-
-
-                            <!-- PAN -->
-                            <div class="vc-bp-document">
-
-                                <div class="vc-bp-doc-info">
-
-                                    <span class="vc-bp-doc-icon">
-                                        <i class="fa-solid fa-id-card"></i>
-                                    </span>
-
-                                    <div>
-                                        <strong>PAN Card</strong>
-                                        <small>pan-card.jpg</small>
-
-                                        <span>
-                                            Uploaded: 14 Aug 2026
-                                        </span>
-                                    </div>
-
-                                </div>
-
-
-                                <span class="vc-bp-doc-status verified">
-                                    <i class="fa-solid fa-check"></i>
-                                    Verified
-                                </span>
-
-
-                                <button
-                                    type="button"
-                                    class="vc-bp-doc-action">
-
-                                    <i class="fa-solid fa-eye"></i>
-                                    View
-
-                                </button>
-
-                            </div>
-
-
-                            <!-- SHOP REGISTRATION -->
-                            <div class="vc-bp-document">
-
-                                <div class="vc-bp-doc-info">
-
-                                    <span class="vc-bp-doc-icon">
-                                        <i class="fa-solid fa-store"></i>
-                                    </span>
-
-                                    <div>
-                                        <strong>Shop Registration</strong>
-                                        <small>shop-registration.pdf</small>
-
-                                        <span>
-                                            Uploaded: 14 Aug 2026
-                                        </span>
-                                    </div>
-
-                                </div>
-
-
-                                <span class="vc-bp-doc-status reviewing">
-                                    <i class="fa-solid fa-clock"></i>
-                                    Under Review
-                                </span>
-
-
-                                <button
-                                    type="button"
-                                    class="vc-bp-doc-action">
-
-                                    <i class="fa-solid fa-eye"></i>
-                                    View
-
-                                </button>
-
-                            </div>
-
-
-                            <!-- EXPIRED DOCUMENT -->
-                            <div class="vc-bp-document vc-bp-doc-warning">
-
-                                <div class="vc-bp-doc-info">
-
-                                    <span class="vc-bp-doc-icon warning">
-                                        <i class="fa-solid fa-file-circle-exclamation"></i>
-                                    </span>
-
-                                    <div>
-                                        <strong>Trade Licence</strong>
-                                        <small>trade-license.pdf</small>
-
-                                        <span>
-                                            Expired: 01 Aug 2026
-                                        </span>
-                                    </div>
-
-                                </div>
-
-
-                                <span class="vc-bp-doc-status expired">
-                                    <i class="fa-solid fa-triangle-exclamation"></i>
-                                    Expired
-                                </span>
-
-
-                                <label class="vc-bp-replace-btn">
-
-                                    <input
-                                        type="file"
-                                        accept="image/*,.pdf">
-
-                                    <i class="fa-solid fa-arrows-rotate"></i>
-                                    <span>Replace</span>
-
-                                </label>
-
-                            </div>
-
-
-                            <!-- REJECTED DOCUMENT -->
-                            <div class="vc-bp-document vc-bp-doc-rejected">
-
-                                <div class="vc-bp-doc-info">
-
-                                    <span class="vc-bp-doc-icon rejected">
-                                        <i class="fa-solid fa-camera"></i>
-                                    </span>
-
-                                    <div>
-                                        <strong>Shop-front Photo</strong>
-                                        <small>shop-front.jpg</small>
-
-                                        <span>
-                                            Reason: Business signage unclear
-                                        </span>
-                                    </div>
-
-                                </div>
-
-
-                                <span class="vc-bp-doc-status rejected">
-                                    <i class="fa-solid fa-xmark"></i>
-                                    Rejected
-                                </span>
-
-
-                                <label class="vc-bp-replace-btn">
-
-                                    <input
-                                        type="file"
-                                        accept="image/*"
-                                        capture="environment">
-
-                                    <i class="fa-solid fa-camera"></i>
-                                    <span>Replace</span>
-
-                                </label>
-
-                            </div>
-
+                        <div class="vc-bp-documents" id="vcBpDocuments">
+                            <p class="vc-live-empty">Loading documents…</p>
                         </div>
 
                     </div>
@@ -513,7 +267,7 @@
                 </div>
 
 
-                <!-- RIGHT -->
+                                <!-- RIGHT -->
                 <aside class="vc-bp-right">
 
                     <!-- VERIFICATION -->
@@ -530,15 +284,13 @@
                         </div>
 
 
-                        <div class="vc-bp-verification-badge">
+                        <div class="vc-bp-verification-badge" id="vcBpVerifyBox">
 
-                            <i class="fa-solid fa-circle-check"></i>
+                            <i class="fa-solid fa-clock"></i>
 
                             <div>
-                                <strong>Approved</strong>
-                                <small>
-                                    Business successfully verified
-                                </small>
+                                <strong id="vcBpVerifyTitle">Pending</strong>
+                                <small id="vcBpVerifySub">Verification in progress</small>
                             </div>
 
                         </div>
@@ -548,17 +300,17 @@
 
                             <div>
                                 <span>Application ID</span>
-                                <strong>VC-BIZ-2026-1024</strong>
+                                <strong id="vcBpAppId">—</strong>
                             </div>
 
                             <div>
                                 <span>Submitted</span>
-                                <strong>14 August 2026</strong>
+                                <strong id="vcBpSubmitted">—</strong>
                             </div>
 
                             <div>
-                                <span>Approved</span>
-                                <strong>16 August 2026</strong>
+                                <span>Status</span>
+                                <strong id="vcBpKycRaw">—</strong>
                             </div>
 
                         </div>
@@ -588,7 +340,7 @@
                                 </span>
 
                                 <p>
-                                    <strong>3</strong>
+                                    <strong id="vcBpDocVerified">0</strong>
                                     Verified
                                 </p>
                             </div>
@@ -600,7 +352,7 @@
                                 </span>
 
                                 <p>
-                                    <strong>1</strong>
+                                    <strong id="vcBpDocReview">0</strong>
                                     Under Review
                                 </p>
                             </div>
@@ -612,8 +364,8 @@
                                 </span>
 
                                 <p>
-                                    <strong>1</strong>
-                                    Expired
+                                    <strong id="vcBpDocExpired">0</strong>
+                                    Missing
                                 </p>
                             </div>
 
@@ -624,7 +376,7 @@
                                 </span>
 
                                 <p>
-                                    <strong>1</strong>
+                                    <strong id="vcBpDocRejected">0</strong>
                                     Rejected
                                 </p>
                             </div>
@@ -641,11 +393,10 @@
                             <i class="fa-solid fa-crown"></i>
                         </span>
 
-                        <h3>Business Account Active</h3>
+                        <h3 id="vcBpBenefitTitle">Business account</h3>
 
-                        <p>
-                            Your verified business account gives you access
-                            to bulk ordering and eligible business pricing.
+                        <p id="vcBpBenefitCopy">
+                            Complete verification to unlock bulk ordering and eligible business pricing.
                         </p>
 
                         <a href="products.php">

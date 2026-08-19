@@ -508,7 +508,7 @@
                                         <input type="email"
                                                id="vcEmail"
                                                name="email"
-                                               placeholder="business@example.com"
+                                               placeholder="Enter business email"
                                                required>
                                     </div>
                                 </div>
@@ -1460,7 +1460,7 @@
 
         <div class="vc-application-number">
             <small>Application ID</small>
-            <strong>VC-BIZ-2026-1024</strong>
+            <strong id="vcRegAppId">—</strong>
         </div>
 
         <a href="index.php">

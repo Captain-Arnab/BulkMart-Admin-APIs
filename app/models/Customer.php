@@ -158,6 +158,8 @@ class Customer extends Model
             'avatar_url'           => $row['avatar_url'] ? media($row['avatar_url']) : null,
             'kyc_status'           => $row['kyc_status'],
             'kyc_rejection_reason' => $row['kyc_rejection_reason'],
+            'created_at'           => $row['created_at'] ?? null,
+            'updated_at'           => $row['updated_at'] ?? null,
             'is_blocked'           => (int) ($row['is_blocked'] ?? 0) === 1,
             'registration_complete'=> !in_array(($row['business_type'] ?? ''), ['unregistered', ''], true)
                 && ($row['business_name'] ?? '') !== 'Pending registration',

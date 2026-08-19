@@ -267,6 +267,89 @@
         );
     }
 
+    function setText(id, value) {
+        var el = typeof id === 'string' ? document.getElementById(id) : id;
+        if (el) {
+            el.textContent = (value === null || value === undefined || String(value).trim() === '') ? '—' : String(value);
+        }
+    }
+
+    function formatInDate(value) {
+        if (!value) {
+            return '—';
+        }
+        var d = new Date(String(value).replace(' ', 'T'));
+        if (isNaN(d.getTime())) {
+            return String(value);
+        }
+        return d.toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' });
+    }
+
+    function formatBizId(c) {
+        if (!c || !c.id) {
+            return '—';
+        }
+        var year = String(c.created_at || '').slice(0, 4) || String(new Date().getFullYear());
+        return 'VC-BIZ-' + year + '-' + String(c.id).padStart(4, '0');
+    }
+
+    function kycUi(status) {
+        var s = String(status || 'pending').toLowerCase();
+        if (s === 'approved') {
+            return { cls: 'approved', icon: 'fa-circle-check', title: 'Verified Business', side: 'Approved', sub: 'Business successfully verified' };
+        }
+        if (s === 'rejected') {
+            return { cls: 'rejected', icon: 'fa-circle-xmark', title: 'Verification rejected', side: 'Rejected', sub: 'Please resubmit your documents' };
+        }
+        return { cls: 'pending', icon: 'fa-clock', title: 'Pending verification', side: 'Pending', sub: 'Verification in progress' };
+    }
+
+    function typeLabel(t) {
+        var map = {
+            retailer: 'Retail Shop',
+            kirana: 'Kirana Store',
+            wholesaler: 'Wholesaler',
+            restaurant: 'Restaurant / Hotel',
+            canteen: 'Canteen',
+            other: 'Other'
+        };
+        return map[t] || t || '—';
+    }
+
+    function addrLine(a) {
+        if (!a) {
+            return '';
+        }
+        return [a.line1, a.line2, a.landmark, a.city, a.state, a.pincode].filter(Boolean).join(', ');
+    }
+
+    function displayName(c) {
+        return (c && (c.owner_name || c.business_name || c.mobile)) || 'Customer';
+    }
+
+    function applyHeaderCustomer(customer) {
+        var account = document.querySelector('.vc-account');
+        var mobileAccount = document.querySelector('.vc-mobile-account a');
+        if (!VC.isLoggedIn()) {
+            return;
+        }
+        var name = displayName(customer);
+        if (account) {
+            account.href = 'account-dashboard.php';
+            var strong = account.querySelector('strong');
+            var small = account.querySelector('small');
+            if (small) small.textContent = 'Hello';
+            if (strong) strong.textContent = name;
+        }
+        if (mobileAccount) {
+            mobileAccount.href = 'account-dashboard.php';
+            var mStrong = mobileAccount.querySelector('strong');
+            var mSmall = mobileAccount.querySelector('small');
+            if (mSmall) mSmall.textContent = 'Welcome back';
+            if (mStrong) mStrong.textContent = name;
+        }
+    }
+
     var VIEW_KEY = 'vc_recent_views';
 
     function loadRecentViews() {
@@ -334,25 +417,14 @@
     }
 
     function bootHeader() {
-        var account = document.querySelector('.vc-account');
-        var mobileAccount = document.querySelector('.vc-mobile-account a');
-        var customer = VC.getCustomer();
+        applyHeaderCustomer(VC.getCustomer());
         if (VC.isLoggedIn()) {
-            var name = (customer && (customer.owner_name || customer.business_name || customer.mobile)) || 'My Account';
-            if (account) {
-                account.href = 'account-dashboard.php';
-                var strong = account.querySelector('strong');
-                var small = account.querySelector('small');
-                if (small) small.textContent = 'Hello';
-                if (strong) strong.textContent = name;
-            }
-            if (mobileAccount) {
-                mobileAccount.href = 'account-dashboard.php';
-                var mStrong = mobileAccount.querySelector('strong');
-                var mSmall = mobileAccount.querySelector('small');
-                if (mSmall) mSmall.textContent = 'Welcome back';
-                if (mStrong) mStrong.textContent = name;
-            }
+            VC.profile().then(function (res) {
+                if (res && res.success) {
+                    VC.setSession({ customer: res.data });
+                    applyHeaderCustomer(res.data);
+                }
+            });
         }
 
         document.querySelectorAll('.vc-search, .vc-mobile-search').forEach(function (form) {
@@ -451,6 +523,13 @@
 
     function bootHome() {
         var slidesWrap = document.querySelector('#vghSlider .vgh-slides');
+        if (slidesWrap) {
+            slidesWrap.innerHTML = '';
+        }
+        ['.vbestSlider .swiper-wrapper', '.vfreshSlider .swiper-wrapper', '.vsrSlider .swiper-wrapper'].forEach(function (sel) {
+            var w = document.querySelector(sel);
+            if (w) w.innerHTML = '';
+        });
         var dotsWrap = document.querySelector('#vghSlider .vgh-dots, #vghSlider .vgh-pagination, .vgh-dots');
         if (!dotsWrap) {
             dotsWrap = document.querySelector('#vghSlider') && document.querySelector('#vghSlider').querySelector('[class*="dot"]');
@@ -1009,7 +1088,7 @@
         VC.offers().then(function (res) {
             var offers = (res && res.success && res.data.offers) || [];
             var host = document.querySelector('#vcCoupons, .vc-offers-grid, .vc-offers-list, main.vc-offers-page');
-            var grid = document.querySelector('.vc-offers-deals, .vc-coupon-grid, #vcTodayDeals');
+            var grids = document.querySelectorAll('.vc-deals-grid, .vc-coupons-grid, .vc-offers-deals, .vc-coupon-grid');
             var html = offers.length ? offers.map(function (o) {
                 var value = o.discount_type === 'percent'
                     ? o.discount_value + '% OFF'
@@ -1024,8 +1103,8 @@
                     '</article>'
                 );
             }).join('') : emptyNote('No offers right now.');
-            if (grid) {
-                grid.innerHTML = html;
+            if (grids.length) {
+                grids.forEach(function (grid) { grid.innerHTML = html; });
             } else if (host) {
                 var box = document.createElement('section');
                 box.className = 'vc-offers-container vc-offer-live-wrap';
@@ -1525,6 +1604,19 @@
             var parent = first ? first.parentElement : document.querySelector('.vc-orders-container');
             document.querySelectorAll('.vc-order-card').forEach(function (n) { n.remove(); });
             var no = document.getElementById('vcNoOrders');
+            var processing = orders.filter(function (o) {
+                return ['pending', 'confirmed', 'processing', 'packed'].indexOf(String(o.status).toLowerCase()) !== -1;
+            }).length;
+            var onWay = orders.filter(function (o) {
+                return ['shipped', 'out_for_delivery'].indexOf(String(o.status).toLowerCase()) !== -1;
+            }).length;
+            var delivered = orders.filter(function (o) {
+                return String(o.status).toLowerCase() === 'delivered';
+            }).length;
+            setText('vcOrdersTotal', orders.length);
+            setText('vcOrdersProcessing', processing);
+            setText('vcOrdersOnWay', onWay);
+            setText('vcOrdersDelivered', delivered);
             if (!orders.length) {
                 if (no) {
                     no.style.display = 'block';
@@ -1567,8 +1659,6 @@
             } else if (parent) {
                 parent.insertAdjacentHTML('beforeend', html);
             }
-            var summary = document.querySelectorAll('.vc-orders-summary strong');
-            if (summary[0]) summary[0].textContent = String(orders.length);
         });
         document.addEventListener('click', function (e) {
             var c = e.target.closest('[data-cancel-order]');
@@ -1607,17 +1697,50 @@
                 return;
             }
             var o = res.data.order;
+            var cust = VC.getCustomer() || {};
+            var addr = o.address || {};
+            var line = addrLine(addr);
             var h1 = document.querySelector('h1');
-            if (h1) h1.textContent = 'Order ' + (o.order_number || '');
-            var host = document.querySelector('.vc-order-details, .vc-tracking-page, section');
+            if (h1 && pageName() !== 'order-success') {
+                h1.textContent = 'Order ' + (o.order_number || '');
+            }
+            setText('vcSuccessOrderNo', o.order_number ? '#' + o.order_number : '—');
+            setText('vcSuccessOrderDate', formatInDate(o.placed_at));
+            setText('vcSuccessEta', formatInDate(o.estimated_delivery_date));
+            setText('vcSuccessPay', o.payment_method || 'Cash on Delivery');
+            setText('vcSuccessTotal', money(o.total));
+            setText('vcSuccessName', displayName(cust));
+            setText('vcSuccessAddr', line || '—');
+            setText('vcSuccessPhone', cust.mobile);
+            setText('vcSuccessEmail', cust.email);
+            setText('vcOrderAddrName', displayName(cust));
+            setText('vcOrderAddrText', line || '—');
+            setText('vcTrackAddrName', displayName(cust));
+            setText('vcTrackAddrLabel', addr.label || 'Address');
+            setText('vcTrackAddrText', line || '—');
+            var itemsHost = document.getElementById('vcSuccessItems');
+            if (itemsHost) {
+                itemsHost.innerHTML = (o.items || []).map(function (it) {
+                    return '<div class="vc-success-product"><div><h3>' + escapeHtml(it.name) +
+                        '</h3><p>' + escapeHtml(it.quantity) + ' × ' + money(it.unit_price) +
+                        '</p></div><strong>' + money(it.line_total) + '</strong></div>';
+                }).join('') || emptyNote('No items');
+            }
+            var itemCount = document.getElementById('vcSuccessItemCount');
+            if (itemCount) {
+                itemCount.textContent = String((o.items || []).length) + ' Items';
+            }
+            var host = document.querySelector('.vc-order-details, .vc-tracking-page, .vc-success-page');
             if (!host) {
                 return;
             }
+            var old = host.querySelector('.vc-live-order-box');
+            if (old) old.remove();
             var items = (o.items || []).map(function (it) {
-                return '<li>' + escapeHtml(it.name) + ' × ' + escapeHtml(it.quantity) + ' — ' + money(it.line_total || it.price) + '</li>';
+                return '<li>' + escapeHtml(it.name) + ' × ' + escapeHtml(it.quantity) + ' — ' + money(it.line_total || it.unit_price) + '</li>';
             }).join('');
-            var log = (o.status_log || o.timeline || []).map(function (s) {
-                return '<li>' + escapeHtml(s.status || s.status_label || '') + ' · ' + escapeHtml(s.created_at || s.at || '') + '</li>';
+            var log = (o.tracking || o.status_log || o.timeline || []).map(function (s) {
+                return '<li>' + escapeHtml(s.status_label || s.status || '') + ' · ' + escapeHtml(s.changed_at || s.created_at || s.at || '') + '</li>';
             }).join('');
             var box = document.createElement('div');
             box.className = 'vc-live-order-box';
@@ -1627,7 +1750,8 @@
                 '<h3>Items</h3><ul>' + (items || '<li>No items</li>') + '</ul>' +
                 (log ? '<h3>Tracking</h3><ul>' + log + '</ul>' : '') +
                 (o.can_cancel ? '<button type="button" class="vc-order-btn" id="vcLiveCancel">Cancel order</button>' : '');
-            host.appendChild(box);
+            var mount = host.querySelector('.vc-success-container, .vc-orders-container, .vc-tracking-container') || host;
+            mount.insertBefore(box, mount.firstChild);
             var btn = document.getElementById('vcLiveCancel');
             if (btn) {
                 btn.addEventListener('click', function () {
@@ -1635,11 +1759,85 @@
                 });
             }
         });
-        if (pageName() === 'order-success') {
-            var msg = document.querySelector('h1, .vc-success-title');
-            if (msg) {
-                msg.textContent = 'Order placed successfully';
-            }
+    }
+
+    function fillBusinessProfile(c, verify, addresses) {
+        var kyc = (verify && verify.kyc_status) || c.kyc_status || 'pending';
+        var ui = kycUi(kyc);
+        var bizId = formatBizId(c);
+        var loc = '';
+        var def = (addresses || []).find(function (a) { return a.is_default; }) || (addresses || [])[0];
+        if (def) {
+            loc = [def.city, def.state].filter(Boolean).join(', ') || addrLine(def);
+        }
+        setText('vcBpType', typeLabel(c.business_type));
+        setText('vcBpName', c.business_name);
+        setText('vcBpId', bizId);
+        setText('vcBpOwner', c.owner_name);
+        setText('vcBpMobile', c.mobile);
+        setText('vcBpEmail', c.email);
+        setText('vcBpLocation', loc);
+        setText('vcBpDetailName', c.business_name);
+        setText('vcBpDetailType', typeLabel(c.business_type));
+        setText('vcBpDetailOwner', c.owner_name);
+        setText('vcBpDetailMobile', c.mobile);
+        setText('vcBpDetailEmail', c.email);
+        setText('vcBpGst', c.gst_number);
+        setText('vcBpFssai', c.fssai_number);
+        setText('vcBpPan', c.pan_number);
+        setText('vcBpAddrName', c.business_name || c.owner_name);
+        setText('vcBpAddrText', def ? addrLine(def) : 'No address saved yet.');
+        setText('vcBpVerifyTitle', ui.side);
+        setText('vcBpVerifySub', ui.sub);
+        setText('vcBpAppId', bizId);
+        setText('vcBpSubmitted', formatInDate(c.created_at));
+        setText('vcBpKycRaw', kyc);
+        var badge = document.getElementById('vcBpStatusBadge');
+        var statusText = document.getElementById('vcBpStatusText');
+        if (badge) {
+            badge.className = 'vc-bp-status ' + ui.cls;
+            badge.innerHTML = '<i class="fa-solid ' + ui.icon + '"></i> <span id="vcBpStatusText">' + escapeHtml(ui.title) + '</span>';
+        } else if (statusText) {
+            statusText.textContent = ui.title;
+        }
+        var box = document.getElementById('vcBpVerifyBox');
+        if (box) {
+            box.className = 'vc-bp-verification-badge ' + ui.cls;
+            var icon = box.querySelector('i');
+            if (icon) icon.className = 'fa-solid ' + ui.icon;
+        }
+        if (ui.cls === 'approved') {
+            setText('vcBpBenefitTitle', 'Business account active');
+            setText('vcBpBenefitCopy', 'Your verified business account gives you access to bulk ordering and eligible business pricing.');
+        } else if (ui.cls === 'rejected') {
+            setText('vcBpBenefitTitle', 'Verification rejected');
+            setText('vcBpBenefitCopy', verify && verify.kyc_rejection_reason ? verify.kyc_rejection_reason : 'Please update your documents and resubmit.');
+        } else {
+            setText('vcBpBenefitTitle', 'Verification pending');
+            setText('vcBpBenefitCopy', 'Complete verification to unlock bulk ordering and eligible business pricing.');
+        }
+        var docs = (verify && verify.documents) || [];
+        var catalog = (verify && verify.catalog) || [];
+        var byType = {};
+        docs.forEach(function (d) { byType[d.document_type || d.type] = d; });
+        var expected = catalog.length ? catalog : Object.keys(byType).map(function (k) { return { key: k, label: k }; });
+        var uploaded = expected.filter(function (row) { return !!byType[row.key]; }).length;
+        var missing = expected.length - uploaded;
+        setText('vcBpDocVerified', kyc === 'approved' ? uploaded : 0);
+        setText('vcBpDocReview', kyc === 'pending' ? uploaded : 0);
+        setText('vcBpDocExpired', missing);
+        setText('vcBpDocRejected', kyc === 'rejected' ? uploaded : 0);
+        var host = document.getElementById('vcBpDocuments');
+        if (host) {
+            host.innerHTML = expected.length ? expected.map(function (row) {
+                var doc = byType[row.key];
+                var st = !doc ? 'missing' : (kyc === 'approved' ? 'verified' : (kyc === 'rejected' ? 'rejected' : 'reviewing'));
+                var stText = !doc ? 'Not uploaded' : (kyc === 'approved' ? 'Verified' : (kyc === 'rejected' ? 'Needs review' : 'Uploaded'));
+                return '<div class="vc-bp-document"><div class="vc-bp-doc-info"><div><strong>' +
+                    escapeHtml(row.label || row.key) + '</strong><small>' +
+                    escapeHtml(doc ? formatInDate(doc.uploaded_at) : 'Not uploaded yet') +
+                    '</small></div></div><span class="vc-bp-doc-status ' + st + '">' + stText + '</span></div>';
+            }).join('') : emptyNote('No documents in catalog yet.');
         }
     }
 
@@ -1647,30 +1845,92 @@
         if (!requireAuth()) {
             return;
         }
-        VC.profile().then(function (res) {
+        Promise.all([
+            VC.profile(),
+            VC.addresses(),
+            VC.orders({ per_page: 20 }),
+            VC.wishlist(),
+            pageName() === 'bussiness-profile' ? VC.verificationStatus() : Promise.resolve(null)
+        ]).then(function (pack) {
+            var res = pack[0];
             if (!res || !res.success) {
                 return;
             }
             var c = res.data;
             VC.setSession({ customer: c });
+            applyHeaderCustomer(c);
             var nameEl = document.querySelector('.vg-user-card h3, .vc-account-user h3');
             var emailEl = document.querySelector('.vg-user-card p, .vc-account-user p');
-            if (nameEl) nameEl.textContent = c.owner_name || c.business_name || c.mobile || 'Customer';
+            if (nameEl) nameEl.textContent = displayName(c);
             if (emailEl) emailEl.textContent = c.email || c.mobile || '';
+            var hello = document.getElementById('vcDashHello');
+            if (hello) hello.textContent = 'Hello ' + displayName(c) + ' 👋';
             var inputs = {
                 owner_name: c.owner_name,
                 email: c.email,
                 business_name: c.business_name,
                 gst_number: c.gst_number,
                 fssai_number: c.fssai_number,
-                pan_number: c.pan_number
+                pan_number: c.pan_number,
+                mobile: c.mobile
             };
             Object.keys(inputs).forEach(function (k) {
                 var el = document.querySelector('[name="' + k + '"]');
                 if (el && inputs[k]) el.value = inputs[k];
             });
-            var form = document.querySelector('.vg-profile-form, form');
-            if (form && pageName() === 'my-profile') {
+            var kyc = kycUi(c.kyc_status);
+            var kycBadge = document.getElementById('vcProfileKycBadge');
+            if (kycBadge) {
+                kycBadge.innerHTML = '<i class="fa-solid ' + kyc.icon + '"></i> ' + escapeHtml(kyc.title);
+            }
+            var addresses = (pack[1] && pack[1].success && pack[1].data.addresses) || [];
+            var def = addresses.find(function (a) { return a.is_default; }) || addresses[0];
+            var addrCard = document.getElementById('vcProfileAddressCard');
+            if (addrCard) {
+                addrCard.innerHTML = def
+                    ? '<h3>' + escapeHtml(displayName(c)) + '</h3><p>' + escapeHtml(addrLine(def)) + '</p>'
+                    : emptyNote('No saved address yet.', '<a href="manage-address.php">Add an address</a>');
+            }
+            var dashAddr = document.getElementById('vcDashAddress');
+            if (dashAddr) {
+                dashAddr.innerHTML = def
+                    ? '<strong>' + escapeHtml(displayName(c)) + '</strong><p>' + escapeHtml(addrLine(def)) +
+                        '</p><p><i class="fa-solid fa-phone"></i> ' + escapeHtml(c.mobile || '') + '</p>'
+                    : '<strong>—</strong><p>No default address saved.</p>';
+            }
+            setText('vcDashInfoName', displayName(c));
+            setText('vcDashInfoEmail', c.email);
+            setText('vcDashInfoPhone', c.mobile);
+            var orders = (pack[2] && pack[2].success && pack[2].data.orders) || [];
+            var wish = (pack[3] && pack[3].success && pack[3].data.items) || [];
+            var active = orders.filter(function (o) {
+                return ['pending', 'confirmed', 'processing', 'packed', 'shipped', 'out_for_delivery'].indexOf(String(o.status).toLowerCase()) !== -1;
+            }).length;
+            setText('vcDashOrderCount', orders.length);
+            setText('vcDashActiveCount', active);
+            setText('vcDashWishCount', wish.length);
+            setText('vcDashAddrCount', addresses.length);
+            setText('vcMenuOrderCount', orders.length);
+            setText('vcMenuWishCount', wish.length);
+            var dashOrders = document.getElementById('vcDashOrders');
+            if (dashOrders) {
+                dashOrders.innerHTML = orders.length ? orders.slice(0, 5).map(function (o) {
+                    return '<div class="vc-recent-order"><div class="vc-recent-order-info"><span class="vc-order-number">' +
+                        escapeHtml(o.order_number || '') + '</span><h3>' + escapeHtml(o.status_label || o.status) +
+                        '</h3><p>' + escapeHtml(formatInDate(o.placed_at)) + '</p></div>' +
+                        '<div class="vc-recent-order-price"><span>Total</span><strong>' + money(o.total) +
+                        '</strong></div><span class="vc-dashboard-status ' + escapeHtml(String(o.status || '')) + '">' +
+                        escapeHtml(o.status_label || o.status) + '</span>' +
+                        '<a href="order-details.php?id=' + o.id + '" class="vc-view-order">View Order</a></div>';
+                }).join('') : emptyNote('No orders yet.', '<a href="product.php">Shop products</a>');
+            }
+            if (pageName() === 'bussiness-profile') {
+                var vres = pack[4];
+                fillBusinessProfile(c, (vres && vres.success && vres.data) || { kyc_status: c.kyc_status, documents: [], catalog: [] }, addresses);
+            }
+            var form = document.querySelector('.vg-profile-form');
+            if (form && pageName() === 'my-profile' && !form.getAttribute('data-vc-bound')) {
+                form.setAttribute('data-vc-bound', '1');
                 form.addEventListener('submit', function (e) {
                     e.preventDefault();
                     var body = {};
@@ -1678,13 +1938,10 @@
                         var el = form.querySelector('[name="' + k + '"]');
                         if (el) body[k] = el.value.trim();
                     });
-                    var nameInput = form.querySelector('input[type="text"]');
-                    var emailInput = form.querySelector('input[type="email"]');
-                    if (!body.owner_name && nameInput) body.owner_name = nameInput.value.trim();
-                    if (!body.email && emailInput) body.email = emailInput.value.trim();
                     VC.updateProfile(body).then(function (r) {
                         if (r && r.success) {
                             VC.setSession({ customer: r.data });
+                            applyHeaderCustomer(r.data);
                             toast('Profile updated');
                         } else {
                             toast((r && r.error && r.error.message) || 'Could not update profile.', 'error');
@@ -1803,17 +2060,20 @@
         }
         VC.notifications().then(function (res) {
             var items = (res && res.success && (res.data.notifications || res.data.items)) || [];
-            var host = document.querySelector('.vc-notification-list, .vc-notifications, section');
+            var unread = items.filter(function (n) { return !n.read_at && !n.is_read; }).length;
+            setText('vcTotalNotifications', items.length);
+            setText('vcUnreadNotifications', unread);
+            setText('vcReadNotifications', items.length - unread);
+            var host = document.getElementById('vcNotificationList') || document.querySelector('.vc-notification-list');
             if (!host) {
                 return;
             }
-            var box = document.createElement('div');
-            box.className = 'vc-live-notes';
-            box.innerHTML = items.length ? items.map(function (n) {
-                return '<article><strong>' + escapeHtml(n.title || n.message) + '</strong><p>' +
-                    escapeHtml(n.body || n.message || '') + '</p></article>';
+            host.innerHTML = items.length ? items.map(function (n) {
+                var read = n.read_at || n.is_read;
+                return '<article class="vc-notification-item ' + (read ? 'read' : 'unread') + '">' +
+                    '<div class="vc-notification-content"><strong>' + escapeHtml(n.title || n.message || 'Update') +
+                    '</strong><p>' + escapeHtml(n.body || n.message || '') + '</p></div></article>';
             }).join('') : emptyNote('No notifications yet.');
-            host.appendChild(box);
         });
     }
 
@@ -1838,11 +2098,13 @@
                 fssai_number: (document.getElementById('vcFSSAI') || {}).value || '',
                 pan_number: (document.getElementById('vcPAN') || {}).value || ''
             };
-            VC.businessRegister(body).then(function (res) {
-                if (!res || !res.success) {
-                    toast(apiErrorMessage(res, 'Could not submit registration.'), 'error');
-                    return;
-                }
+                VC.businessRegister(body).then(function (res) {
+                    if (!res || !res.success) {
+                        toast(apiErrorMessage(res, 'Could not submit registration.'), 'error');
+                        return;
+                    }
+                    var cust = (res.data && res.data.customer) || VC.getCustomer() || {};
+                    setText('vcRegAppId', formatBizId(cust));
                 var uploads = document.querySelectorAll('.vc-upload-card input[type="file"]');
                 var chain = Promise.resolve();
                 var nameMap = {
@@ -2037,6 +2299,9 @@
             setText('vcSubmittedDate', formatDate(customer.created_at || customer.updated_at));
             setText('vcBizNameLive', customer.business_name);
             setText('vcOwnerNameLive', customer.owner_name);
+            setText('vcApprovedBizName', customer.business_name);
+            setText('vcApprovedBizMeta', [typeLabel(customer.business_type), customer.owner_name].filter(Boolean).join(' · '));
+            setText('vcApprovedEyebrow', status === 'approved' ? 'Verified Business' : 'Business');
             setText('vcJourneySubmitted', formatDate(customer.created_at || customer.updated_at));
             if (data.kyc_rejection_reason) {
                 setText('vcRejectReason', data.kyc_rejection_reason);
