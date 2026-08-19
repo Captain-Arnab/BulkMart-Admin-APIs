@@ -70,15 +70,42 @@ function app_settings_keyed(): array
 function admin_brand_src(string $key, string $fallbackAsset): string
 {
     $v = trim((string) (app_settings_keyed()[$key] ?? ''));
-    if ($v === '') {
-        return asset($fallbackAsset);
+    if ($v !== '') {
+        if (preg_match('#^https?://#i', $v)) {
+            $url = $v;
+        } else {
+            $url = public_url(ltrim($v, '/'));
+        }
+    } else {
+        $url = public_url('assets/' . ltrim($fallbackAsset, '/'));
     }
-    $url = media($v);
     $rev = trim((string) (app_settings_keyed()['admin_brand_rev'] ?? ''));
-    if ($rev !== '') {
+    if ($v !== '' && $rev !== '') {
         $url .= (str_contains($url, '?') ? '&' : '?') . 'v=' . rawurlencode($rev);
     }
     return $url;
+}
+
+function site_logo_src(): string
+{
+    $v = trim((string) (app_settings_keyed()['admin_logo_url'] ?? ''));
+    if ($v !== '') {
+        return admin_brand_src('admin_logo_url', 'img/logo-on-light.png');
+    }
+    return 'images/vegiicart-logo.jpeg';
+}
+
+function site_favicon_src(): string
+{
+    $v = trim((string) (app_settings_keyed()['admin_favicon_url'] ?? ''));
+    if ($v !== '') {
+        return admin_brand_src('admin_favicon_url', 'img/logo-mark.png');
+    }
+    $logo = trim((string) (app_settings_keyed()['admin_logo_url'] ?? ''));
+    if ($logo !== '') {
+        return admin_brand_src('admin_logo_url', 'img/logo-mark.png');
+    }
+    return 'images/vegiicart-logo.jpeg';
 }
 
 function admin_logo_src(): string

@@ -78,7 +78,7 @@ class SettingsController extends Controller
                 redirect('settings');
             }
             $model->set('admin_brand_rev', (string) time());
-            flash('success', 'Admin logo and favicon updated. Customer website is unchanged.');
+            flash('success', 'Logo and favicon updated for admin and website.');
             redirect('settings');
         } catch (Throwable $e) {
             flash('error', $e->getMessage());

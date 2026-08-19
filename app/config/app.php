@@ -96,6 +96,51 @@ function app_base_url(): string
     return $base;
 }
 
+/**
+ * Always the admin/public folder URL (no trailing slash), e.g. /VGS/veggiicart/public.
+ * Works from both /public (admin) and website pages under / or /web.
+ */
+function public_base_url(): string
+{
+    static $base = null;
+    if ($base !== null) {
+        return $base;
+    }
+
+    $local = [];
+    $localFile = __DIR__ . '/config.local.php';
+    if (is_file($localFile)) {
+        $local = require $localFile;
+    }
+    $configured = trim((string) (($local['app']['base_url'] ?? '')), '/');
+    if ($configured !== '') {
+        $base = '/' . $configured;
+        return $base;
+    }
+
+    $script = str_replace('\\', '/', dirname($_SERVER['SCRIPT_NAME'] ?? '/index.php'));
+    $script = rtrim($script === '/' ? '' : $script, '/');
+    if (str_ends_with($script, '/web')) {
+        $script = substr($script, 0, -4);
+    }
+    if ($script === '/public' || str_ends_with($script, '/public')) {
+        $base = $script;
+        return $base;
+    }
+    $base = ($script === '' ? '' : $script) . '/public';
+    return $base;
+}
+
+function public_url(string $path = ''): string
+{
+    $path = ltrim($path, '/');
+    $base = public_base_url();
+    if ($path === '') {
+        return $base === '' ? '/' : $base . '/';
+    }
+    return ($base === '' ? '' : $base) . '/' . $path;
+}
+
 /** Absolute URL path helper: url('dashboard') => /.../public/dashboard */
 function url(string $path = ''): string
 {

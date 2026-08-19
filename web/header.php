@@ -1,5 +1,8 @@
 <?php
+require_once __DIR__ . '/vc-bootstrap.php';
 $vcPage = basename($_SERVER['SCRIPT_FILENAME'] ?? $_SERVER['SCRIPT_NAME'] ?? 'index.php', '.php');
+$vcSiteLogo = function_exists('site_logo_src') ? site_logo_src() : 'images/vegiicart-logo.jpeg';
+$vcSiteFavicon = function_exists('site_favicon_src') ? site_favicon_src() : 'images/vegiicart-logo.jpeg';
 ?>
 <!DOCTYPE html>
 <html lang="en">
@@ -9,6 +12,8 @@ $vcPage = basename($_SERVER['SCRIPT_FILENAME'] ?? $_SERVER['SCRIPT_NAME'] ?? 'in
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
     <title>Vegiicart - Fresh Fruits & Vegetables</title>
+    <link rel="icon" href="<?= htmlspecialchars($vcSiteFavicon, ENT_QUOTES, 'UTF-8') ?>">
+    <link rel="apple-touch-icon" href="<?= htmlspecialchars($vcSiteFavicon, ENT_QUOTES, 'UTF-8') ?>">
 
     <!-- Google Font -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -118,7 +123,7 @@ $vcPage = basename($_SERVER['SCRIPT_FILENAME'] ?? $_SERVER['SCRIPT_NAME'] ?? 'in
 
                 <a href="index.php" class="vc-logo">
 
-                    <img src="images/vegiicart-logo.jpeg"
+                    <img src="<?= htmlspecialchars($vcSiteLogo, ENT_QUOTES, 'UTF-8') ?>"
                          alt="Vegiicart">
 
                 </a>
@@ -509,7 +514,7 @@ $vcPage = basename($_SERVER['SCRIPT_FILENAME'] ?? $_SERVER['SCRIPT_NAME'] ?? 'in
 
         <div class="vc-mobile-logo">
 
-            <img src="images/vegiicart-logo.jpeg"
+            <img src="<?= htmlspecialchars($vcSiteLogo, ENT_QUOTES, 'UTF-8') ?>"
                  alt="Vegiicart">
 
         </div>
