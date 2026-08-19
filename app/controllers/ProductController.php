@@ -34,6 +34,7 @@ class ProductController extends Controller
         $this->view('products/form', [
             'title'      => 'Add Product',
             'product'    => null,
+            'images'     => [],
             'categories' => (new Category())->options(),
             'error'      => flash('error'),
         ]);
@@ -46,7 +47,8 @@ class ProductController extends Controller
             if (!empty($_FILES['image']['name'])) {
                 $data['image_url'] = UploadService::storeImage($_FILES['image'], 'products');
             }
-            (new Product())->create($data);
+            $id = (new Product())->create($data);
+            $this->saveProductImages($id);
             flash('success', 'Product created.');
             redirect('products');
         } catch (Throwable $e) {
@@ -65,6 +67,7 @@ class ProductController extends Controller
         $this->view('products/form', [
             'title'      => 'Edit Product',
             'product'    => $product,
+            'images'     => (new ProductImage())->forProduct((int) $id),
             'categories' => (new Category())->options(),
             'error'      => flash('error'),
         ]);
@@ -85,8 +88,9 @@ class ProductController extends Controller
                 $data['image_url'] = UploadService::storeImage($_FILES['image'], 'products');
             }
             $model->update((int) $id, $data);
+            $this->saveProductImages((int) $id);
             flash('success', 'Product updated.');
-            redirect('products');
+            redirect('products/' . (int) $id . '/edit');
         } catch (Throwable $e) {
             flash('error', $e->getMessage());
             redirect('products/' . (int) $id . '/edit');
@@ -365,6 +369,71 @@ class ProductController extends Controller
             'is_active'   => isset($_POST['is_active']) ? 1 : 0,
             'image_url'   => null,
         ];
+    }
+
+    private function saveProductImages(int $productId): void
+    {
+        $images = new ProductImage();
+        $remove = array_map('intval', (array) ($_POST['remove_image'] ?? []));
+        foreach ($remove as $rid) {
+            if ($rid > 0) {
+                $images->deleteForProduct($rid, $productId);
+            }
+        }
+        $sort = $_POST['image_sort'] ?? [];
+        if (is_array($sort)) {
+            foreach ($sort as $id => $order) {
+                $images->updateSort((int) $id, $productId, (int) $order);
+            }
+        }
+        $uploaded = $this->normalizeUploadedFiles('images');
+        $existing = $images->forProduct($productId);
+        $nextSort = 0;
+        foreach ($existing as $row) {
+            $nextSort = max($nextSort, (int) $row['sort_order'] + 1);
+        }
+        $newIds = [];
+        foreach ($uploaded as $file) {
+            $url = UploadService::storeImage($file, 'products');
+            if ($url) {
+                $newIds[] = $images->add($productId, $url, $nextSort, false);
+                $nextSort++;
+            }
+        }
+        $primary = (string) ($_POST['primary_image'] ?? '');
+        if (str_starts_with($primary, 'new:') && $newIds !== []) {
+            $idx = (int) substr($primary, 4);
+            $pick = $newIds[$idx] ?? $newIds[0];
+            $images->setPrimary($productId, $pick);
+        } elseif (ctype_digit($primary) && (int) $primary > 0) {
+            $images->setPrimary($productId, (int) $primary);
+        }
+        $images->ensurePrimary($productId);
+    }
+
+    /** @return array<int,array<string,mixed>> */
+    private function normalizeUploadedFiles(string $field): array
+    {
+        if (empty($_FILES[$field]['name'])) {
+            return [];
+        }
+        if (!is_array($_FILES[$field]['name'])) {
+            return [$_FILES[$field]];
+        }
+        $out = [];
+        foreach ($_FILES[$field]['name'] as $i => $name) {
+            if ($name === '' || $name === null) {
+                continue;
+            }
+            $out[] = [
+                'name'     => (string) $name,
+                'type'     => $_FILES[$field]['type'][$i] ?? '',
+                'tmp_name' => $_FILES[$field]['tmp_name'][$i] ?? '',
+                'error'    => $_FILES[$field]['error'][$i] ?? UPLOAD_ERR_NO_FILE,
+                'size'     => $_FILES[$field]['size'][$i] ?? 0,
+            ];
+        }
+        return $out;
     }
 
     private function parseBool(string $value, bool $default): bool

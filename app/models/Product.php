@@ -95,6 +95,11 @@ class Product extends Model
         return $this->fetchOne('SELECT * FROM products WHERE item_code = ?', [$code]);
     }
 
+    public function findByName(string $name): ?array
+    {
+        return $this->fetchOne('SELECT * FROM products WHERE LOWER(name) = LOWER(?)', [$name]);
+    }
+
     public function create(array $data): int
     {
         $this->execute(

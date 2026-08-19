@@ -152,6 +152,41 @@ veggiicart/
 | GET | `/banners` | `banners` | Public |
 | GET | `/offers` | `offers` | Public |
 
+#### `GET /products/{id}` product object
+
+List/search/similar responses still return a single `image_url` (the cover/primary image) for backward compatibility.
+
+Product **detail** adds `description` and an `images` gallery array. `image_url` remains and is always the primary/cover image.
+
+```json
+{
+  "id": 12,
+  "category_id": 1,
+  "category_name": "Green Vegetables",
+  "name": "Tomato",
+  "unit": "per kg",
+  "moq": 1,
+  "price": 38,
+  "stock": 40,
+  "in_stock": true,
+  "image_url": "http://localhost/VGS/veggiicart/public/uploads/products/cover.jpg",
+  "item_code": "20",
+  "batch_no": null,
+  "grade": "A",
+  "origin": null,
+  "description": "Farm fresh tomatoes.",
+  "images": [
+    { "url": "http://localhost/VGS/veggiicart/public/uploads/products/cover.jpg", "is_primary": true, "sort_order": 0 },
+    { "url": "http://localhost/VGS/veggiicart/public/uploads/products/side.jpg", "is_primary": false, "sort_order": 1 }
+  ]
+}
+```
+
+- `images[].url` is an absolute media URL (same rules as `image_url`).
+- `images[].is_primary` is `true` for exactly one cover image when any images exist.
+- `images[].sort_order` is the admin gallery order (lower first).
+- If a product has no `product_images` rows yet, `images` is a one-item array built from `image_url`, or `[]` if there is no image.
+
 ### Cart — `CartApiController`
 
 | Method | Path | Handler | Auth |

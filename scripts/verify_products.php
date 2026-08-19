@@ -112,10 +112,15 @@ foreach ($tables as $t) {
 
 // Confirm sample product imported
 $sample = $pdo->query("SELECT COUNT(*) FROM products WHERE item_code='VG-TEST-001'")->fetchColumn();
-ok('Sample bulk product imported', (int)$sample === 1);
+ok('VG-TEST-001 not in catalog', (int)$sample === 0);
 
-$tomatoStock = $pdo->query("SELECT stock FROM products WHERE item_code='VG-GV-001'")->fetchColumn();
-ok('Tomato stock updated via bulk', (float)$tomatoStock == 275.0);
+$catalog = (int) $pdo->query('SELECT COUNT(*) FROM products')->fetchColumn();
+ok('Confirmed catalog size', $catalog === 34);
+
+$tomato = $pdo->query("SELECT item_code, batch_no, stock FROM products WHERE name='Tomato'")->fetch();
+ok('Tomato item_code is 20', $tomato && (string)$tomato['item_code'] === '20');
+ok('Tomato batch_no is NULL', $tomato && $tomato['batch_no'] === null);
+ok('Tomato stock updated via bulk', $tomato && (float)$tomato['stock'] == 275.0);
 
 echo PHP_EOL . ($fail === 0 ? "All product module checks passed.\n" : "$fail failed.\n");
 exit($fail === 0 ? 0 : 1);

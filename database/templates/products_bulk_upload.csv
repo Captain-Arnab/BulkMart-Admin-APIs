@@ -1,2 +1,2 @@
 name,category,unit,moq,price,stock,item_code,batch_no,description,grade,origin,in_stock,is_active
-Sample Capsicum,Green Vegetables,per kg,5,58,100,VG-TEST-001,BATCH-A,Test bulk row,A,Maharashtra,1,1
+Tomato,Green Vegetables,per kg,10,28,250,20,,Wholesale Tomato,A,Maharashtra,1,1

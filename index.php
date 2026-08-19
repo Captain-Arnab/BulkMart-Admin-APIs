@@ -1,20 +1,12 @@
 <?php
 /**
- * Project root — bounce into /public for XAMPP convenience.
- * Prefer pointing the vhost/document root at /public in production.
+ * Customer website entry (XAMPP / project-root document root).
+ *
+ * Admin panel and API are unchanged under /public.
+ * Prefer pointing the vhost document root at this project root so:
+ *   /                  → this file / web/
+ *   /public/dashboard  → admin
+ *   /public/api/v1/*   → customer API
  */
-$uri = $_SERVER['REQUEST_URI'] ?? '/';
-$base = rtrim(str_replace('\\', '/', dirname($_SERVER['SCRIPT_NAME'] ?? '')), '/');
-$target = ($base === '' ? '' : $base) . '/public/';
-
-// Preserve path after project root if someone hits /veggiicart/something
-$suffix = '';
-if ($base !== '' && str_starts_with($uri, $base)) {
-    $rest = substr($uri, strlen($base));
-    if ($rest !== '' && $rest !== '/' && !str_starts_with($rest, '/public')) {
-        $suffix = ltrim($rest, '/');
-    }
-}
-
-header('Location: ' . $target . $suffix);
-exit;
+chdir(__DIR__ . '/web');
+require __DIR__ . '/web/index.php';

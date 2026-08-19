@@ -37,6 +37,13 @@ $relPath = $uriPath;
 if ($base !== '' && str_starts_with($relPath, $base)) {
     $relPath = substr($relPath, strlen($base)) ?: '/';
 }
+$apiAt = strpos($relPath, '/api/');
+if ($apiAt === false) {
+    $apiAt = strpos($uriPath, '/api/');
+    if ($apiAt !== false) {
+        $relPath = substr($uriPath, $apiAt);
+    }
+}
 $isApi = str_starts_with('/' . trim($relPath, '/'), '/api');
 
 if ($isApi) {

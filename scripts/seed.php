@@ -1,7 +1,10 @@
 <?php
 /**
- * Seed categories, 34 products, and Super Admin.
+ * Seed categories, confirmed product catalog, and Super Admin.
  * Usage: php scripts/seed.php
+ *
+ * Idempotent: upserts the confirmed list by name, then removes any product
+ * not on the list (VG-TEST-001, old placeholders, leftover seed SKUs).
  */
 
 declare(strict_types=1);
@@ -40,78 +43,122 @@ foreach ($categoryNames as $name) {
     }
 }
 
+/**
+ * Confirmed catalog. Names are stored exactly as given (including casing).
+ * item_code / batch_no are NULL except Tomato item_code = '20'.
+ *
+ * Tuple: name, category, unit, moq, price, stock, item_code|null
+ */
 $seedProducts = [
     // Green Vegetables
-    ['Tomato', 'Green Vegetables', 'per kg', 10, 28, 250, 'VG-GV-001', 'A', 'Maharashtra'],
-    ['Cucumber', 'Green Vegetables', 'per kg', 5, 32, 180, 'VG-GV-002', 'A', 'Karnataka'],
-    ['Capsicum Green', 'Green Vegetables', 'per kg', 5, 55, 120, 'VG-GV-003', 'Premium', 'Maharashtra'],
-    ['Bottle Gourd', 'Green Vegetables', 'per kg', 5, 30, 140, 'VG-GV-004', 'A', 'Gujarat'],
-    ['Bitter Gourd', 'Green Vegetables', 'per kg', 5, 45, 90, 'VG-GV-005', 'A', 'Maharashtra'],
-    ['Ridge Gourd', 'Green Vegetables', 'per kg', 5, 40, 85, 'VG-GV-006', 'B', 'Andhra Pradesh'],
-    ['Lady Finger', 'Green Vegetables', 'per kg', 5, 42, 160, 'VG-GV-007', 'A', 'Maharashtra'],
-    ['French Beans', 'Green Vegetables', 'per kg', 5, 60, 70, 'VG-GV-008', 'Premium', 'Karnataka'],
-    ['Cabbage', 'Green Vegetables', 'per kg', 10, 22, 300, 'VG-GV-009', 'A', 'Himachal'],
-    ['Cauliflower', 'Green Vegetables', 'per kg', 10, 35, 200, 'VG-GV-010', 'A', 'Punjab'],
+    ['Beans', 'Green Vegetables', 'per kg', 5, 60, 70, null],
+    ['Beans (chikkudu)', 'Green Vegetables', 'per kg', 5, 55, 80, null],
+    ['Bittergourd', 'Green Vegetables', 'per kg', 5, 45, 90, null],
+    ['Bottle gourd', 'Green Vegetables', 'per kg', 5, 30, 140, null],
+    ['Brinjal (black)', 'Green Vegetables', 'per kg', 5, 36, 120, null],
+    ['Brinjal (white)', 'Green Vegetables', 'per kg', 5, 38, 90, null],
+    ['Brinjal long (purple)', 'Green Vegetables', 'per kg', 5, 40, 100, null],
+    ['Cabbage (big size)', 'Green Vegetables', 'per kg', 10, 22, 300, null],
+    ['cabbage (small size)', 'Green Vegetables', 'per kg', 10, 20, 220, null],
+    ['Cluster beans', 'Green Vegetables', 'per kg', 5, 48, 85, null],
+    ['Cucumber (English) black', 'Green Vegetables', 'per kg', 5, 32, 180, null],
+    ['Cucumber yellow (round)', 'Green Vegetables', 'per kg', 5, 28, 150, null],
+    ['Drumsticks', 'Green Vegetables', 'per kg', 5, 70, 60, null],
+    ['Ivy gourd', 'Green Vegetables', 'per kg', 5, 42, 95, null],
+    ['Ladyfinger', 'Green Vegetables', 'per kg', 5, 42, 160, null],
+    ['Tomato', 'Green Vegetables', 'per kg', 10, 28, 250, '20'],
+    ['capcicum green', 'Green Vegetables', 'per kg', 5, 55, 120, null],
+    ['capsicum red', 'Green Vegetables', 'per kg', 5, 70, 80, null],
 
     // Root Vegetables
-    ['Potato', 'Root Vegetables', 'per kg', 25, 18, 800, 'VG-RV-001', 'A', 'Uttar Pradesh'],
-    ['Onion', 'Root Vegetables', 'per kg', 25, 24, 750, 'VG-RV-002', 'A', 'Maharashtra'],
-    ['Carrot', 'Root Vegetables', 'per kg', 10, 36, 220, 'VG-RV-003', 'Premium', 'Himachal'],
-    ['Beetroot', 'Root Vegetables', 'per kg', 5, 38, 110, 'VG-RV-004', 'A', 'Karnataka'],
-    ['Radish', 'Root Vegetables', 'per kg', 5, 20, 150, 'VG-RV-005', 'B', 'Haryana'],
-    ['Sweet Potato', 'Root Vegetables', 'per kg', 10, 34, 130, 'VG-RV-006', 'A', 'Odisha'],
-    ['Ginger', 'Root Vegetables', 'per kg', 2, 120, 60, 'VG-RV-007', 'Premium', 'Kerala'],
-    ['Garlic', 'Root Vegetables', 'per kg', 2, 140, 55, 'VG-RV-008', 'A', 'Madhya Pradesh'],
+    ['Arvi (chamagadda)', 'Root Vegetables', 'per kg', 5, 40, 90, null],
+    ['Beetroot', 'Root Vegetables', 'per kg', 5, 38, 110, null],
+    ['Carrot', 'Root Vegetables', 'per kg', 10, 36, 220, null],
+    ['Garlic', 'Root Vegetables', 'per kg', 2, 140, 55, null],
+    ['Ginger', 'Root Vegetables', 'per kg', 2, 120, 60, null],
+    ['Onion big size', 'Root Vegetables', 'per kg', 25, 24, 400, null],
+    ['Onion medium size', 'Root Vegetables', 'per kg', 25, 22, 450, null],
+    ['Onion small size', 'Root Vegetables', 'per kg', 25, 26, 300, null],
+    ['Potato', 'Root Vegetables', 'per kg', 25, 18, 800, null],
 
     // Seasonal Fruits
-    ['Banana', 'Seasonal Fruits', 'per dozen', 5, 45, 400, 'VG-SF-001', 'A', 'Tamil Nadu'],
-    ['Apple', 'Seasonal Fruits', 'per kg', 5, 160, 180, 'VG-SF-002', 'Premium', 'Himachal'],
-    ['Orange', 'Seasonal Fruits', 'per kg', 5, 70, 210, 'VG-SF-003', 'A', 'Nagpur'],
-    ['Papaya', 'Seasonal Fruits', 'per kg', 5, 32, 160, 'VG-SF-004', 'A', 'Andhra Pradesh'],
-    ['Watermelon', 'Seasonal Fruits', 'per kg', 10, 18, 500, 'VG-SF-005', 'B', 'Rajasthan'],
-    ['Mango', 'Seasonal Fruits', 'per kg', 5, 95, 140, 'VG-SF-006', 'Premium', 'Ratnagiri'],
-    ['Pomegranate', 'Seasonal Fruits', 'per kg', 5, 130, 95, 'VG-SF-007', 'Premium', 'Maharashtra'],
-    ['Guava', 'Seasonal Fruits', 'per kg', 5, 48, 120, 'VG-SF-008', 'A', 'Uttar Pradesh'],
-    ['Grapes', 'Seasonal Fruits', 'per kg', 5, 85, 100, 'VG-SF-009', 'A', 'Nashik'],
-    ['Mosambi', 'Seasonal Fruits', 'per kg', 5, 55, 170, 'VG-SF-010', 'A', 'Andhra Pradesh'],
+    ['Lemon', 'Seasonal Fruits', 'per kg', 5, 50, 140, null],
+    ['apple', 'Seasonal Fruits', 'per kg', 5, 160, 180, null],
+    ['avocado', 'Seasonal Fruits', 'per kg', 2, 180, 40, null],
+    ['banana', 'Seasonal Fruits', 'per dozen', 5, 45, 400, null],
+    ['boppaya (papaya)', 'Seasonal Fruits', 'per kg', 5, 32, 160, null],
 
     // Herbs & Leafy
-    ['Coriander', 'Herbs & Leafy', 'per bunch', 10, 12, 200, 'VG-HL-001', 'A', 'Maharashtra'],
-    ['Mint', 'Herbs & Leafy', 'per bunch', 10, 15, 160, 'VG-HL-002', 'A', 'Maharashtra'],
-    ['Spinach', 'Herbs & Leafy', 'per kg', 5, 28, 140, 'VG-HL-003', 'A', 'Gujarat'],
-    ['Methi', 'Herbs & Leafy', 'per bunch', 10, 14, 150, 'VG-HL-004', 'B', 'Rajasthan'],
-    ['Curry Leaves', 'Herbs & Leafy', 'per bunch', 10, 10, 180, 'VG-HL-005', 'A', 'Tamil Nadu'],
-    ['Lettuce', 'Herbs & Leafy', 'per kg', 2, 75, 40, 'VG-HL-006', 'Premium', 'Maharashtra'],
+    ['Coriander leaves', 'Herbs & Leafy', 'per bunch', 10, 12, 200, null],
+    ['Mint leaves', 'Herbs & Leafy', 'per bunch', 10, 15, 160, null],
 ];
 
-$added = 0;
-$skipped = 0;
+$keepNames = [];
 foreach ($seedProducts as $row) {
-    [$name, $cat, $unit, $moq, $price, $stock, $code, $grade, $origin] = $row;
-    if ($products->findByItemCode($code)) {
-        echo "[skip product] $code $name\n";
-        $skipped++;
-        continue;
-    }
-    $products->create([
+    $keepNames[] = $row[0];
+}
+
+// Drop old placeholder codes so Tomato can take item_code = 20 without unique clashes.
+$pdo->exec('UPDATE products SET item_code = NULL, batch_no = NULL');
+
+$added = 0;
+$updated = 0;
+foreach ($seedProducts as $row) {
+    [$name, $cat, $unit, $moq, $price, $stock, $code] = $row;
+    $existing = $products->findByName($name);
+    $payload = [
         'category_id' => $categoryIds[$cat],
         'name'        => $name,
         'unit'        => $unit,
         'moq'         => $moq,
         'price'       => $price,
         'stock'       => $stock,
-        'image_url'   => null,
-        'batch_no'    => 'SEED-BATCH-01',
+        'image_url'   => $existing['image_url'] ?? null,
+        'batch_no'    => null,
         'item_code'   => $code,
-        'description' => "Wholesale {$name} — B2B supply.",
-        'grade'       => $grade,
-        'origin'      => $origin,
+        'description' => $existing['description'] ?? null,
+        'grade'       => $existing['grade'] ?? null,
+        'origin'      => $existing['origin'] ?? null,
         'in_stock'    => $stock > 0,
         'is_active'   => true,
-    ]);
-    echo "[add product]  $code $name\n";
-    $added++;
+    ];
+    if ($existing) {
+        // Keep live commercial fields if already set; always sync identity fields.
+        $payload['unit'] = $existing['unit'] ?: $unit;
+        $payload['moq'] = $existing['moq'] !== null && $existing['moq'] !== '' ? $existing['moq'] : $moq;
+        $payload['price'] = $existing['price'] !== null && $existing['price'] !== '' ? $existing['price'] : $price;
+        $payload['stock'] = $existing['stock'] !== null && $existing['stock'] !== '' ? $existing['stock'] : $stock;
+        $payload['in_stock'] = ((float) $payload['stock']) > 0;
+        $products->update((int) $existing['id'], $payload);
+        echo "[update product] $name" . ($code ? " (item_code=$code)" : '') . "\n";
+        $updated++;
+    } else {
+        $products->create($payload);
+        echo "[add product]    $name" . ($code ? " (item_code=$code)" : '') . "\n";
+        $added++;
+    }
 }
 
-echo "\nDone. Categories: " . count($categoryIds) . ", products added: $added, skipped: $skipped\n";
-echo "Login: " . SEED_ADMIN_EMAIL . " / " . SEED_ADMIN_PASSWORD . "\n";
+$placeholders = implode(',', array_fill(0, count($keepNames), '?'));
+$extraStmt = $pdo->prepare("SELECT id, name, item_code FROM products WHERE name NOT IN ($placeholders)");
+$extraStmt->execute($keepNames);
+$extras = $extraStmt->fetchAll();
+$removed = 0;
+foreach ($extras as $extra) {
+    $id = (int) $extra['id'];
+    $pdo->prepare('DELETE FROM order_items WHERE product_id = ?')->execute([$id]);
+    $pdo->prepare('DELETE FROM products WHERE id = ?')->execute([$id]);
+    echo '[remove product] ' . $extra['name'] . ($extra['item_code'] ? ' (' . $extra['item_code'] . ')' : '') . "\n";
+    $removed++;
+}
+
+$total = (int) $pdo->query('SELECT COUNT(*) FROM products')->fetchColumn();
+echo "\nDone. Categories: " . count($categoryIds)
+    . ", added: $added, updated: $updated, removed: $removed, catalog total: $total\n";
+echo 'Expected catalog size: ' . count($seedProducts) . "\n";
+echo 'Login: ' . SEED_ADMIN_EMAIL . ' / ' . SEED_ADMIN_PASSWORD . "\n";
+
+if ($total !== count($seedProducts)) {
+    fwrite(STDERR, "WARNING: product count $total does not match seed list " . count($seedProducts) . "\n");
+    exit(1);
+}

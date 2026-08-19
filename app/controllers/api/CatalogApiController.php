@@ -220,13 +220,38 @@ class CatalogApiController extends ApiController
             'in_stock'      => (int) $p['in_stock'] === 1 && (float) $p['stock'] > 0,
             'image_url'     => $this->absoluteMedia($p['image_url'] ?? null),
             'item_code'     => $p['item_code'] ?? null,
+            'batch_no'      => $p['batch_no'] ?? null,
             'grade'         => $p['grade'] ?? null,
             'origin'        => $p['origin'] ?? null,
         ];
         if ($detail) {
             $out['description'] = $p['description'] ?? null;
-            $out['batch_no'] = $p['batch_no'] ?? null;
+            $out['images'] = $this->formatImages((int) $p['id'], $out['image_url']);
         }
         return $out;
+    }
+
+    /** @return array<int,array{url:?string,is_primary:bool,sort_order:int}> */
+    private function formatImages(int $productId, ?string $fallbackUrl): array
+    {
+        $rows = [];
+        try {
+            $rows = (new ProductImage())->forProduct($productId);
+        } catch (Throwable $e) {
+            $rows = [];
+        }
+        if ($rows === []) {
+            if ($fallbackUrl) {
+                return [['url' => $fallbackUrl, 'is_primary' => true, 'sort_order' => 0]];
+            }
+            return [];
+        }
+        return array_map(function (array $r) {
+            return [
+                'url'        => $this->absoluteMedia($r['image_url'] ?? null),
+                'is_primary' => (int) ($r['is_primary'] ?? 0) === 1,
+                'sort_order' => (int) ($r['sort_order'] ?? 0),
+            ];
+        }, $rows);
     }
 }

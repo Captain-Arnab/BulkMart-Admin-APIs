@@ -4,6 +4,7 @@
 $isEdit = !empty($product);
 $error = $error ?? null;
 $p = $product ?? [];
+$images = $images ?? [];
 ?>
 <div class="pagetitle">
   <h1><?= e($title) ?></h1>
@@ -60,11 +61,13 @@ $p = $product ?? [];
         </div>
         <div class="col-md-4">
           <label class="form-label">Item code</label>
-          <input type="text" name="item_code" class="form-control" value="<?= e($p['item_code'] ?? '') ?>">
+          <input type="text" name="item_code" class="form-control" value="<?= e($p['item_code'] ?? '') ?>"
+                 placeholder="Filled as batches are assigned">
         </div>
         <div class="col-md-4">
           <label class="form-label">Batch no</label>
-          <input type="text" name="batch_no" class="form-control" value="<?= e($p['batch_no'] ?? '') ?>">
+          <input type="text" name="batch_no" class="form-control" value="<?= e($p['batch_no'] ?? '') ?>"
+                 placeholder="Filled as batches come in">
         </div>
         <div class="col-md-4">
           <label class="form-label">Grade</label>
@@ -79,12 +82,31 @@ $p = $product ?? [];
           <label class="form-label">Origin</label>
           <input type="text" name="origin" class="form-control" value="<?= e($p['origin'] ?? '') ?>">
         </div>
-        <div class="col-md-4">
-          <label class="form-label">Image</label>
-          <input type="file" name="image" class="form-control" accept="image/*">
-          <?php if (!empty($p['image_url'])): ?>
-            <div class="mt-2"><img src="<?= e(media($p['image_url'])) ?>" alt="" style="height:56px;border-radius:8px"></div>
+        <div class="col-12">
+          <label class="form-label">Product images</label>
+          <p class="text-muted small mb-2">Upload several photos for the product gallery. Mark one as the cover image. Cover is also used as the catalog thumbnail.</p>
+          <?php if ($images): ?>
+            <div class="vc-admin-gallery">
+              <?php foreach ($images as $img): ?>
+                <?php $imgId = (int) $img['id']; ?>
+                <div class="vc-admin-gallery-card">
+                  <img src="<?= e(media($img['image_url'])) ?>" alt="">
+                  <label class="form-label small mb-1">Order</label>
+                  <input type="number" class="form-control form-control-sm" name="image_sort[<?= $imgId ?>]" value="<?= (int) $img['sort_order'] ?>" min="0">
+                  <div class="form-check mt-2">
+                    <input class="form-check-input" type="radio" name="primary_image" id="primary_<?= $imgId ?>" value="<?= $imgId ?>" <?= (int) $img['is_primary'] === 1 ? 'checked' : '' ?>>
+                    <label class="form-check-label" for="primary_<?= $imgId ?>">Cover image</label>
+                  </div>
+                  <div class="form-check">
+                    <input class="form-check-input" type="checkbox" name="remove_image[]" id="remove_<?= $imgId ?>" value="<?= $imgId ?>">
+                    <label class="form-check-label text-danger" for="remove_<?= $imgId ?>">Remove</label>
+                  </div>
+                </div>
+              <?php endforeach; ?>
+            </div>
           <?php endif; ?>
+          <input type="file" name="images[]" id="vcProductImages" class="form-control" accept="image/*" multiple>
+          <div class="vc-admin-gallery mt-3" id="vcNewImagePreview"></div>
         </div>
         <div class="col-12">
           <label class="form-label">Description</label>
@@ -112,3 +134,26 @@ $p = $product ?? [];
     </div>
   </div>
 </section>
+<script>
+(function () {
+  var input = document.getElementById('vcProductImages');
+  var preview = document.getElementById('vcNewImagePreview');
+  if (!input || !preview) return;
+  input.addEventListener('change', function () {
+    preview.innerHTML = '';
+    Array.prototype.forEach.call(input.files || [], function (file, i) {
+      var card = document.createElement('div');
+      card.className = 'vc-admin-gallery-card';
+      var img = document.createElement('img');
+      img.src = URL.createObjectURL(file);
+      var radio = document.createElement('div');
+      radio.className = 'form-check mt-2';
+      radio.innerHTML = '<input class="form-check-input" type="radio" name="primary_image" id="primary_new_' + i + '" value="new:' + i + '">' +
+        '<label class="form-check-label" for="primary_new_' + i + '">Cover image</label>';
+      card.appendChild(img);
+      card.appendChild(radio);
+      preview.appendChild(card);
+    });
+  });
+})();
+</script>

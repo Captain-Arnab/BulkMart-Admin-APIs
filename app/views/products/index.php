@@ -71,6 +71,8 @@ $result = $result ?? ['page' => 1, 'pages' => 1, 'total' => count($products ?? [
             <tr>
               <th>Product</th>
               <th>Category</th>
+              <th>Item Code</th>
+              <th>Batch No</th>
               <th>Price</th>
               <th>Stock</th>
               <th>Status</th>
@@ -80,7 +82,7 @@ $result = $result ?? ['page' => 1, 'pages' => 1, 'total' => count($products ?? [
           </thead>
           <tbody>
           <?php if (!$products): ?>
-            <tr><td colspan="7" class="text-center text-muted py-4">No products found.</td></tr>
+            <tr><td colspan="9" class="text-center text-muted py-4">No products found.</td></tr>
           <?php endif; ?>
           <?php foreach ($products as $p): ?>
             <?php $badge = Product::stockBadge($p); ?>
@@ -94,11 +96,13 @@ $result = $result ?? ['page' => 1, 'pages' => 1, 'total' => count($products ?? [
                   <?php endif; ?>
                   <div>
                     <div class="fw-semibold"><?= e($p['name']) ?></div>
-                    <div class="small text-muted"><?= e($p['item_code'] ?: '—') ?> · <?= e($p['unit']) ?></div>
+                    <div class="small text-muted"><?= e($p['unit']) ?></div>
                   </div>
                 </div>
               </td>
               <td><?= e($p['category_name']) ?></td>
+              <td><code><?= e($p['item_code'] ?: '—') ?></code></td>
+              <td><?= e($p['batch_no'] ?: '—') ?></td>
               <td>₹<?= e(number_format((float)$p['price'], 2)) ?></td>
               <td style="min-width:140px">
                 <form method="POST" action="<?= e(url('products/' . $p['id'] . '/stock')) ?>" class="d-flex gap-1">

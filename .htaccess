@@ -1,2 +1,33 @@
 RewriteEngine On
-RewriteRule ^(.*)$ public/$1 [L]
+
+# ---------------------------------------------------------------------------
+# VeggiiCart routing
+#   /                  → customer website (web/)
+#   /public/*          → admin panel + API  (UNCHANGED — pass through)
+#   /api/*             → same API front controller (Flutter clean path)
+# ---------------------------------------------------------------------------
+
+# Existing admin + API URLs — do not rewrite, do not loop
+RewriteRule ^public(/|$) - [L]
+
+# Internal rewrite target — stop so web/web/... never happens
+RewriteRule ^web(/|$) - [L]
+
+# Keep internal trees off the public website
+RewriteRule ^(app|database|docs|scripts|deploy_package)(/|$) - [F,L]
+RewriteRule ^\.git - [F,L]
+
+# Flutter / production clean API path (same handlers as /public/api/v1)
+RewriteRule ^api(/.*)?$ public/api$1 [L]
+
+# Dummy nav filenames from the frontend kit → real website pages
+RewriteRule ^shop\.php$ web/product.php [L]
+RewriteRule ^products\.php$ web/product.php [L]
+RewriteRule ^offers\.php$ web/offer.php [L]
+RewriteRule ^contact\.php$ web/about.php [L]
+RewriteRule ^my-account\.php$ web/account-dashboard.php [L]
+RewriteRule ^addresses\.php$ web/manage-address.php [L]
+RewriteRule ^(vegetables|fruits|leafy-greens|herbs|exotic|bulk-orders)\.php$ web/category-product-listing.php [L]
+
+# Customer website
+RewriteRule ^(.*)$ web/$1 [L]

@@ -1,0 +1,49 @@
+VeggiiCart — production catalog import notes
+===========================================
+
+File: database/seeds/products_production.sql
+Source: verified local MySQL catalog (34 products) as of 2026-08-19 08:09:26
+
+1. What this file does
+   - Inserts the 4 category names if they are missing (matched by name, not id).
+   - Deletes known stale/test product names/codes IF they are not referenced by order_items.
+   - Inserts each of the 34 confirmed products if a row with that exact name is not already present.
+
+2. Safe to run more than once
+   - Categories: WHERE NOT EXISTS (name).
+   - Products: WHERE NOT EXISTS (name). Re-running will not create duplicates.
+   - It does NOT update an existing product that already has the same name.
+     If live already has "Tomato" with the wrong price, fix that row in admin — this file will skip it.
+
+3. Tables written by the SQL statements
+   - Only INSERT/DELETE against `categories` and `products`.
+   - No INSERT/UPDATE/DELETE statements against orders, customers, or other tables.
+   - Note: MySQL FK CASCADE could still remove cart/wishlist/market_price/product_images rows
+     if a stale product (named in the DELETE list) is actually deleted. order_items is RESTRICT,
+     so any product with order history is skipped by the DELETE.
+
+4. Order-history conflict check (run against LOCAL during generation)
+   - No local order_items referenced the stale/test names. None were skipped for FK reasons.
+   - This file therefore does not delete any product that has order_items on the live DB either
+     (the DELETE uses NOT EXISTS order_items). Real customer orders are left intact.
+
+5. Local extras at generation time (not in the confirmed 34)
+   - None. Local catalog is exactly the 34 names.
+
+6. Recommended import order on live (phpMyAdmin)
+   a. Schema migrations already applied (001–006), including `categories` and `products`.
+   b. Import this file (SQL tab → paste → Go). Expect a transaction COMMIT at the end.
+   c. Confirm: SELECT COUNT(*) FROM products;  -- should be at least 34
+   d. Confirm: SELECT name, item_code FROM products WHERE name = 'Tomato';  -- item_code = 20 if the row was inserted by this file
+   e. Only then point the live website/app at this database for real traffic.
+
+7. Images
+   - image_url values are copied from local (including any uploads/products/... paths).
+   - Those files are NOT in this SQL. Upload images via admin (or copy public/uploads) on live
+     or the catalog will show missing pictures until you do.
+
+8. Unique item_code
+   - Tomato is the only product with item_code = '20'. Others are NULL.
+   - If live already has a different product using item_code 20, the Tomato INSERT will fail the unique key.
+     Clear or rename that live code first.
+

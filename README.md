@@ -36,7 +36,7 @@ These passwords are for XAMPP seeding only. Login always requires a real `admin_
 ### Useful scripts
 
 - `php scripts/migrate.php` — apply SQL migrations
-- `php scripts/seed.php` — categories, 34 products, admin user
+- `php scripts/seed.php` — categories, confirmed 34-product catalog, admin user
 - `php scripts/seed_orders.php` — test customers, orders, delivery manager
 - `php scripts/seed_modules.php` — demo banners/offers/tickets + TEST sub-admin
 - `php scripts/seed_analytics.php` — DEMO orders (VC-DEMO-*) for Dashboard/Reports charts

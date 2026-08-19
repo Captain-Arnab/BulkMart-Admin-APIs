@@ -62,6 +62,12 @@ class Router
             $path = substr($path, strlen($base)) ?: '/';
         }
 
+        // Website now occupies "/", so /api/v1 may arrive without the /public prefix.
+        $apiAt = strpos($path, '/api/');
+        if ($apiAt !== false) {
+            $path = substr($path, $apiAt);
+        }
+
         $path = '/' . trim($path, '/');
         if ($path !== '/') {
             $path = rtrim($path, '/');
