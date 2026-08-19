@@ -1845,29 +1845,22 @@
                 }
                 var uploads = document.querySelectorAll('.vc-upload-card input[type="file"]');
                 var chain = Promise.resolve();
+                var nameMap = {
+                    gst_certificate: 'gst_certificate',
+                    fssai_document: 'fssai_license',
+                    shop_registration: 'shop_establishment',
+                    msme_certificate: 'msme_certificate',
+                    trade_licence: 'trade_license',
+                    pan_card: 'pan_card',
+                    aadhaar_card: 'aadhaar_card',
+                    shop_photo: 'business_photo',
+                    business_card: 'owner_photo'
+                };
                 uploads.forEach(function (input) {
                     if (!input.files || !input.files[0]) {
                         return;
                     }
-                    var label = (input.closest('.vc-upload-card') && input.closest('.vc-upload-card').querySelector('strong'));
-                    var text = label ? label.textContent.toLowerCase() : '';
-                    var map = {
-                        gst: 'gst_certificate',
-                        fssai: 'fssai_license',
-                        pan: 'pan_card',
-                        aadhaar: 'aadhaar_card',
-                        shop: 'shop_establishment',
-                        trade: 'trade_license',
-                        cheque: 'cancelled_cheque',
-                        business: 'business_photo',
-                        owner: 'owner_photo'
-                    };
-                    var docType = 'business_photo';
-                    Object.keys(map).forEach(function (k) {
-                        if (text.indexOf(k) !== -1) {
-                            docType = map[k];
-                        }
-                    });
+                    var docType = nameMap[input.name] || input.name;
                     chain = chain.then(function () { return VC.uploadDocument(docType, input.files[0]); });
                 });
                 chain.then(function () {
@@ -1916,51 +1909,119 @@
                 panel.classList.toggle('active', panel.id === id);
             });
         }
-        function renderDocs(docs, kyc) {
+        function isImageUrl(url) {
+            return /\.(jpe?g|png|gif|webp|avif|bmp)(\?|#|$)/i.test(String(url || ''));
+        }
+        function openDocPreview(url, label) {
+            var box = document.getElementById('vcDocLightbox');
+            var body = document.getElementById('vcDocLightboxBody');
+            if (!box || !body || !url) {
+                return;
+            }
+            if (isPdfUrl(url)) {
+                body.innerHTML = '<iframe src="' + escapeHtml(url) + '" title="' + escapeHtml(label || 'Document') + '"></iframe>';
+            } else if (isImageUrl(url)) {
+                body.innerHTML = '<img src="' + escapeHtml(url) + '" alt="' + escapeHtml(label || 'Document') + '">';
+            } else {
+                body.innerHTML = '<a href="' + escapeHtml(url) + '" target="_blank" rel="noopener">Open file</a>';
+            }
+            box.hidden = false;
+        }
+        function bindLightbox() {
+            var box = document.getElementById('vcDocLightbox');
+            var close = document.getElementById('vcDocLightboxClose');
+            if (close) {
+                close.addEventListener('click', function () { if (box) box.hidden = true; });
+            }
+            if (box) {
+                box.addEventListener('click', function (e) {
+                    if (e.target === box) {
+                        box.hidden = true;
+                    }
+                });
+            }
+        }
+        function previewInner(url, label) {
+            if (!url) {
+                return '<span class="vc-doc-preview-empty"><i class="fa-solid fa-cloud-arrow-up"></i></span>';
+            }
+            if (isImageUrl(url)) {
+                return '<img src="' + escapeHtml(url) + '" alt="' + escapeHtml(label || '') + '">';
+            }
+            if (isPdfUrl(url)) {
+                return '<span class="vc-doc-preview-empty is-file"><i class="fa-solid fa-file-pdf"></i></span>';
+            }
+            return '<span class="vc-doc-preview-empty is-file"><i class="fa-solid fa-file"></i></span>';
+        }
+        function renderDocs(docs, kyc, catalog) {
             var grid = document.getElementById('vcPendingDocGrid');
             var total = document.getElementById('vcPendingDocTotal');
             var rejected = document.getElementById('vcRejectedDocList');
             var list = docs || [];
-            if (total) {
-                total.textContent = list.length === 1 ? '1 Document' : list.length + ' Documents';
+            var byType = {};
+            list.forEach(function (doc) {
+                byType[doc.document_type] = doc;
+            });
+            var expected = (catalog || []).filter(function (row) {
+                return row.key !== 'cancelled_cheque';
+            });
+            if (!expected.length) {
+                expected = [
+                    { key: 'gst_certificate', label: 'GST Certificate' },
+                    { key: 'fssai_license', label: 'FSSAI Licence' },
+                    { key: 'shop_establishment', label: 'Shop Registration' },
+                    { key: 'msme_certificate', label: 'MSME Certificate' },
+                    { key: 'trade_license', label: 'Trade Licence' },
+                    { key: 'pan_card', label: 'PAN Card' },
+                    { key: 'aadhaar_card', label: 'Aadhaar Card' },
+                    { key: 'business_photo', label: 'Shop-front Photo' },
+                    { key: 'owner_photo', label: 'Business Visiting Card' }
+                ];
             }
-            var empty = '<p class="vc-docs-empty">No documents uploaded yet.</p>';
-            if (grid) {
-                grid.innerHTML = list.length ? list.map(function (doc) {
-                    var badge = kyc === 'approved' ? 'verified' : (kyc === 'rejected' ? 'rejected' : 'reviewing');
-                    var badgeText = kyc === 'approved' ? 'Verified' : (kyc === 'rejected' ? 'Needs review' : 'Reviewing');
-                    var view = doc.file_url
-                        ? '<a class="vc-doc-view" href="' + escapeHtml(doc.file_url) + '" target="_blank" rel="noopener" title="View"><i class="fa-regular fa-eye"></i></a>'
-                        : '';
-                    return (
-                        '<div class="vc-document-item">' +
-                            '<span class="vc-document-icon"><i class="fa-solid fa-file"></i></span>' +
-                            '<div><strong>' + escapeHtml(doc.label || 'Document') + '</strong>' +
-                            '<small>' + escapeHtml(fileNameFromUrl(doc.file_url)) + '</small></div>' +
-                            view +
+            var uploadedCount = expected.filter(function (row) { return !!byType[row.key]; }).length;
+            if (total) {
+                total.textContent = uploadedCount + ' of ' + expected.length + ' uploaded';
+            }
+            function cardHtml(row, doc) {
+                var uploaded = !!doc;
+                var url = doc && doc.file_url;
+                var badge = !uploaded ? 'missing' : (kyc === 'approved' ? 'verified' : (kyc === 'rejected' ? 'rejected' : 'reviewing'));
+                var badgeText = !uploaded ? 'Not uploaded' : (kyc === 'approved' ? 'Verified' : (kyc === 'rejected' ? 'Needs review' : 'Uploaded'));
+                var previewBtn = uploaded && url
+                    ? '<button type="button" class="vc-doc-view" data-preview="' + escapeHtml(url) + '" data-label="' + escapeHtml(row.label) + '"><i class="fa-regular fa-eye"></i> Preview</button>'
+                    : '';
+                return (
+                    '<article class="vc-doc-card' + (uploaded ? ' is-uploaded' : ' is-missing') + '">' +
+                        '<div class="vc-doc-preview"' + (uploaded && url ? ' data-preview="' + escapeHtml(url) + '" data-label="' + escapeHtml(row.label) + '" role="button" tabindex="0"' : '') + '>' + previewInner(url, row.label) + '</div>' +
+                        '<div class="vc-doc-meta">' +
+                            '<strong>' + escapeHtml(row.label) + '</strong>' +
+                            '<small>' + (uploaded ? escapeHtml(fileNameFromUrl(url)) : 'Not uploaded yet') + '</small>' +
                             '<span class="vc-doc-status ' + badge + '">' + badgeText + '</span>' +
-                        '</div>'
-                    );
-                }).join('') : empty;
+                        '</div>' +
+                        previewBtn +
+                    '</article>'
+                );
+            }
+            var html = expected.map(function (row) { return cardHtml(row, byType[row.key]); }).join('');
+            if (grid) {
+                grid.innerHTML = html;
+                grid.querySelectorAll('[data-preview]').forEach(function (btn) {
+                    btn.addEventListener('click', function () {
+                        openDocPreview(btn.getAttribute('data-preview'), btn.getAttribute('data-label'));
+                    });
+                });
             }
             if (rejected) {
-                if (!list.length) {
-                    rejected.innerHTML = empty;
-                    return;
-                }
-                rejected.innerHTML = list.map(function (doc) {
-                    return (
-                        '<div class="vc-rejected-document">' +
-                            '<div class="vc-rejected-doc-info"><span><i class="fa-solid fa-file"></i></span>' +
-                            '<div><strong>' + escapeHtml(doc.label || 'Document') + '</strong>' +
-                            '<small>' + escapeHtml(fileNameFromUrl(doc.file_url)) + '</small></div></div>' +
-                            (doc.file_url ? '<a class="vc-doc-view" href="' + escapeHtml(doc.file_url) + '" target="_blank" rel="noopener"><i class="fa-regular fa-eye"></i></a>' : '') +
-                        '</div>'
-                    );
-                }).join('');
+                rejected.innerHTML = expected.map(function (row) { return cardHtml(row, byType[row.key]); }).join('');
+                rejected.querySelectorAll('[data-preview]').forEach(function (btn) {
+                    btn.addEventListener('click', function () {
+                        openDocPreview(btn.getAttribute('data-preview'), btn.getAttribute('data-label'));
+                    });
+                });
             }
         }
 
+        bindLightbox();
         VC.verificationStatus().then(function (res) {
             if (!res || !res.success) {
                 return;
@@ -1987,7 +2048,7 @@
                     : 'Your application has been received. Our team is reviewing your business information. You have not uploaded any documents yet.';
             }
             showStatusPanel(status);
-            renderDocs(docs, status);
+            renderDocs(docs, status, data.catalog || []);
         });
     }
 

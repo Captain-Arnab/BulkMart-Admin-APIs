@@ -197,56 +197,23 @@
                     </div>
 
 
-                    <div class="vc-verification-progress">
-
-                        <div class="vc-progress-step completed">
-
-                            <span>
-                                <i class="fa-solid fa-check"></i>
-                            </span>
-
-                            <div>
-                                <strong>Application Submitted</strong>
+                    <ol class="vc-journey">
+                        <li class="vc-journey-step is-done">
+                            <span class="vc-journey-dot"><i class="fa-solid fa-check"></i></span>
+                            <strong>Application Submitted</strong>
                             <small id="vcJourneySubmitted">—</small>
-                            </div>
-
-                        </div>
-
-
-                        <div class="vc-progress-line completed"></div>
-
-
-                        <div class="vc-progress-step current">
-
-                            <span>
-                                <i class="fa-solid fa-magnifying-glass"></i>
-                            </span>
-
-                            <div>
-                                <strong>Under Review</strong>
-                                <small>Verification in progress</small>
-                            </div>
-
-                        </div>
-
-
-                        <div class="vc-progress-line"></div>
-
-
-                        <div class="vc-progress-step">
-
-                            <span>
-                                <i class="fa-solid fa-user-check"></i>
-                            </span>
-
-                            <div>
-                                <strong>Final Decision</strong>
-                                <small>Pending</small>
-                            </div>
-
-                        </div>
-
-                    </div>
+                        </li>
+                        <li class="vc-journey-step is-current">
+                            <span class="vc-journey-dot"><i class="fa-solid fa-magnifying-glass"></i></span>
+                            <strong>Under Review</strong>
+                            <small>Verification in progress</small>
+                        </li>
+                        <li class="vc-journey-step">
+                            <span class="vc-journey-dot"><i class="fa-solid fa-user-check"></i></span>
+                            <strong>Final Decision</strong>
+                            <small>Pending</small>
+                        </li>
+                    </ol>
 
                 </div>
 
@@ -266,7 +233,7 @@
                     </div>
 
 
-                    <div class="vc-document-grid" id="vcPendingDocGrid"></div>
+                    <div class="vc-doc-checklist" id="vcPendingDocGrid"></div>
 
                 </div>
 
@@ -588,6 +555,12 @@
 
     </div>
 
+</div>
+
+
+<div class="vc-doc-lightbox" id="vcDocLightbox" hidden>
+    <button type="button" class="vc-doc-lightbox-close" id="vcDocLightboxClose" aria-label="Close preview">&times;</button>
+    <div class="vc-doc-lightbox-body" id="vcDocLightboxBody"></div>
 </div>
 
 

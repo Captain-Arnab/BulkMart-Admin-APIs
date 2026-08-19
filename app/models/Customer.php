@@ -9,15 +9,24 @@ class Customer extends Model
     ];
 
     public const DOC_LABELS = [
-        'gst_certificate'     => 'GST Certificate',
-        'fssai_license'       => 'FSSAI License',
-        'pan_card'            => 'PAN Card',
-        'aadhaar_card'        => 'Aadhaar Card',
-        'shop_establishment'  => 'Shop Establishment',
-        'trade_license'       => 'Trade License',
-        'cancelled_cheque'    => 'Cancelled Cheque',
-        'business_photo'      => 'Business Photo',
-        'owner_photo'         => 'Owner Photo',
+        'gst_certificate'    => 'GST Certificate',
+        'fssai_license'      => 'FSSAI Licence',
+        'shop_establishment' => 'Shop Registration',
+        'msme_certificate'   => 'MSME Certificate',
+        'trade_license'      => 'Trade Licence',
+        'pan_card'           => 'PAN Card',
+        'aadhaar_card'       => 'Aadhaar Card',
+        'business_photo'     => 'Shop-front Photo',
+        'owner_photo'        => 'Business Visiting Card',
+        'cancelled_cheque'   => 'Cancelled Cheque',
+    ];
+
+    public const DOC_ALIASES = [
+        'fssai_document'     => 'fssai_license',
+        'shop_registration'  => 'shop_establishment',
+        'trade_licence'      => 'trade_license',
+        'shop_photo'         => 'business_photo',
+        'business_card'      => 'owner_photo',
     ];
 
     public function paginate(array $filters, int $page = 1, int $perPage = 15): array

@@ -109,6 +109,7 @@ class BusinessApiController extends ApiController
     {
         try {
             $type = trim((string) ($_POST['document_type'] ?? ($this->input()['document_type'] ?? '')));
+            $type = Customer::DOC_ALIASES[$type] ?? $type;
             if ($type === '' || !isset(Customer::DOC_LABELS[$type])) {
                 $this->validationError(['document_type' => 'Valid document_type is required.']);
             }
@@ -141,7 +142,7 @@ class BusinessApiController extends ApiController
                 return [
                     'id'            => (int) $d['id'],
                     'document_type' => $d['document_type'],
-                    'label'         => Customer::DOC_LABELS[$d['document_type']] ?? $d['document_type'],
+                    'label'         => Customer::DOC_LABELS[Customer::DOC_ALIASES[$d['document_type']] ?? $d['document_type']] ?? $d['document_type'],
                     'file_url'      => $this->absoluteMedia($d['file_url']),
                     'uploaded_at'   => $d['uploaded_at'],
                 ];
@@ -206,14 +207,18 @@ class BusinessApiController extends ApiController
                 'updated_at' => $customer['updated_at'] ?? null,
             ]),
             'documents'            => array_map(function (array $d) {
+                $type = Customer::DOC_ALIASES[$d['document_type']] ?? $d['document_type'];
                 return [
                     'id'            => (int) $d['id'],
-                    'document_type' => $d['document_type'],
-                    'label'         => Customer::DOC_LABELS[$d['document_type']] ?? $d['document_type'],
+                    'document_type' => $type,
+                    'label'         => Customer::DOC_LABELS[$type] ?? $d['document_type'],
                     'file_url'      => $this->absoluteMedia($d['file_url']),
                     'uploaded_at'   => $d['uploaded_at'],
                 ];
             }, $docs),
+            'catalog'              => array_map(static function (string $key, string $label): array {
+                return ['key' => $key, 'label' => $label];
+            }, array_keys(Customer::DOC_LABELS), array_values(Customer::DOC_LABELS)),
         ]);
     }
 
