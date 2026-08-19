@@ -201,6 +201,10 @@ class BusinessApiController extends ApiController
         $this->ok([
             'kyc_status'           => $customer['kyc_status'],
             'kyc_rejection_reason' => $customer['kyc_rejection_reason'],
+            'customer'             => array_merge($this->customers->publicProfile($customer), [
+                'created_at' => $customer['created_at'] ?? null,
+                'updated_at' => $customer['updated_at'] ?? null,
+            ]),
             'documents'            => array_map(function (array $d) {
                 return [
                     'id'            => (int) $d['id'],

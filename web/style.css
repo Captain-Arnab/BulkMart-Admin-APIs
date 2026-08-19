@@ -46309,6 +46309,171 @@ RESPONSIVE
     display: none !important;
 }
 
+/* Verification status — live layout + readable type */
+.vc-status-demo[hidden],
+.vc-status-demo {
+    display: none !important;
+}
+.vc-verification-page {
+    overflow-x: hidden;
+}
+.vc-verification-container {
+    width: min(1080px, calc(100% - 32px));
+    max-width: 100%;
+}
+.vc-application-overview {
+    grid-template-columns: minmax(0, 280px) minmax(0, 1fr);
+}
+.vc-application-number-box small,
+.vc-application-meta small {
+    font-size: 12px;
+}
+.vc-application-number-box strong {
+    font-size: 16px;
+    word-break: break-word;
+}
+.vc-application-meta strong {
+    font-size: 14px;
+    word-break: break-word;
+}
+.vc-status-card {
+    grid-template-columns: minmax(140px, 220px) minmax(0, 1fr);
+    gap: 24px;
+}
+.vc-status-content h2 {
+    font-size: clamp(22px, 3.4vw, 32px);
+    line-height: 1.25;
+    letter-spacing: -0.4px;
+}
+.vc-status-content > p,
+.vc-review-notice p,
+.vc-docs-empty {
+    font-size: 15px;
+    line-height: 1.6;
+    color: #4d5c50;
+}
+.vc-status-pill,
+.vc-section-heading span {
+    font-size: 11px;
+}
+.vc-section-heading h3 {
+    font-size: 20px;
+}
+.vc-verification-progress {
+    grid-template-columns: minmax(0, 1fr) 32px minmax(0, 1fr) 32px minmax(0, 1fr);
+    gap: 8px;
+}
+.vc-progress-step strong {
+    font-size: 13px;
+}
+.vc-progress-step small {
+    font-size: 12px;
+}
+.vc-document-grid {
+    gap: 12px;
+}
+.vc-document-item {
+    grid-template-columns: 44px minmax(0, 1fr) auto auto;
+}
+.vc-document-item strong {
+    font-size: 14px;
+}
+.vc-document-item small {
+    font-size: 12px;
+}
+.vc-doc-status {
+    font-size: 11px;
+    white-space: nowrap;
+}
+.vc-doc-status.rejected {
+    background: #f8e0dc;
+    color: #b23b32;
+}
+.vc-doc-view {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 36px;
+    height: 36px;
+    border-radius: 8px;
+    color: #2e7d37;
+    background: #eef6eb;
+    text-decoration: none;
+}
+.vc-docs-empty {
+    margin: 0;
+    padding: 16px;
+    border-radius: 12px;
+    background: #f4f7f2;
+}
+.vc-outline-action,
+.vc-primary-action {
+    font-size: 14px;
+    min-height: 48px;
+}
+.vc-status-actions {
+    flex-wrap: wrap;
+}
+
+@media (max-width: 900px) {
+    .vc-application-overview,
+    .vc-status-card {
+        grid-template-columns: 1fr !important;
+    }
+    .vc-application-meta {
+        grid-template-columns: 1fr;
+    }
+    .vc-document-grid {
+        grid-template-columns: 1fr;
+    }
+}
+
+@media (max-width: 640px) {
+    .vc-verification-hero {
+        padding: 28px 0 24px;
+    }
+    .vc-verification-hero h1 {
+        font-size: 28px;
+        letter-spacing: -0.6px;
+    }
+    .vc-verification-progress {
+        display: flex;
+        flex-direction: column;
+        align-items: stretch;
+        gap: 0;
+    }
+    .vc-progress-step {
+        display: grid;
+        grid-template-columns: 44px minmax(0, 1fr);
+        gap: 12px;
+        text-align: left;
+        align-items: center;
+    }
+    .vc-progress-step > span {
+        margin: 0;
+    }
+    .vc-progress-line {
+        width: 2px;
+        height: 20px;
+        margin: 4px 0 4px 21px;
+    }
+    .vc-status-actions,
+    .vc-status-actions.vc-approved-actions {
+        flex-direction: column;
+        align-items: stretch;
+    }
+    .vc-outline-action,
+    .vc-primary-action {
+        width: 100%;
+    }
+    .vc-document-item {
+        grid-template-columns: 40px minmax(0, 1fr) auto;
+        grid-template-areas:
+            "icon text status"
+            "icon view status";
+    }
+}
+
 @media (max-width: 1200px) {
     .vc-category-main-grid {
         grid-template-columns: repeat(2, minmax(0, 1fr));

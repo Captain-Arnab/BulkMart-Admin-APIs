@@ -36,7 +36,7 @@
 
             <!-- DEMO STATUS SWITCHER
                  Remove this block after PHP integration -->
-            <div class="vc-status-demo">
+            <div class="vc-status-demo" hidden>
 
                 <span>Preview Status:</span>
 
@@ -75,7 +75,7 @@
 
                     <div>
                         <small>Application Number</small>
-                        <strong>VC-BIZ-2026-1024</strong>
+                        <strong id="vcAppNumber">—</strong>
                     </div>
 
                 </div>
@@ -90,7 +90,7 @@
 
                         <div>
                             <small>Submitted Date</small>
-                            <strong>14 August 2026</strong>
+                            <strong id="vcSubmittedDate">—</strong>
                         </div>
                     </div>
 
@@ -102,7 +102,7 @@
 
                         <div>
                             <small>Business</small>
-                            <strong>Fresh Mart Retail</strong>
+                            <strong id="vcBizNameLive">—</strong>
                         </div>
                     </div>
 
@@ -114,7 +114,7 @@
 
                         <div>
                             <small>Owner</small>
-                            <strong>Rahul Sharma</strong>
+                            <strong id="vcOwnerNameLive">—</strong>
                         </div>
                     </div>
 
@@ -157,10 +157,9 @@
                             <span>Business Application</span>
                         </h2>
 
-                        <p>
+                        <p id="vcPendingReviewCopy">
                             Your application has been received successfully.
-                            Our verification team is reviewing your business
-                            information and uploaded documents.
+                            Our verification team is reviewing your business information.
                         </p>
 
 
@@ -208,7 +207,7 @@
 
                             <div>
                                 <strong>Application Submitted</strong>
-                                <small>14 Aug 2026</small>
+                            <small id="vcJourneySubmitted">—</small>
                             </div>
 
                         </div>
@@ -262,123 +261,12 @@
                             <h3>Uploaded Documents</h3>
                         </div>
 
-                        <strong class="vc-document-total">
-                            6 Documents
-                        </strong>
+                        <strong class="vc-document-total" id="vcPendingDocTotal">0 Documents</strong>
 
                     </div>
 
 
-                    <div class="vc-document-grid">
-
-                        <div class="vc-document-item">
-
-                            <span class="vc-document-icon">
-                                <i class="fa-solid fa-file-pdf"></i>
-                            </span>
-
-                            <div>
-                                <strong>GST Certificate</strong>
-                                <small>gst-certificate.pdf</small>
-                            </div>
-
-                            <span class="vc-doc-status reviewing">
-                                Reviewing
-                            </span>
-
-                        </div>
-
-
-                        <div class="vc-document-item">
-
-                            <span class="vc-document-icon">
-                                <i class="fa-solid fa-file-image"></i>
-                            </span>
-
-                            <div>
-                                <strong>PAN Card</strong>
-                                <small>pan-card.jpg</small>
-                            </div>
-
-                            <span class="vc-doc-status verified">
-                                Verified
-                            </span>
-
-                        </div>
-
-
-                        <div class="vc-document-item">
-
-                            <span class="vc-document-icon">
-                                <i class="fa-solid fa-id-card"></i>
-                            </span>
-
-                            <div>
-                                <strong>Aadhaar Card</strong>
-                                <small>aadhaar.pdf</small>
-                            </div>
-
-                            <span class="vc-doc-status verified">
-                                Verified
-                            </span>
-
-                        </div>
-
-
-                        <div class="vc-document-item">
-
-                            <span class="vc-document-icon">
-                                <i class="fa-solid fa-shop"></i>
-                            </span>
-
-                            <div>
-                                <strong>Shop Registration</strong>
-                                <small>registration.pdf</small>
-                            </div>
-
-                            <span class="vc-doc-status reviewing">
-                                Reviewing
-                            </span>
-
-                        </div>
-
-
-                        <div class="vc-document-item">
-
-                            <span class="vc-document-icon">
-                                <i class="fa-solid fa-camera"></i>
-                            </span>
-
-                            <div>
-                                <strong>Shop-front Photo</strong>
-                                <small>shop-front.jpg</small>
-                            </div>
-
-                            <span class="vc-doc-status verified">
-                                Verified
-                            </span>
-
-                        </div>
-
-
-                        <div class="vc-document-item">
-
-                            <span class="vc-document-icon">
-                                <i class="fa-solid fa-certificate"></i>
-                            </span>
-
-                            <div>
-                                <strong>FSSAI Licence</strong>
-                                <small>fssai.pdf</small>
-                            </div>
-
-                            <span class="vc-doc-status reviewing">
-                                Reviewing
-                            </span>
-
-                        </div>
-
-                    </div>
+                    <div class="vc-document-grid" id="vcPendingDocGrid"></div>
 
                 </div>
 
@@ -390,7 +278,7 @@
                         Contact Support
                     </a>
 
-                    <a href="business-profile.php" class="vc-primary-action">
+                    <a href="bussiness-profile.php" class="vc-primary-action">
                         View Application
                         <i class="fa-solid fa-arrow-right"></i>
                     </a>
@@ -510,7 +398,7 @@
                 <div class="vc-status-actions vc-approved-actions">
 
                     <a
-                        href="business-profile.php"
+                        href="bussiness-profile.php"
                         class="vc-outline-action">
 
                         <i class="fa-solid fa-building-user"></i>
@@ -587,9 +475,8 @@
                     <div>
                         <small>Rejection Reason</small>
 
-                        <h3>
-                            GST certificate is unclear and the shop-front
-                            photograph does not clearly show the business name.
+                        <h3 id="vcRejectReason">
+                            Additional information is required. Please re-upload clear documents if asked.
                         </h3>
 
                         <p>
@@ -615,103 +502,7 @@
                     </div>
 
 
-                    <div class="vc-rejected-documents">
-
-                        <!-- DOC 1 -->
-                        <div class="vc-rejected-document">
-
-                            <div class="vc-rejected-doc-info">
-
-                                <span>
-                                    <i class="fa-solid fa-file-pdf"></i>
-                                </span>
-
-                                <div>
-                                    <strong>GST Certificate</strong>
-                                    <small>gst-certificate.pdf</small>
-                                </div>
-
-                            </div>
-
-
-                            <div class="vc-rejected-message">
-
-                                <span>
-                                    <i class="fa-solid fa-xmark"></i>
-                                    Rejected
-                                </span>
-
-                                <p>
-                                    Document image is blurred and GST number
-                                    cannot be verified.
-                                </p>
-
-                            </div>
-
-
-                            <label class="vc-reupload-btn">
-
-                                <input
-                                    type="file"
-                                    accept="image/*,.pdf">
-
-                                <i class="fa-solid fa-cloud-arrow-up"></i>
-
-                                <span>Re-upload</span>
-
-                            </label>
-
-                        </div>
-
-
-                        <!-- DOC 2 -->
-                        <div class="vc-rejected-document">
-
-                            <div class="vc-rejected-doc-info">
-
-                                <span>
-                                    <i class="fa-solid fa-camera"></i>
-                                </span>
-
-                                <div>
-                                    <strong>Shop-front Photo</strong>
-                                    <small>shop-front.jpg</small>
-                                </div>
-
-                            </div>
-
-
-                            <div class="vc-rejected-message">
-
-                                <span>
-                                    <i class="fa-solid fa-xmark"></i>
-                                    Rejected
-                                </span>
-
-                                <p>
-                                    Store signage and business name are not
-                                    clearly visible.
-                                </p>
-
-                            </div>
-
-
-                            <label class="vc-reupload-btn">
-
-                                <input
-                                    type="file"
-                                    accept="image/*"
-                                    capture="environment">
-
-                                <i class="fa-solid fa-camera"></i>
-
-                                <span>Re-upload</span>
-
-                            </label>
-
-                        </div>
-
-                    </div>
+                    <div class="vc-rejected-documents" id="vcRejectedDocList"></div>
 
                 </div>
 

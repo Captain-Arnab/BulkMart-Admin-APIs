@@ -1881,20 +1881,113 @@
     }
 
     function bootVerification() {
-        if (!VC.isLoggedIn()) {
+        if (!requireAuth()) {
             return;
         }
+        function setText(id, value) {
+            var el = document.getElementById(id);
+            if (el) {
+                el.textContent = value || '—';
+            }
+        }
+        function formatDate(value) {
+            if (!value) {
+                return '—';
+            }
+            var d = new Date(String(value).replace(' ', 'T'));
+            if (isNaN(d.getTime())) {
+                return String(value);
+            }
+            return d.toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' });
+        }
+        function fileNameFromUrl(url) {
+            var path = String(url || '').split('?')[0];
+            var name = path.split('/').pop() || 'document';
+            try {
+                return decodeURIComponent(name);
+            } catch (e) {
+                return name;
+            }
+        }
+        function showStatusPanel(status) {
+            var map = { pending: 'vcStatusPending', approved: 'vcStatusApproved', rejected: 'vcStatusRejected' };
+            var id = map[status] || 'vcStatusPending';
+            document.querySelectorAll('.vc-verification-status-panel').forEach(function (panel) {
+                panel.classList.toggle('active', panel.id === id);
+            });
+        }
+        function renderDocs(docs, kyc) {
+            var grid = document.getElementById('vcPendingDocGrid');
+            var total = document.getElementById('vcPendingDocTotal');
+            var rejected = document.getElementById('vcRejectedDocList');
+            var list = docs || [];
+            if (total) {
+                total.textContent = list.length === 1 ? '1 Document' : list.length + ' Documents';
+            }
+            var empty = '<p class="vc-docs-empty">No documents uploaded yet.</p>';
+            if (grid) {
+                grid.innerHTML = list.length ? list.map(function (doc) {
+                    var badge = kyc === 'approved' ? 'verified' : (kyc === 'rejected' ? 'rejected' : 'reviewing');
+                    var badgeText = kyc === 'approved' ? 'Verified' : (kyc === 'rejected' ? 'Needs review' : 'Reviewing');
+                    var view = doc.file_url
+                        ? '<a class="vc-doc-view" href="' + escapeHtml(doc.file_url) + '" target="_blank" rel="noopener" title="View"><i class="fa-regular fa-eye"></i></a>'
+                        : '';
+                    return (
+                        '<div class="vc-document-item">' +
+                            '<span class="vc-document-icon"><i class="fa-solid fa-file"></i></span>' +
+                            '<div><strong>' + escapeHtml(doc.label || 'Document') + '</strong>' +
+                            '<small>' + escapeHtml(fileNameFromUrl(doc.file_url)) + '</small></div>' +
+                            view +
+                            '<span class="vc-doc-status ' + badge + '">' + badgeText + '</span>' +
+                        '</div>'
+                    );
+                }).join('') : empty;
+            }
+            if (rejected) {
+                if (!list.length) {
+                    rejected.innerHTML = empty;
+                    return;
+                }
+                rejected.innerHTML = list.map(function (doc) {
+                    return (
+                        '<div class="vc-rejected-document">' +
+                            '<div class="vc-rejected-doc-info"><span><i class="fa-solid fa-file"></i></span>' +
+                            '<div><strong>' + escapeHtml(doc.label || 'Document') + '</strong>' +
+                            '<small>' + escapeHtml(fileNameFromUrl(doc.file_url)) + '</small></div></div>' +
+                            (doc.file_url ? '<a class="vc-doc-view" href="' + escapeHtml(doc.file_url) + '" target="_blank" rel="noopener"><i class="fa-regular fa-eye"></i></a>' : '') +
+                        '</div>'
+                    );
+                }).join('');
+            }
+        }
+
         VC.verificationStatus().then(function (res) {
             if (!res || !res.success) {
                 return;
             }
-            var status = (res.data && (res.data.kyc_status || (res.data.customer && res.data.customer.kyc_status))) || '';
-            var buttons = document.querySelectorAll('[data-status-target]');
-            buttons.forEach(function (b) {
-                if (b.getAttribute('data-status-target') === status) {
-                    b.click();
-                }
-            });
+            var data = res.data || {};
+            var customer = data.customer || {};
+            var status = data.kyc_status || customer.kyc_status || 'pending';
+            var docs = data.documents || [];
+            var sess = (VC.getCustomer && VC.getCustomer()) || {};
+            var id = customer.id || sess.id;
+            var year = (customer.created_at || '').slice(0, 4) || String(new Date().getFullYear());
+            setText('vcAppNumber', id ? ('VC-BIZ-' + year + '-' + String(id).padStart(4, '0')) : '—');
+            setText('vcSubmittedDate', formatDate(customer.created_at || customer.updated_at));
+            setText('vcBizNameLive', customer.business_name);
+            setText('vcOwnerNameLive', customer.owner_name);
+            setText('vcJourneySubmitted', formatDate(customer.created_at || customer.updated_at));
+            if (data.kyc_rejection_reason) {
+                setText('vcRejectReason', data.kyc_rejection_reason);
+            }
+            var copy = document.getElementById('vcPendingReviewCopy');
+            if (copy) {
+                copy.textContent = docs.length
+                    ? 'Your application has been received. Our team is reviewing your business information and uploaded documents.'
+                    : 'Your application has been received. Our team is reviewing your business information. You have not uploaded any documents yet.';
+            }
+            showStatusPanel(status);
+            renderDocs(docs, status);
         });
     }
 
