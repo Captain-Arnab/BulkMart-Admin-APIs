@@ -12,6 +12,26 @@ class BusinessApiController extends ApiController
         ['key' => 'other', 'label' => 'Other'],
     ];
 
+    /** Form labels / aliases → canonical key */
+    private const BUSINESS_TYPE_ALIASES = [
+        'retail shop'        => 'retailer',
+        'retailer'           => 'retailer',
+        'supermarket'        => 'retailer',
+        'kirana store'       => 'kirana',
+        'kirana'             => 'kirana',
+        'hotel'              => 'hotel',
+        'restaurant'         => 'restaurant',
+        'catering service'   => 'caterer',
+        'caterer'            => 'caterer',
+        'vendor/reseller'    => 'wholesaler',
+        'wholesaler'         => 'wholesaler',
+        'hostel'             => 'other',
+        'hospital'           => 'other',
+        'corporate pantry'   => 'other',
+        'juice shop'         => 'other',
+        'other'              => 'other',
+    ];
+
     private Customer $customers;
 
     public function __construct()
@@ -31,7 +51,7 @@ class BusinessApiController extends ApiController
             $fields = [];
             $businessName = trim((string) ($body['business_name'] ?? ''));
             $ownerName = trim((string) ($body['owner_name'] ?? ''));
-            $businessType = trim((string) ($body['business_type'] ?? ''));
+            $businessType = $this->normalizeBusinessType(trim((string) ($body['business_type'] ?? '')));
             if ($businessName === '') {
                 $fields['business_name'] = 'Business name is required.';
             }
@@ -42,9 +62,7 @@ class BusinessApiController extends ApiController
                 $fields['business_type'] = 'Business type is required.';
             }
             $validKeys = array_column(self::BUSINESS_TYPES, 'key');
-            $validLabels = array_column(self::BUSINESS_TYPES, 'label');
-            if ($businessType !== '' && !in_array(strtolower($businessType), $validKeys, true)
-                && !in_array($businessType, $validLabels, true)) {
+            if ($businessType !== '' && !in_array($businessType, $validKeys, true)) {
                 $fields['business_type'] = 'Invalid business type.';
             }
             if ($fields !== []) {
@@ -55,9 +73,8 @@ class BusinessApiController extends ApiController
             $map = [];
             foreach (self::BUSINESS_TYPES as $t) {
                 $map[$t['key']] = $t['label'];
-                $map[strtolower($t['label'])] = $t['label'];
             }
-            $normalized = $map[strtolower($businessType)] ?? $businessType;
+            $normalized = $map[$businessType] ?? $businessType;
 
             $id = $this->customerId();
             $this->customers->submitRegistration($id, [
@@ -225,5 +242,26 @@ class BusinessApiController extends ApiController
             throw new RuntimeException('Failed to save uploaded document.');
         }
         return 'uploads/' . trim($subdir, '/') . '/' . $name;
+    }
+
+    private function normalizeBusinessType(string $raw): string
+    {
+        $key = strtolower(trim($raw));
+        if ($key === '') {
+            return '';
+        }
+        if (isset(self::BUSINESS_TYPE_ALIASES[$key])) {
+            return self::BUSINESS_TYPE_ALIASES[$key];
+        }
+        $validKeys = array_column(self::BUSINESS_TYPES, 'key');
+        if (in_array($key, $validKeys, true)) {
+            return $key;
+        }
+        foreach (self::BUSINESS_TYPES as $t) {
+            if (strtolower($t['label']) === $key) {
+                return $t['key'];
+            }
+        }
+        return $key;
     }
 }

@@ -50,6 +50,17 @@
         return '<img src="' + escapeHtml(imgUrl(url)) + '" alt="' + escapeHtml(alt || '') + '">';
     }
 
+    function apiErrorMessage(res, fallback) {
+        var fields = res && res.error && res.error.fields;
+        if (fields && typeof fields === 'object') {
+            var parts = Object.keys(fields).map(function (k) { return fields[k]; }).filter(Boolean);
+            if (parts.length) {
+                return parts.join(' ');
+            }
+        }
+        return (res && res.error && res.error.message) || fallback || 'Something went wrong.';
+    }
+
     function toast(message, type) {
         var el = document.getElementById('vcToast');
         if (!el) {
@@ -1829,7 +1840,7 @@
             };
             VC.businessRegister(body).then(function (res) {
                 if (!res || !res.success) {
-                    toast((res && res.error && res.error.message) || 'Could not submit registration.', 'error');
+                    toast(apiErrorMessage(res, 'Could not submit registration.'), 'error');
                     return;
                 }
                 var uploads = document.querySelectorAll('.vc-upload-card input[type="file"]');

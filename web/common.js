@@ -1232,6 +1232,36 @@ document.addEventListener("DOMContentLoaded", function () {
 
 document.addEventListener("DOMContentLoaded", function () {
 
+    document.querySelectorAll(".vc-signup-password-toggle").forEach(function (button) {
+        button.addEventListener("click", function (e) {
+            e.preventDefault();
+            e.stopPropagation();
+
+            var targetId = button.getAttribute("data-target");
+            var input = targetId
+                ? document.getElementById(targetId)
+                : (button.parentElement && button.parentElement.querySelector("input"));
+            if (!input) {
+                return;
+            }
+
+            var icon = button.querySelector("i");
+            var show = input.type === "password";
+            input.type = show ? "text" : "password";
+
+            if (icon) {
+                icon.classList.toggle("fa-eye", !show);
+                icon.classList.toggle("fa-eye-slash", show);
+            }
+
+            button.setAttribute("aria-label", show ? "Hide password" : "Show password");
+        });
+    });
+
+});
+
+document.addEventListener("DOMContentLoaded", function () {
+
     if (window.VC_LIVE) {
         return;
     }

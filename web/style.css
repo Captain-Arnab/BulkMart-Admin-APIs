@@ -23956,6 +23956,7 @@ input {
     top: 50%;
     right: 7px;
     transform: translateY(-50%);
+    z-index: 2;
     display: flex;
     align-items: center;
     justify-content: center;
@@ -23964,6 +23965,7 @@ input {
     background: transparent;
     color: #809083;
     cursor: pointer;
+    pointer-events: auto;
 }
 
 .vc-password-toggle:hover {
@@ -24520,6 +24522,7 @@ input {
     top: 50%;
     right: 7px;
     transform: translateY(-50%);
+    z-index: 2;
     display: flex;
     align-items: center;
     justify-content: center;
@@ -24528,6 +24531,7 @@ input {
     background: transparent;
     color: #809083;
     cursor: pointer;
+    pointer-events: auto;
 }
 
 .vc-signup-password-toggle:hover {
@@ -33006,6 +33010,8 @@ RESPONSIVE
     right: 14px;
 
     transform: translateY(-50%);
+
+    z-index: 2;
 
     width: 35px;
     height: 35px;
