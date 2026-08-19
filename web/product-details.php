@@ -57,6 +57,11 @@
                         id="vcMainProductImage"
                         src="images/vegiicart-logo.jpeg"
                         alt="Product image">
+                    <iframe
+                        id="vcMainProductPdf"
+                        class="vc-main-pdf"
+                        title="PDF preview"
+                        hidden></iframe>
 
                 </div>
 

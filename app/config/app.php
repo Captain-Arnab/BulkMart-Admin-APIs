@@ -145,3 +145,12 @@ function flash(string $key, ?string $message = null): ?string
     unset($_SESSION['_flash'][$key]);
     return $val;
 }
+
+define('VC_BANNER_TITLE_MAX', 160);
+define('VC_BANNER_DESC_MAX', 500);
+define('VC_BANNER_LINK_MAX', 500);
+define('VC_PRODUCT_NAME_MAX', 160);
+define('VC_PRODUCT_DESC_MAX', 2000);
+define('VC_CATEGORY_NAME_MAX', 120);
+
+require_once APP_PATH . '/helpers/media.php';

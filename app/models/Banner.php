@@ -27,11 +27,16 @@ class Banner extends Model
     public function create(array $d): int
     {
         $this->execute(
-            'INSERT INTO banners (image_url, title, link, active_from, active_to, sort_order, is_active) VALUES (?,?,?,?,?,?,?)',
+            'INSERT INTO banners (image_url, title, description, link, active_from, active_to, sort_order, is_active) VALUES (?,?,?,?,?,?,?,?)',
             [
-                $d['image_url'], $d['title'], $d['link'] ?? null,
-                $d['active_from'] ?: null, $d['active_to'] ?: null,
-                (int) ($d['sort_order'] ?? 0), !empty($d['is_active']) ? 1 : 0,
+                $d['image_url'] ?? null,
+                $d['title'] ?? null,
+                $d['description'] ?? null,
+                $d['link'] ?? null,
+                $d['active_from'] ?: null,
+                $d['active_to'] ?: null,
+                (int) ($d['sort_order'] ?? 0),
+                !empty($d['is_active']) ? 1 : 0,
             ]
         );
         return (int) $this->db->lastInsertId();
@@ -40,11 +45,17 @@ class Banner extends Model
     public function update(int $id, array $d): bool
     {
         return $this->execute(
-            'UPDATE banners SET image_url=?, title=?, link=?, active_from=?, active_to=?, sort_order=?, is_active=? WHERE id=?',
+            'UPDATE banners SET image_url=?, title=?, description=?, link=?, active_from=?, active_to=?, sort_order=?, is_active=? WHERE id=?',
             [
-                $d['image_url'], $d['title'], $d['link'] ?? null,
-                $d['active_from'] ?: null, $d['active_to'] ?: null,
-                (int) ($d['sort_order'] ?? 0), !empty($d['is_active']) ? 1 : 0, $id,
+                $d['image_url'] ?? null,
+                $d['title'] ?? null,
+                $d['description'] ?? null,
+                $d['link'] ?? null,
+                $d['active_from'] ?: null,
+                $d['active_to'] ?: null,
+                (int) ($d['sort_order'] ?? 0),
+                !empty($d['is_active']) ? 1 : 0,
+                $id,
             ]
         );
     }

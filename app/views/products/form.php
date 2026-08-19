@@ -25,8 +25,8 @@ $images = $images ?? [];
       <form method="POST" enctype="multipart/form-data" class="row g-3"
             action="<?= e($isEdit ? url('products/' . $p['id'] . '/update') : url('products')) ?>">
         <div class="col-md-6">
-          <label class="form-label">Name *</label>
-          <input type="text" name="name" class="form-control" required value="<?= e($p['name'] ?? '') ?>">
+          <label class="form-label">Name * <span class="text-muted fw-normal">(max <?= (int) VC_PRODUCT_NAME_MAX ?> characters)</span></label>
+          <input type="text" name="name" class="form-control" required maxlength="<?= (int) VC_PRODUCT_NAME_MAX ?>" data-char-count value="<?= e($p['name'] ?? '') ?>">
         </div>
         <div class="col-md-6">
           <label class="form-label">Category *</label>
@@ -83,14 +83,14 @@ $images = $images ?? [];
           <input type="text" name="origin" class="form-control" value="<?= e($p['origin'] ?? '') ?>">
         </div>
         <div class="col-12">
-          <label class="form-label">Product images</label>
-          <p class="text-muted small mb-2">Upload several photos for the product gallery. Mark one as the cover image. Cover is also used as the catalog thumbnail.</p>
+          <label class="form-label">Product images / files</label>
+          <p class="text-muted small mb-2">Upload gallery files. Mark one as the cover. Cover is also used as the catalog thumbnail. <?= e(media_formats_hint()) ?></p>
           <?php if ($images): ?>
             <div class="vc-admin-gallery">
               <?php foreach ($images as $img): ?>
                 <?php $imgId = (int) $img['id']; ?>
                 <div class="vc-admin-gallery-card">
-                  <img src="<?= e(media($img['image_url'])) ?>" alt="">
+                  <?= media_preview_html($img['image_url']) ?>
                   <label class="form-label small mb-1">Order</label>
                   <input type="number" class="form-control form-control-sm" name="image_sort[<?= $imgId ?>]" value="<?= (int) $img['sort_order'] ?>" min="0">
                   <div class="form-check mt-2">
@@ -105,12 +105,12 @@ $images = $images ?? [];
               <?php endforeach; ?>
             </div>
           <?php endif; ?>
-          <input type="file" name="images[]" id="vcProductImages" class="form-control" accept="image/*" multiple>
+          <input type="file" name="images[]" id="vcProductImages" class="form-control" accept="<?= e(media_accept_attr()) ?>" multiple>
           <div class="vc-admin-gallery mt-3" id="vcNewImagePreview"></div>
         </div>
         <div class="col-12">
-          <label class="form-label">Description</label>
-          <textarea name="description" class="form-control" rows="3"><?= e($p['description'] ?? '') ?></textarea>
+          <label class="form-label">Description <span class="text-muted fw-normal">(max <?= (int) VC_PRODUCT_DESC_MAX ?> characters)</span></label>
+          <textarea name="description" class="form-control" rows="3" maxlength="<?= (int) VC_PRODUCT_DESC_MAX ?>" data-char-count><?= e($p['description'] ?? '') ?></textarea>
         </div>
         <div class="col-md-3">
           <div class="form-check mt-2">
@@ -150,13 +150,21 @@ $images = $images ?? [];
     Array.prototype.forEach.call(input.files || [], function (file, i) {
       var card = document.createElement('div');
       card.className = 'vc-admin-gallery-card';
-      var img = document.createElement('img');
-      img.src = URL.createObjectURL(file);
+      if (file.type === 'application/pdf' || /\.pdf$/i.test(file.name || '')) {
+        var frame = document.createElement('iframe');
+        frame.className = 'vc-media-preview-pdf';
+        frame.title = 'PDF preview';
+        frame.src = URL.createObjectURL(file);
+        card.appendChild(frame);
+      } else {
+        var img = document.createElement('img');
+        img.src = URL.createObjectURL(file);
+        card.appendChild(img);
+      }
       var radio = document.createElement('div');
       radio.className = 'form-check mt-2';
       radio.innerHTML = '<input class="form-check-input" type="radio" name="primary_image" id="primary_new_' + i + '" value="new:' + i + '">' +
         '<label class="form-check-label" for="primary_new_' + i + '">Cover image</label>';
-      card.appendChild(img);
       card.appendChild(radio);
       preview.appendChild(card);
     });

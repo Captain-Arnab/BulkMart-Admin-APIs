@@ -62,7 +62,7 @@ $error = $error ?? null;
               </td>
               <td style="width:64px">
                 <?php if (!empty($cat['image_url'])): ?>
-                  <img src="<?= e(media($cat['image_url'])) ?>" alt="" class="rounded" style="width:48px;height:48px;object-fit:cover">
+                  <?= media_thumb_html($cat['image_url'], 'rounded', 'width:48px;height:48px;object-fit:cover') ?>
                 <?php else: ?>
                   <div class="vc-thumb-placeholder"><i class="bi bi-tags"></i></div>
                 <?php endif; ?>

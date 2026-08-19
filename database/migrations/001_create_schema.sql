@@ -198,8 +198,9 @@ CREATE TABLE IF NOT EXISTS `role_permissions` (
 
 CREATE TABLE IF NOT EXISTS `banners` (
   `id` INT UNSIGNED NOT NULL AUTO_INCREMENT,
-  `image_url` VARCHAR(500) NOT NULL,
-  `title` VARCHAR(160) NOT NULL,
+  `image_url` VARCHAR(500) NULL,
+  `title` VARCHAR(160) NULL,
+  `description` TEXT NULL,
   `link` VARCHAR(500) NULL,
   `active_from` DATETIME NULL,
   `active_to` DATETIME NULL,

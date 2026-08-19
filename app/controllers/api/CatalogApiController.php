@@ -163,11 +163,12 @@ class CatalogApiController extends ApiController
         $this->ok([
             'banners' => array_map(function (array $b) {
                 return [
-                    'id'         => (int) $b['id'],
-                    'title'      => $b['title'],
-                    'image_url'  => $this->absoluteMedia($b['image_url']),
-                    'link'       => $b['link'],
-                    'sort_order' => (int) $b['sort_order'],
+                    'id'          => (int) $b['id'],
+                    'title'       => $b['title'],
+                    'description' => $b['description'] ?? null,
+                    'image_url'   => $this->absoluteMedia($b['image_url'] ?? null),
+                    'link'        => $b['link'],
+                    'sort_order'  => (int) $b['sort_order'],
                 ];
             }, $rows),
         ]);

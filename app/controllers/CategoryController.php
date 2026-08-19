@@ -145,8 +145,8 @@ class CategoryController extends Controller
         if ($name === '') {
             throw new InvalidArgumentException('Category name is required.');
         }
-        if (mb_strlen($name) > 120) {
-            throw new InvalidArgumentException('Category name is too long.');
+        if (vc_strlen($name) > VC_CATEGORY_NAME_MAX) {
+            throw new InvalidArgumentException('Category name can be at most ' . VC_CATEGORY_NAME_MAX . ' characters.');
         }
         return ['name' => $name, 'image_url' => null];
     }

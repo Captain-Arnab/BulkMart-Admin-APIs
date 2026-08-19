@@ -13,7 +13,7 @@
 <section class="section">
   <div class="card vc-filter-card mb-3"><div class="card-body py-3">
     <form class="row g-2 align-items-end" method="GET" action="<?= e(url('offers')) ?>">
-      <div class="col-md-5"><label class="form-label mb-1">Search</label><input type="text" name="q" value="<?= e($filters['q'] ?? '') ?>" class="form-control" placeholder="Title / coupon"></div>
+      <div class="col-md-5"><label class="form-label mb-1">Search</label><input type="text" name="q" value="<?= e($filters['q'] ?? '') ?>" class="form-control" placeholder="Title / description / coupon"></div>
       <div class="col-md-3"><label class="form-label mb-1">Active</label>
         <select name="active" class="form-select">
           <option value="">All</option>
@@ -33,8 +33,21 @@
       <?php if (!$banners): ?><tr><td colspan="6" class="text-muted">No banners yet.</td></tr><?php endif; ?>
       <?php foreach ($banners as $b): ?>
         <tr>
-          <td><?php if ($b['image_url']): ?><img src="<?= e(media($b['image_url'])) ?>" style="height:40px;border-radius:4px" alt=""><?php endif; ?></td>
-          <td><?= e($b['title']) ?><?php if ($b['link']): ?><div class="small text-muted"><?= e($b['link']) ?></div><?php endif; ?></td>
+          <td><?php if ($b['image_url']): ?><?= media_thumb_html($b['image_url'], '', 'height:40px;border-radius:4px;width:56px;object-fit:cover') ?><?php endif; ?></td>
+          <td><?php
+            $btitle = trim((string) ($b['title'] ?? ''));
+            echo e($btitle !== '' ? $btitle : 'Untitled');
+            $bdesc = trim((string) ($b['description'] ?? ''));
+            if ($bdesc !== '') {
+                $snip = function_exists('mb_substr')
+                    ? (mb_strlen($bdesc) > 80 ? mb_substr($bdesc, 0, 77) . '…' : $bdesc)
+                    : (strlen($bdesc) > 80 ? substr($bdesc, 0, 77) . '…' : $bdesc);
+                echo '<div class="small text-muted">' . e($snip) . '</div>';
+            }
+            if (!empty($b['link'])) {
+                echo '<div class="small text-muted">' . e($b['link']) . '</div>';
+            }
+          ?></td>
           <td><?= (int)$b['sort_order'] ?></td>
           <td class="small"><?= e(($b['active_from']?date('d M Y',strtotime($b['active_from'])):'—').' → '.($b['active_to']?date('d M Y',strtotime($b['active_to'])):'—')) ?></td>
           <td><?= (int)$b['is_active']?'Yes':'No' ?></td>

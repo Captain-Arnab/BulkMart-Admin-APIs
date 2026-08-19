@@ -39,6 +39,17 @@
         return url || PLACEHOLDER_IMG;
     }
 
+    function isPdfUrl(url) {
+        return /\.pdf(\?|#|$)/i.test(String(url || ''));
+    }
+
+    function catalogThumb(url, alt) {
+        if (url && isPdfUrl(url)) {
+            return '<span class="vc-pdf-fill" aria-hidden="true"><i class="fa-solid fa-file-pdf"></i></span>';
+        }
+        return '<img src="' + escapeHtml(imgUrl(url)) + '" alt="' + escapeHtml(alt || '') + '">';
+    }
+
     function toast(message, type) {
         var el = document.getElementById('vcToast');
         if (!el) {
@@ -178,7 +189,7 @@
             '<article class="vc-list-product-card" data-name="' + escapeHtml(p.name) + '" data-category="' + escapeHtml(p.category_id) + '" data-price="' + escapeHtml(p.price) + '">' +
                 '<div class="vc-list-image">' +
                     (p.in_stock ? '' : '<span class="vc-list-badge">Out of stock</span>') +
-                    '<a href="' + productHref(p) + '"><img src="' + escapeHtml(imgUrl(p.image_url)) + '" alt="' + escapeHtml(p.name) + '"></a>' +
+                    '<a href="' + productHref(p) + '">' + catalogThumb(p.image_url, p.name) + '</a>' +
                     '<button type="button" class="vc-list-wishlist" data-add-wish="' + p.id + '" aria-label="Wishlist"><i class="fa-regular fa-heart"></i></button>' +
                     '<div class="vc-list-quick-actions"><a href="' + productHref(p) + '" title="View product"><i class="fa-regular fa-eye"></i></a></div>' +
                 '</div>' +
@@ -203,7 +214,7 @@
                 '<article class="' + prefix + '-card">' +
                     '<button class="' + prefix + '-wishlist" type="button" data-add-wish="' + p.id + '"><i class="fa-regular fa-heart"></i></button>' +
                     '<a href="' + productHref(p) + '" class="' + prefix + '-image">' +
-                        '<img src="' + escapeHtml(imgUrl(p.image_url)) + '" alt="' + escapeHtml(p.name) + '">' +
+                        catalogThumb(p.image_url, p.name) +
                     '</a>' +
                     '<div class="' + prefix + '-content">' +
                         '<span class="' + prefix + '-category">' + escapeHtml(p.category_name || '') + '</span>' +
@@ -224,7 +235,7 @@
         return (
             '<a href="' + categoryHref(c) + '" class="vcat-card">' +
                 '<div class="vcat-image">' +
-                    '<img src="' + escapeHtml(imgUrl(c.image_url)) + '" alt="' + escapeHtml(c.name) + '">' +
+                    catalogThumb(c.image_url, c.name) +
                     '<span class="vcat-count">' + escapeHtml(c.product_count || 0) + ' Items</span>' +
                 '</div>' +
                 '<div class="vcat-content">' +
@@ -442,13 +453,19 @@
             var banners = (res && res.success && res.data.banners) || [];
             if (slidesWrap && banners.length) {
                 slidesWrap.innerHTML = banners.map(function (b, i) {
+                    var heading = b.title ? '<h1>' + escapeHtml(b.title) + '</h1>' : '';
+                    var desc = b.description ? '<p class="vgh-lead">' + escapeHtml(b.description) + '</p>' : '';
+                    var media = (b.image_url && isPdfUrl(b.image_url))
+                        ? '<iframe class="vgh-slide-pdf" src="' + escapeHtml(imgUrl(b.image_url)) + '#toolbar=0" title="' + escapeHtml(b.title || 'Banner') + '"></iframe>'
+                        : '<img src="' + escapeHtml(imgUrl(b.image_url)) + '" alt="' + escapeHtml(b.title || 'Banner') + '">';
                     return (
                         '<article class="vgh-slide' + (i === 0 ? ' active' : '') + '">' +
-                            '<img src="' + escapeHtml(imgUrl(b.image_url)) + '" alt="' + escapeHtml(b.title || 'Banner') + '">' +
+                            media +
                             '<div class="vgh-overlay"></div>' +
                             '<div class="vgh-container"><div class="vgh-content">' +
                                 '<span class="vgh-badge"><i class="fa-solid fa-leaf"></i> Fresh Every Day</span>' +
-                                '<h1>' + escapeHtml(b.title || 'Fresh Produce') + '</h1>' +
+                                heading +
+                                desc +
                                 '<div class="vgh-actions">' +
                                     '<a href="' + escapeHtml(b.link || 'product.php') + '" class="vgh-primary-btn">Shop Now <i class="fa-solid fa-arrow-right"></i></a>' +
                                 '</div>' +
@@ -542,7 +559,7 @@
                 viewedGrid.innerHTML = viewed.map(function (p) {
                     return (
                         '<a href="' + productHref(p) + '" class="vrc-viewed-card">' +
-                            '<div class="vrc-viewed-image"><img src="' + escapeHtml(imgUrl(p.image_url)) + '" alt="' + escapeHtml(p.name) + '"></div>' +
+                            '<div class="vrc-viewed-image">' + catalogThumb(p.image_url, p.name) + '</div>' +
                             '<div class="vrc-viewed-content">' +
                                 '<span>' + escapeHtml(p.category_name || '') + '</span>' +
                                 '<h4>' + escapeHtml(p.name) + '</h4>' +
@@ -603,7 +620,7 @@
                     return (
                         '<article class="vrc-order-item">' +
                             '<div class="vrc-order-image">' +
-                                '<img src="' + escapeHtml(imgUrl(img)) + '" alt="' + escapeHtml(name) + '">' +
+                                catalogThumb(img, name) +
                                 (row.when ? '<span>' + escapeHtml(row.when) + '</span>' : '') +
                             '</div>' +
                             '<div class="vrc-order-content">' +
@@ -818,7 +835,7 @@
                     '<article class="vc-category-main-card">' +
                         '<a href="' + categoryHref(c) + '">' +
                             '<div class="vc-category-main-image">' +
-                                '<img src="' + escapeHtml(imgUrl(c.image_url)) + '" alt="' + escapeHtml(c.name) + '">' +
+                                catalogThumb(c.image_url, c.name) +
                                 '<span>' + escapeHtml(c.product_count || 0) + ' Products</span>' +
                             '</div>' +
                             '<div class="vc-category-main-content">' +
@@ -905,6 +922,35 @@
         });
     }
 
+    function showMainMedia(url, alt) {
+        var main = document.getElementById('vcMainProductImage') || document.querySelector('.vc-product-main-image img');
+        var pdf = document.getElementById('vcMainProductPdf');
+        var src = imgUrl(url);
+        var pdfFile = !!(url && isPdfUrl(url));
+        if (pdf) {
+            if (pdfFile) {
+                pdf.src = src;
+                pdf.hidden = false;
+                if (main) {
+                    main.hidden = true;
+                }
+            } else {
+                pdf.hidden = true;
+                pdf.removeAttribute('src');
+                if (main) {
+                    main.hidden = false;
+                    main.src = src;
+                    main.alt = alt || '';
+                }
+            }
+            return;
+        }
+        if (main) {
+            main.src = pdfFile ? PLACEHOLDER_IMG : src;
+            main.alt = alt || '';
+        }
+    }
+
     function renderProductGallery(p) {
         var images = [];
         if (p.images && p.images.length) {
@@ -919,12 +965,8 @@
         }
         var gallery = document.querySelector('.vc-product-gallery');
         var thumbs = document.getElementById('vcProductThumbs') || document.querySelector('.vc-product-thumbnails');
-        var main = document.getElementById('vcMainProductImage') || document.querySelector('.vc-product-main-image img');
-        var cover = images[0] ? imgUrl(images[0].url) : PLACEHOLDER_IMG;
-        if (main) {
-            main.src = cover;
-            main.alt = p.name;
-        }
+        var coverUrl = images[0] ? images[0].url : null;
+        showMainMedia(coverUrl, p.name);
         if (gallery) {
             gallery.classList.toggle('is-single', images.length < 2);
         }
@@ -933,9 +975,13 @@
         }
         thumbs.innerHTML = images.map(function (im, i) {
             var url = imgUrl(im.url);
+            var pdf = isPdfUrl(im.url);
+            var inner = pdf
+                ? '<span class="vc-pdf-fill"><i class="fa-solid fa-file-pdf"></i></span>'
+                : '<img src="' + escapeHtml(url) + '" alt="' + escapeHtml(p.name) + '">';
             return (
-                '<button type="button" class="vc-product-thumb' + (i === 0 ? ' active' : '') + '" data-image="' + escapeHtml(url) + '">' +
-                    '<img src="' + escapeHtml(url) + '" alt="' + escapeHtml(p.name) + '">' +
+                '<button type="button" class="vc-product-thumb' + (i === 0 ? ' active' : '') + '" data-image="' + escapeHtml(im.url || '') + '">' +
+                    inner +
                 '</button>'
             );
         }).join('');
@@ -943,9 +989,7 @@
             thumb.addEventListener('click', function () {
                 thumbs.querySelectorAll('.vc-product-thumb').forEach(function (t) { t.classList.remove('active'); });
                 thumb.classList.add('active');
-                if (main) {
-                    main.src = thumb.getAttribute('data-image') || cover;
-                }
+                showMainMedia(thumb.getAttribute('data-image') || coverUrl, p.name);
             });
         });
     }
@@ -982,7 +1026,11 @@
             var banners = (res && res.success && res.data.banners) || [];
             var img = document.querySelector('.vc-offers-hero-image img');
             if (img && banners[0]) {
-                img.src = imgUrl(banners[0].image_url);
+                if (isPdfUrl(banners[0].image_url)) {
+                    img.src = PLACEHOLDER_IMG;
+                } else {
+                    img.src = imgUrl(banners[0].image_url);
+                }
             }
         });
     }
@@ -1179,7 +1227,7 @@
                         return (
                             '<div class="vc-cart-item" data-item-id="' + item.id + '">' +
                                 '<div class="vc-cart-product">' +
-                                    '<div class="vc-cart-image"><img src="' + escapeHtml(imgUrl(item.image_url)) + '" alt="' + escapeHtml(item.name) + '"></div>' +
+                                    '<div class="vc-cart-image">' + catalogThumb(item.image_url, item.name) + '</div>' +
                                     '<div class="vc-cart-product-info">' +
                                         '<span class="vc-cart-category">' + escapeHtml(item.category_name || '') + '</span>' +
                                         '<h3>' + escapeHtml(item.name) + '</h3>' +
@@ -1311,8 +1359,9 @@
             var summary = document.querySelector('.vc-order-summary-card');
             if (summary) {
                 var productsHtml = cart.items.map(function (item) {
-                    return '<div class="vc-order-product"><div class="vc-order-product-image"><img src="' +
-                        escapeHtml(imgUrl(item.image_url)) + '" alt=""></div><div><strong>' + escapeHtml(item.name) +
+                    return '<div class="vc-order-product"><div class="vc-order-product-image">' +
+                        catalogThumb(item.image_url, item.name) +
+                        '</div><div><strong>' + escapeHtml(item.name) +
                         '</strong><small>' + item.quantity + ' × ' + money(item.price) + '</small></div></div>';
                 }).join('') || emptyNote('Cart is empty.');
                 var existingProducts = summary.querySelectorAll('.vc-order-product');
@@ -1408,7 +1457,7 @@
                 return (
                     '<article class="vc-wishlist-card">' +
                         '<div class="vc-wishlist-image">' +
-                            '<a href="product-details.php?id=' + pid + '"><img src="' + escapeHtml(imgUrl(item.image_url)) + '" alt="' + escapeHtml(item.name) + '"></a>' +
+                            '<a href="product-details.php?id=' + pid + '">' + catalogThumb(item.image_url, item.name) + '</a>' +
                             '<button type="button" class="vc-wishlist-remove" data-wish-remove="' + item.id + '"><i class="fa-solid fa-xmark"></i></button>' +
                         '</div>' +
                         '<div class="vc-wishlist-content">' +

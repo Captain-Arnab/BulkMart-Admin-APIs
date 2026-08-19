@@ -12,7 +12,10 @@ class OfferController extends Controller
         $offers = (new Offer())->all();
         if ($filters['q'] !== '') {
             $q = mb_strtolower($filters['q']);
-            $banners = array_values(array_filter($banners, static fn (array $b): bool => str_contains(mb_strtolower((string) ($b['title'] ?? '')), $q)));
+            $banners = array_values(array_filter($banners, static fn (array $b): bool =>
+                str_contains(mb_strtolower((string) ($b['title'] ?? '')), $q)
+                || str_contains(mb_strtolower((string) ($b['description'] ?? '')), $q)
+            ));
             $offers = array_values(array_filter($offers, static function (array $o) use ($q): bool {
                 return str_contains(mb_strtolower((string) $o['title']), $q)
                     || str_contains(mb_strtolower((string) ($o['coupon_code'] ?? '')), $q);
@@ -46,10 +49,11 @@ class OfferController extends Controller
     {
         try {
             $data = $this->bannerPayload();
-            if (empty($_FILES['image']['name'])) {
-                throw new InvalidArgumentException('Banner image is required.');
+            if (!empty($_FILES['image']['name'])) {
+                $data['image_url'] = UploadService::storeImage($_FILES['image'], 'banners');
+            } else {
+                $data['image_url'] = null;
             }
-            $data['image_url'] = UploadService::storeImage($_FILES['image'], 'banners');
             (new Banner())->create($data);
             flash('success', 'Banner created.');
             redirect('offers');
@@ -167,12 +171,21 @@ class OfferController extends Controller
     private function bannerPayload(): array
     {
         $title = trim((string) ($_POST['title'] ?? ''));
-        if ($title === '') {
-            throw new InvalidArgumentException('Title is required.');
+        $description = trim((string) ($_POST['description'] ?? ''));
+        $link = trim((string) ($_POST['link'] ?? ''));
+        if (vc_strlen($title) > VC_BANNER_TITLE_MAX) {
+            throw new InvalidArgumentException('Title can be at most ' . VC_BANNER_TITLE_MAX . ' characters.');
+        }
+        if (vc_strlen($description) > VC_BANNER_DESC_MAX) {
+            throw new InvalidArgumentException('Description can be at most ' . VC_BANNER_DESC_MAX . ' characters.');
+        }
+        if (vc_strlen($link) > VC_BANNER_LINK_MAX) {
+            throw new InvalidArgumentException('Link can be at most ' . VC_BANNER_LINK_MAX . ' characters.');
         }
         return [
-            'title'       => $title,
-            'link'        => trim((string) ($_POST['link'] ?? '')) ?: null,
+            'title'       => $title !== '' ? $title : null,
+            'description' => $description !== '' ? $description : null,
+            'link'        => $link !== '' ? $link : null,
             'active_from' => $this->normalizeDateTime($_POST['active_from'] ?? ''),
             'active_to'   => $this->normalizeDateTime($_POST['active_to'] ?? ''),
             'sort_order'  => (int) ($_POST['sort_order'] ?? 0),

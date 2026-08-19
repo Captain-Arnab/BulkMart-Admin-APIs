@@ -31,6 +31,7 @@ if ($bannerCount === 0) {
     (new Banner($pdo))->create([
         'image_url'   => 'assets/img/logo-on-light.png',
         'title'       => 'DEMO — Fresh arrivals this week',
+        'description' => 'Seasonal produce delivered in bulk for your business.',
         'link'        => null,
         'active_from' => date('Y-m-d H:i:s'),
         'active_to'   => date('Y-m-d H:i:s', strtotime('+30 days')),

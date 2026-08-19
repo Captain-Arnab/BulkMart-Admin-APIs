@@ -105,7 +105,7 @@ $result = $result ?? ['page' => 1, 'pages' => 1, 'total' => count($products ?? [
               <td>
                 <div class="d-flex align-items-center gap-2">
                   <?php if (!empty($p['image_url'])): ?>
-                    <img src="<?= e(media($p['image_url'])) ?>" alt="" class="rounded" style="width:44px;height:44px;object-fit:cover">
+                  <?= media_thumb_html($p['image_url'], 'rounded', 'width:44px;height:44px;object-fit:cover') ?>
                   <?php else: ?>
                     <div class="vc-thumb-placeholder"><i class="bi bi-box-seam"></i></div>
                   <?php endif; ?>

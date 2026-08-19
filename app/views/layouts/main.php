@@ -54,6 +54,7 @@ $pageTitle = ($title ?? 'Admin') . ' · ' . APP_NAME;
 <script src="<?= e(asset('vendor/tinymce/tinymce.min.js')) ?>"></script>
 <script src="<?= e(asset('js/main.js')) ?>"></script>
 <script src="<?= e(asset('js/vc-header-search.js')) ?>"></script>
+<script src="<?= e(asset('js/vc-char-count.js')) ?>"></script>
 <?php if (!empty($pageScripts) && is_array($pageScripts)): ?>
   <?php foreach ($pageScripts as $src): ?>
     <script src="<?= e($src) ?>"></script>

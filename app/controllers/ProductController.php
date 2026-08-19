@@ -90,7 +90,7 @@ class ProductController extends Controller
             $model->update((int) $id, $data);
             $this->saveProductImages((int) $id);
             flash('success', 'Product updated.');
-            redirect('products/' . (int) $id . '/edit');
+            redirect('products');
         } catch (Throwable $e) {
             flash('error', $e->getMessage());
             redirect('products/' . (int) $id . '/edit');
@@ -392,6 +392,13 @@ class ProductController extends Controller
         if ($name === '' || $categoryId <= 0 || $unit === '') {
             throw new InvalidArgumentException('Name, category, and unit are required.');
         }
+        if (vc_strlen($name) > VC_PRODUCT_NAME_MAX) {
+            throw new InvalidArgumentException('Name can be at most ' . VC_PRODUCT_NAME_MAX . ' characters.');
+        }
+        $description = trim((string) ($_POST['description'] ?? ''));
+        if (vc_strlen($description) > VC_PRODUCT_DESC_MAX) {
+            throw new InvalidArgumentException('Description can be at most ' . VC_PRODUCT_DESC_MAX . ' characters.');
+        }
         if ($moq <= 0 || $price < 0 || $stock < 0) {
             throw new InvalidArgumentException('MOQ must be > 0; price/stock cannot be negative.');
         }
@@ -419,7 +426,7 @@ class ProductController extends Controller
             'stock'       => $stock,
             'batch_no'    => trim((string) ($_POST['batch_no'] ?? '')) ?: null,
             'item_code'   => $itemCode,
-            'description' => trim((string) ($_POST['description'] ?? '')) ?: null,
+            'description' => $description !== '' ? $description : null,
             'grade'       => trim((string) ($_POST['grade'] ?? '')) ?: null,
             'origin'      => trim((string) ($_POST['origin'] ?? '')) ?: null,
             'in_stock'    => $inStock,

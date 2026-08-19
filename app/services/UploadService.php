@@ -2,22 +2,28 @@
 
 class UploadService
 {
-    public static function storeImage(array $file, string $subdir, int $maxBytes = 2097152): ?string
+    public const MAX_BYTES = 5242880;
+
+    public static function storeImage(array $file, string $subdir, int $maxBytes = self::MAX_BYTES): ?string
     {
-        if (($file['error'] ?? UPLOAD_ERR_NO_FILE) === UPLOAD_ERR_NO_FILE) {
+        $err = (int) ($file['error'] ?? UPLOAD_ERR_NO_FILE);
+        if ($err === UPLOAD_ERR_NO_FILE) {
             return null;
         }
-        if (($file['error'] ?? UPLOAD_ERR_OK) !== UPLOAD_ERR_OK) {
-            throw new RuntimeException('Image upload failed.');
+        if ($err === UPLOAD_ERR_INI_SIZE || $err === UPLOAD_ERR_FORM_SIZE) {
+            throw new RuntimeException('File is larger than the server upload limit. Use a file under 5MB.');
+        }
+        if ($err !== UPLOAD_ERR_OK) {
+            throw new RuntimeException('File upload failed.');
         }
         if (($file['size'] ?? 0) > $maxBytes) {
-            throw new RuntimeException('Image must be 2MB or smaller.');
+            throw new RuntimeException('File must be 5MB or smaller.');
         }
 
         $tmp = (string) ($file['tmp_name'] ?? '');
         $ext = self::detectImageExtension($tmp);
         if ($ext === null) {
-            throw new RuntimeException('Only JPG, PNG, WEBP, or GIF images are allowed.');
+            throw new RuntimeException('Only JPG, JPEG, PNG, GIF, WEBP, AVIF, BMP, or PDF files are allowed.');
         }
 
         $dir = PUBLIC_PATH . '/uploads/' . trim($subdir, '/');
@@ -28,7 +34,7 @@ class UploadService
         $name = date('YmdHis') . '_' . bin2hex(random_bytes(4)) . '.' . $ext;
         $dest = $dir . '/' . $name;
         if (!move_uploaded_file($tmp, $dest)) {
-            throw new RuntimeException('Failed to save uploaded image.');
+            throw new RuntimeException('Failed to save uploaded file.');
         }
 
         return 'uploads/' . trim($subdir, '/') . '/' . $name;
@@ -36,7 +42,7 @@ class UploadService
 
     /**
      * Prefer file signatures over finfo. XAMPP/Windows libmagic often
-     * reports WebP (RIFF container) as application/octet-stream or audio/x-riff.
+     * mislabels WebP/AVIF (ISO/RIFF containers).
      */
     public static function detectImageExtension(string $path): ?string
     {
@@ -44,8 +50,8 @@ class UploadService
             return null;
         }
 
-        $head = file_get_contents($path, false, null, 0, 16);
-        if (!is_string($head) || strlen($head) < 12) {
+        $head = file_get_contents($path, false, null, 0, 32);
+        if (!is_string($head) || strlen($head) < 8) {
             return null;
         }
 
@@ -58,17 +64,32 @@ class UploadService
         if (str_starts_with($head, 'GIF87a') || str_starts_with($head, 'GIF89a')) {
             return 'gif';
         }
-        if (substr($head, 0, 4) === 'RIFF' && substr($head, 8, 4) === 'WEBP') {
+        if (str_starts_with($head, 'BM')) {
+            return 'bmp';
+        }
+        if (str_starts_with($head, '%PDF')) {
+            return 'pdf';
+        }
+        if (strlen($head) >= 12 && substr($head, 0, 4) === 'RIFF' && substr($head, 8, 4) === 'WEBP') {
             return 'webp';
+        }
+        if (strlen($head) >= 12 && substr($head, 4, 4) === 'ftyp') {
+            $brand = strtolower(substr($head, 8, 4));
+            if (in_array($brand, ['avif', 'avis', 'avio'], true) || str_contains(strtolower($head), 'avif')) {
+                return 'avif';
+            }
         }
 
         $finfo = new finfo(FILEINFO_MIME_TYPE);
         $mime = strtolower(trim(explode(';', (string) $finfo->file($path))[0]));
         return match ($mime) {
             'image/jpeg', 'image/jpg', 'image/pjpeg' => 'jpg',
-            'image/png', 'image/x-png' => 'png',
+            'image/png', 'image/x-png', 'image/apng' => 'png',
             'image/gif' => 'gif',
             'image/webp', 'image/x-webp' => 'webp',
+            'image/avif' => 'avif',
+            'image/bmp', 'image/x-ms-bmp', 'image/x-bmp' => 'bmp',
+            'application/pdf', 'application/x-pdf' => 'pdf',
             default => null,
         };
     }

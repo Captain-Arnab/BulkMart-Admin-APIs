@@ -23,15 +23,16 @@ $error = $error ?? null;
             action="<?= e($isEdit ? url('categories/' . $category['id'] . '/update') : url('categories')) ?>"
             class="row g-3">
         <div class="col-md-6">
-          <label class="form-label">Name *</label>
-          <input type="text" name="name" class="form-control" required maxlength="120"
-                 value="<?= e($category['name'] ?? '') ?>">
+          <label class="form-label">Name * <span class="text-muted fw-normal">(max <?= (int) VC_CATEGORY_NAME_MAX ?> characters)</span></label>
+          <input type="text" name="name" class="form-control" required maxlength="<?= (int) VC_CATEGORY_NAME_MAX ?>"
+                 data-char-count value="<?= e($category['name'] ?? '') ?>">
         </div>
         <div class="col-md-6">
-          <label class="form-label">Image</label>
-          <input type="file" name="image" class="form-control" accept="image/*">
+          <label class="form-label">Image / file</label>
+          <input type="file" name="image" class="form-control" accept="<?= e(media_accept_attr()) ?>">
+          <div class="form-text"><?= e(media_formats_hint()) ?></div>
           <?php if (!empty($category['image_url'])): ?>
-            <div class="mt-2"><img src="<?= e(media($category['image_url'])) ?>" alt="" style="height:56px;border-radius:8px"></div>
+            <div class="vc-admin-gallery mt-2"><div class="vc-admin-gallery-card"><?= media_preview_html($category['image_url']) ?></div></div>
           <?php endif; ?>
         </div>
         <div class="col-12">
