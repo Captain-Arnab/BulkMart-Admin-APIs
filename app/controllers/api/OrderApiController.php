@@ -377,7 +377,7 @@ Order ' . $esc($invoice['order_number']) . ' · ' . $esc($invoice['placed_at']) 
                 return [
                     'id'          => (int) $i['id'],
                     'product_id'  => $i['product_id'] !== null && $i['product_id'] !== '' ? (int) $i['product_id'] : null,
-                    'name'        => $i['product_name_snapshot'],
+                    'name'        => display_name($i['product_name_snapshot'] ?? ''),
                     'unit'        => $i['unit_snapshot'],
                     'quantity'    => (float) $i['quantity'],
                     'unit_price'  => (float) $i['unit_price_snapshot'],

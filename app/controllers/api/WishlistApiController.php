@@ -93,7 +93,7 @@ class WishlistApiController extends ApiController
         return [
             'id'            => (int) $r['id'],
             'product_id'    => (int) $r['product_id'],
-            'name'          => $r['name'],
+            'name'          => display_name($r['name'] ?? ''),
             'unit'          => $r['unit'],
             'moq'           => (float) $r['moq'],
             'price'         => (float) $r['price'],

@@ -149,7 +149,7 @@ class CartApiController extends ApiController
             $formatted[] = [
                 'id'            => (int) $ci['id'],
                 'product_id'    => (int) $ci['product_id'],
-                'name'          => $ci['name'],
+                'name'          => display_name($ci['name'] ?? ''),
                 'unit'          => $ci['unit'],
                 'moq'           => (float) $ci['moq'],
                 'price'         => (float) $ci['price'],

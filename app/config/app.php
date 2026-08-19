@@ -174,6 +174,22 @@ function e(?string $value): string
     return htmlspecialchars((string) $value, ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8');
 }
 
+/** Display names as Title Case: "cabbage (small size)" → "Cabbage (Small Size)". Does not change stored data. */
+function display_name(?string $value): string
+{
+    $s = mb_strtolower(trim((string) $value), 'UTF-8');
+    if ($s === '') {
+        return '';
+    }
+    return (string) preg_replace_callback(
+        '/(^|[^\p{L}\p{N}])(\p{L})/u',
+        static function (array $m): string {
+            return $m[1] . mb_strtoupper($m[2], 'UTF-8');
+        },
+        $s
+    );
+}
+
 function redirect(string $path): never
 {
     header('Location: ' . url($path));

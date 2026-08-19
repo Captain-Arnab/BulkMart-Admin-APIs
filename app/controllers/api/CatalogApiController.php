@@ -123,7 +123,7 @@ class CatalogApiController extends ApiController
             $rows = array_map(static function (array $r) {
                 return [
                     'product_id'    => (int) $r['product_id'],
-                    'name'          => $r['name'],
+                    'name'          => display_name($r['name'] ?? ''),
                     'unit'          => $r['unit'],
                     'catalog_price' => (float) $r['catalog_price'],
                     'market_price'  => $r['market_price'] !== null ? (float) $r['market_price'] : null,
@@ -143,7 +143,7 @@ class CatalogApiController extends ApiController
             'prices' => array_map(function (array $r) {
                 return [
                     'product_id'    => (int) $r['product_id'],
-                    'name'          => $r['name'],
+                    'name'          => display_name($r['name'] ?? ''),
                     'unit'          => $r['unit'],
                     'moq'           => isset($r['moq']) ? (float) $r['moq'] : null,
                     'catalog_price' => (float) $r['catalog_price'],
@@ -213,7 +213,7 @@ class CatalogApiController extends ApiController
             'id'            => (int) $p['id'],
             'category_id'   => (int) $p['category_id'],
             'category_name' => $p['category_name'] ?? null,
-            'name'          => $p['name'],
+            'name'          => display_name($p['name'] ?? ''),
             'unit'          => $p['unit'],
             'moq'           => (float) $p['moq'],
             'price'         => (float) $p['price'],

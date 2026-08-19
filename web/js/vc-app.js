@@ -27,6 +27,14 @@
             .replace(/"/g, '&quot;');
     }
 
+    /** "cabbage (small size)" → "Cabbage (Small Size)" regardless of stored casing. */
+    function titleCaseName(value) {
+        var s = String(value == null ? '' : value).toLocaleLowerCase('en-IN');
+        return s.replace(/(^|[^A-Za-z0-9\u00C0-\u024F])([A-Za-z\u00C0-\u024F])/g, function (_, sep, ch) {
+            return sep + ch.toLocaleUpperCase('en-IN');
+        });
+    }
+
     function money(n) {
         var v = Number(n);
         if (isNaN(v)) {
@@ -197,16 +205,16 @@
             ? '<div class="vc-list-stock"><i class="fa-solid fa-circle"></i> In Stock</div>'
             : '<div class="vc-list-stock out"><i class="fa-solid fa-circle"></i> Out of Stock</div>';
         return (
-            '<article class="vc-list-product-card" data-name="' + escapeHtml(p.name) + '" data-category="' + escapeHtml(p.category_id) + '" data-price="' + escapeHtml(p.price) + '">' +
+            '<article class="vc-list-product-card" data-name="' + escapeHtml(titleCaseName(p.name)) + '" data-category="' + escapeHtml(p.category_id) + '" data-price="' + escapeHtml(p.price) + '">' +
                 '<div class="vc-list-image">' +
                     (p.in_stock ? '' : '<span class="vc-list-badge">Out of stock</span>') +
-                    '<a href="' + productHref(p) + '">' + catalogThumb(p.image_url, p.name) + '</a>' +
+                    '<a href="' + productHref(p) + '">' + catalogThumb(p.image_url, titleCaseName(p.name)) + '</a>' +
                     '<button type="button" class="vc-list-wishlist" data-add-wish="' + p.id + '" aria-label="Wishlist"><i class="fa-regular fa-heart"></i></button>' +
                     '<div class="vc-list-quick-actions"><a href="' + productHref(p) + '" title="View product"><i class="fa-regular fa-eye"></i></a></div>' +
                 '</div>' +
                 '<div class="vc-list-content">' +
                     '<span class="vc-list-category">' + escapeHtml(p.category_name || '') + '</span>' +
-                    '<h3><a href="' + productHref(p) + '">' + escapeHtml(p.name) + '</a></h3>' +
+                    '<h3><a href="' + productHref(p) + '">' + escapeHtml(titleCaseName(p.name)) + '</a></h3>' +
                     '<div class="vc-list-pack">' + escapeHtml(p.unit || '') + (p.moq ? ' · MOQ ' + p.moq : '') + '</div>' +
                     '<div class="vc-list-price"><strong>' + money(p.price) + '</strong></div>' +
                     stock +
@@ -225,11 +233,11 @@
                 '<article class="' + prefix + '-card">' +
                     '<button class="' + prefix + '-wishlist" type="button" data-add-wish="' + p.id + '"><i class="fa-regular fa-heart"></i></button>' +
                     '<a href="' + productHref(p) + '" class="' + prefix + '-image">' +
-                        catalogThumb(p.image_url, p.name) +
+                        catalogThumb(p.image_url, titleCaseName(p.name)) +
                     '</a>' +
                     '<div class="' + prefix + '-content">' +
                         '<span class="' + prefix + '-category">' + escapeHtml(p.category_name || '') + '</span>' +
-                        '<h3>' + escapeHtml(p.name) + '</h3>' +
+                        '<h3>' + escapeHtml(titleCaseName(p.name)) + '</h3>' +
                         '<div class="' + prefix + '-price-row">' +
                             '<div class="' + prefix + '-price"><strong>' + money(p.price) + '</strong><span>/ ' + escapeHtml(p.unit || '') + '</span></div>' +
                             '<button class="' + prefix + '-cart-btn" type="button" data-add-cart="' + p.id + '" data-qty="' + (p.moq || 1) + '">' +
@@ -649,10 +657,10 @@
                 viewedGrid.innerHTML = viewed.map(function (p) {
                     return (
                         '<a href="' + productHref(p) + '" class="vrc-viewed-card">' +
-                            '<div class="vrc-viewed-image">' + catalogThumb(p.image_url, p.name) + '</div>' +
+                            '<div class="vrc-viewed-image">' + catalogThumb(p.image_url, titleCaseName(p.name)) + '</div>' +
                             '<div class="vrc-viewed-content">' +
                                 '<span>' + escapeHtml(p.category_name || '') + '</span>' +
-                                '<h4>' + escapeHtml(p.name) + '</h4>' +
+                                '<h4>' + escapeHtml(titleCaseName(p.name)) + '</h4>' +
                                 '<div><strong>' + money(p.price) + '</strong><small> / ' + escapeHtml(p.unit || '') + '</small></div>' +
                             '</div>' +
                             '<span class="vrc-viewed-arrow"><i class="fa-solid fa-arrow-right"></i></span>' +
@@ -704,7 +712,7 @@
                 orderList.innerHTML = rows.map(function (row) {
                     var line = row.line;
                     var p = row.product;
-                    var name = (p && p.name) || line.name;
+                    var name = titleCaseName((p && p.name) || line.name);
                     var img = (p && p.image_url) || PLACEHOLDER_IMG;
                     var cat = (p && p.category_name) || '';
                     return (
@@ -954,7 +962,7 @@
             var p = res.data.product;
             rememberView(p.id);
             var title = document.querySelector('.vc-product-info h1, .vc-product-title, .vc-product-page h1');
-            if (title) title.textContent = p.name;
+            if (title) title.textContent = titleCaseName(p.name);
             var cat = document.querySelector('.vc-product-breadcrumb span, .vc-product-category');
             if (cat) cat.textContent = p.category_name || '';
             var price = document.querySelector('.vc-product-price strong');
@@ -1056,7 +1064,7 @@
         var gallery = document.querySelector('.vc-product-gallery');
         var thumbs = document.getElementById('vcProductThumbs') || document.querySelector('.vc-product-thumbnails');
         var coverUrl = images[0] ? images[0].url : null;
-        showMainMedia(coverUrl, p.name);
+        showMainMedia(coverUrl, titleCaseName(p.name));
         if (gallery) {
             gallery.classList.toggle('is-single', images.length < 2);
         }
@@ -1068,7 +1076,7 @@
             var pdf = isPdfUrl(im.url);
             var inner = pdf
                 ? '<span class="vc-pdf-fill"><i class="fa-solid fa-file-pdf"></i></span>'
-                : '<img src="' + escapeHtml(url) + '" alt="' + escapeHtml(p.name) + '">';
+                : '<img src="' + escapeHtml(url) + '" alt="' + escapeHtml(titleCaseName(p.name)) + '">';
             return (
                 '<button type="button" class="vc-product-thumb' + (i === 0 ? ' active' : '') + '" data-image="' + escapeHtml(im.url || '') + '">' +
                     inner +
@@ -1079,7 +1087,7 @@
             thumb.addEventListener('click', function () {
                 thumbs.querySelectorAll('.vc-product-thumb').forEach(function (t) { t.classList.remove('active'); });
                 thumb.classList.add('active');
-                showMainMedia(thumb.getAttribute('data-image') || coverUrl, p.name);
+                showMainMedia(thumb.getAttribute('data-image') || coverUrl, titleCaseName(p.name));
             });
         });
     }
@@ -1317,10 +1325,10 @@
                         return (
                             '<div class="vc-cart-item" data-item-id="' + item.id + '">' +
                                 '<div class="vc-cart-product">' +
-                                    '<div class="vc-cart-image">' + catalogThumb(item.image_url, item.name) + '</div>' +
+                                    '<div class="vc-cart-image">' + catalogThumb(item.image_url, titleCaseName(item.name)) + '</div>' +
                                     '<div class="vc-cart-product-info">' +
                                         '<span class="vc-cart-category">' + escapeHtml(item.category_name || '') + '</span>' +
-                                        '<h3>' + escapeHtml(item.name) + '</h3>' +
+                                        '<h3>' + escapeHtml(titleCaseName(item.name)) + '</h3>' +
                                         '<div class="vc-cart-meta"><span>' + escapeHtml(item.unit || '') + '</span>' +
                                             '<span class="vc-stock">' + (item.in_stock ? 'In Stock' : 'Out of Stock') + '</span></div>' +
                                         '<button class="vc-remove-btn" type="button" data-remove-item="' + item.id + '"><i class="fa-solid fa-trash-can"></i> Remove</button>' +
@@ -1450,8 +1458,8 @@
             if (summary) {
                 var productsHtml = cart.items.map(function (item) {
                     return '<div class="vc-order-product"><div class="vc-order-product-image">' +
-                        catalogThumb(item.image_url, item.name) +
-                        '</div><div><strong>' + escapeHtml(item.name) +
+                        catalogThumb(item.image_url, titleCaseName(item.name)) +
+                        '</div><div><strong>' + escapeHtml(titleCaseName(item.name)) +
                         '</strong><small>' + item.quantity + ' × ' + money(item.price) + '</small></div></div>';
                 }).join('') || emptyNote('Cart is empty.');
                 var existingProducts = summary.querySelectorAll('.vc-order-product');
@@ -1547,12 +1555,12 @@
                 return (
                     '<article class="vc-wishlist-card">' +
                         '<div class="vc-wishlist-image">' +
-                            '<a href="product-details.php?id=' + pid + '">' + catalogThumb(item.image_url, item.name) + '</a>' +
+                            '<a href="product-details.php?id=' + pid + '">' + catalogThumb(item.image_url, titleCaseName(item.name)) + '</a>' +
                             '<button type="button" class="vc-wishlist-remove" data-wish-remove="' + item.id + '"><i class="fa-solid fa-xmark"></i></button>' +
                         '</div>' +
                         '<div class="vc-wishlist-content">' +
                             '<span class="vc-wishlist-category">' + escapeHtml(item.category_name || '') + '</span>' +
-                            '<h3><a href="product-details.php?id=' + pid + '">' + escapeHtml(item.name) + '</a></h3>' +
+                            '<h3><a href="product-details.php?id=' + pid + '">' + escapeHtml(titleCaseName(item.name)) + '</a></h3>' +
                             '<div class="vc-list-price"><strong>' + money(item.price) + '</strong></div>' +
                             '<button type="button" class="vc-list-cart-btn" data-wish-cart="' + item.id + '">Move to Cart</button>' +
                         '</div>' +
@@ -1721,7 +1729,7 @@
             var itemsHost = document.getElementById('vcSuccessItems');
             if (itemsHost) {
                 itemsHost.innerHTML = (o.items || []).map(function (it) {
-                    return '<div class="vc-success-product"><div><h3>' + escapeHtml(it.name) +
+                    return '<div class="vc-success-product"><div><h3>' + escapeHtml(titleCaseName(it.name)) +
                         '</h3><p>' + escapeHtml(it.quantity) + ' × ' + money(it.unit_price) +
                         '</p></div><strong>' + money(it.line_total) + '</strong></div>';
                 }).join('') || emptyNote('No items');
@@ -1737,7 +1745,7 @@
             var old = host.querySelector('.vc-live-order-box');
             if (old) old.remove();
             var items = (o.items || []).map(function (it) {
-                return '<li>' + escapeHtml(it.name) + ' × ' + escapeHtml(it.quantity) + ' — ' + money(it.line_total || it.unit_price) + '</li>';
+                return '<li>' + escapeHtml(titleCaseName(it.name)) + ' × ' + escapeHtml(it.quantity) + ' — ' + money(it.line_total || it.unit_price) + '</li>';
             }).join('');
             var log = (o.tracking || o.status_log || o.timeline || []).map(function (s) {
                 return '<li>' + escapeHtml(s.status_label || s.status || '') + ' · ' + escapeHtml(s.changed_at || s.created_at || s.at || '') + '</li>';
