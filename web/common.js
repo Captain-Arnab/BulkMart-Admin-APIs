@@ -160,8 +160,8 @@ document.addEventListener("DOMContentLoaded", function () {
 
 
     /* =====================================================
-       FAST AUTOPLAY
-       1800 = 1.8 seconds
+       AUTOPLAY
+       6000 = 6 seconds per slide
     ====================================================== */
 
     function startAutoPlay() {
@@ -172,7 +172,7 @@ document.addEventListener("DOMContentLoaded", function () {
 
             nextSlide();
 
-        }, 1800);
+        }, 6000);
 
     }
 

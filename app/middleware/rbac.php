@@ -21,10 +21,11 @@ function rbac_modules(): array
         'roles'        => 'Roles & Sub-Admins',
         'offers'       => 'Offers & Banners',
         'market_prices'=> 'Market Prices',
-        'support'      => 'Support Tickets',
-        'reports'      => 'Reports & Analytics',
-        'settings'     => 'Settings',
-        'profile'      => 'Profile',
+        'support'         => 'Support Tickets',
+        'bulk_enquiries'  => 'Bulk Enquiries',
+        'reports'         => 'Reports & Analytics',
+        'settings'        => 'Settings',
+        'profile'         => 'Profile',
     ];
 }
 
@@ -161,6 +162,12 @@ function rbac_sidebar_items(?array $user = null): array
             'label' => 'Support Tickets',
             'icon'  => 'bi-headset',
             'route' => 'support',
+        ],
+        [
+            'key'   => 'bulk_enquiries',
+            'label' => 'Bulk Enquiries',
+            'icon'  => 'bi-clipboard-data',
+            'route' => 'bulk-enquiries',
         ],
         [
             'key'   => 'reports',

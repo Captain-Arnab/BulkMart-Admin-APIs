@@ -1352,7 +1352,7 @@
                                     <span>
                                         I confirm that the information provided
                                         is correct and I agree to Vegiicart's
-                                        <a href="terms.php">
+                                        <a href="terms-and-conditions.php">
                                             Terms & Conditions
                                         </a>
                                         and

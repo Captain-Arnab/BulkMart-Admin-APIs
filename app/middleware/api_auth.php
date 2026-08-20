@@ -81,3 +81,44 @@ function api_customer_id(): int
 {
     return (int) ($GLOBALS['api_customer_id'] ?? 0);
 }
+
+/**
+ * Optional Bearer JWT — sets customer globals when valid; never aborts.
+ * Used for public endpoints that still attach a logged-in customer when present.
+ */
+function optional_api_auth(): void
+{
+    $header = $_SERVER['HTTP_AUTHORIZATION'] ?? $_SERVER['REDIRECT_HTTP_AUTHORIZATION'] ?? '';
+    if ($header === '' && function_exists('apache_request_headers')) {
+        $headers = apache_request_headers();
+        foreach ($headers as $k => $v) {
+            if (strcasecmp($k, 'Authorization') === 0) {
+                $header = $v;
+                break;
+            }
+        }
+    }
+
+    if (!preg_match('/^Bearer\s+(\S+)$/i', $header, $m)) {
+        return;
+    }
+
+    try {
+        $payload = JwtService::decode($m[1]);
+    } catch (Throwable $e) {
+        return;
+    }
+
+    $customerId = (int) ($payload['sub'] ?? 0);
+    if ($customerId < 1) {
+        return;
+    }
+
+    $customer = (new Customer())->find($customerId);
+    if (!$customer || (int) ($customer['is_blocked'] ?? 0) === 1) {
+        return;
+    }
+
+    $GLOBALS['api_customer_id'] = $customerId;
+    $GLOBALS['api_customer'] = $customer;
+}

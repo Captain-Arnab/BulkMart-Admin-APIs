@@ -149,77 +149,52 @@
 
 
                 <!-- =====================================
-                     WEIGHT SELECTION
+                     QUANTITY TIERS (25 / 50 / 75 / 100 KG)
                 ====================================== -->
-                <div class="vc-product-option">
+                <div class="vc-product-option" id="vcQtyTierBlock">
 
                     <div class="vc-product-option-title">
 
                         <strong>
-                            Select Weight
+                            Select Quantity
                         </strong>
 
-                        <span>
-                            Choose your pack size
+                        <span id="vcQtyTierHint">
+                            Fixed bulk packs in KG
                         </span>
 
                     </div>
 
 
-                    <div class="vc-weight-options">
+                    <div class="vc-weight-options" id="vcQtyTiers">
 
-                        <button
-                            type="button"
-                            class="vc-weight-btn"
-                            data-price="35">
-
-                            250 g
-
-                        </button>
-
-
-                        <button
-                            type="button"
-                            class="vc-weight-btn active"
-                            data-price="60">
-
-                            500 g
-
-                        </button>
-
-
-                        <button
-                            type="button"
-                            class="vc-weight-btn"
-                            data-price="110">
-
-                            1 Kg
-
-                        </button>
-
-
-                        <button
-                            type="button"
-                            class="vc-weight-btn"
-                            data-price="205">
-
-                            2 Kg
-
-                        </button>
+                        <button type="button" class="vc-weight-btn active" data-qty="25">25 KG</button>
+                        <button type="button" class="vc-weight-btn" data-qty="50">50 KG</button>
+                        <button type="button" class="vc-weight-btn" data-qty="75">75 KG</button>
+                        <button type="button" class="vc-weight-btn" data-qty="100">100 KG</button>
 
                     </div>
+
+                    <div class="vc-bulk-quote-row">
+                        <span>Need more than 100 KG?</span>
+                        <button type="button" class="vc-bulk-quote-btn" id="vcBulkQuoteBtn">
+                            Get Bulk Quote
+                        </button>
+                    </div>
+
+                    <p class="vc-qty-line-total" id="vcQtyLineTotal" hidden></p>
 
                 </div>
 
 
 
                 <!-- =====================================
-                     QUANTITY + CART
+                     QUANTITY + CART (non-kg products keep stepper)
                 ====================================== -->
                 <div class="vc-product-purchase">
 
 
-                    <div class="vc-product-qty">
+                    <div class="vc-product-qty" id="vcLegacyQtyBox" hidden>
 
                         <button
                             type="button"
@@ -233,7 +208,7 @@
                         <input
                             type="number"
                             id="vcProductQty"
-                            value="1"
+                            value="25"
                             min="1">
 
 
@@ -251,7 +226,8 @@
 
                     <button
                         type="button"
-                        class="vc-add-cart-btn">
+                        class="vc-add-cart-btn"
+                        id="vcAddCartBtn">
 
                         <i class="fa-solid fa-basket-shopping"></i>
 
@@ -955,5 +931,78 @@
     </div>
 
 </section>
+
+<!-- Bulk enquiry modal -->
+<div class="vc-bulk-modal" id="vcBulkEnquiryModal" aria-hidden="true">
+    <div class="vc-bulk-modal-card" role="dialog" aria-modal="true" aria-labelledby="vcBulkModalTitle">
+        <button type="button" class="vc-bulk-modal-close" id="vcBulkModalClose" aria-label="Close">
+            <i class="fa-solid fa-xmark"></i>
+        </button>
+
+        <div class="vc-bulk-modal-head">
+            <span class="vc-bulk-modal-icon"><i class="fa-solid fa-truck-ramp-box"></i></span>
+            <div>
+                <small>Bulk orders</small>
+                <h2 id="vcBulkModalTitle">Get a Bulk Quote</h2>
+            </div>
+        </div>
+
+        <p class="vc-bulk-modal-lead">
+            Tell us what you need above 100 KG. Our team will call you within 24 hours
+            (<strong>(veggiicart@gmail.com · +91 8099999086)</strong>.
+        </p>
+
+        <form id="vcBulkEnquiryForm" class="vc-bulk-form" novalidate>
+            <div class="vc-bulk-form-grid">
+                <label>
+                    <span>Name *</span>
+                    <input type="text" name="name" required placeholder="Your full name" autocomplete="name">
+                </label>
+                <label>
+                    <span>Business Name</span>
+                    <input type="text" name="business_name" placeholder="Restaurant / store name" autocomplete="organization">
+                </label>
+                <label>
+                    <span>Mobile Number *</span>
+                    <input type="tel" name="mobile" required placeholder="10-digit mobile" autocomplete="tel">
+                </label>
+                <label>
+                    <span>Product</span>
+                    <input type="text" name="product_label" id="vcBulkProductLabel" readonly>
+                    <input type="hidden" name="product_id" id="vcBulkProductId" value="">
+                </label>
+                <label>
+                    <span>Required Quantity *</span>
+                    <input type="text" name="required_quantity" required placeholder="e.g. 150 kg or 200–300 kg">
+                </label>
+                <label>
+                    <span>Pincode *</span>
+                    <input type="text" name="pincode" required placeholder="Delivery pincode" inputmode="numeric">
+                </label>
+                <label class="vc-bulk-span-2">
+                    <span>Delivery Location *</span>
+                    <input type="text" name="delivery_location" required placeholder="Area / city / landmark">
+                </label>
+                <label>
+                    <span>Preferred Delivery Date</span>
+                    <input type="date" name="preferred_delivery_date">
+                </label>
+                <label class="vc-bulk-span-2">
+                    <span>Additional Requirement</span>
+                    <textarea name="additional_requirement" rows="3" placeholder="Grade, packaging, timing notes…"></textarea>
+                </label>
+            </div>
+
+            <p class="vc-bulk-form-error" id="vcBulkFormError" hidden></p>
+            <p class="vc-bulk-form-success" id="vcBulkFormSuccess" hidden>
+                Thanks — our team will contact you within 24 hours.
+            </p>
+
+            <button type="submit" class="vc-bulk-submit-btn" id="vcBulkSubmitBtn">
+                Submit Enquiry
+            </button>
+        </form>
+    </div>
+</div>
 
 <?php include('footer.php'); ?>

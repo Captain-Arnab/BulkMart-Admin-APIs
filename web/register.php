@@ -261,7 +261,7 @@
 
                         <span>
                             I agree to the
-                            <a href="terms.php">Terms & Conditions</a>
+                            <a href="terms-and-conditions.php">Terms & Conditions</a>
                             and
                             <a href="privacy-policy.php">Privacy Policy</a>.
                         </span>

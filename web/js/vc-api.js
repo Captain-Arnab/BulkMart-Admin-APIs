@@ -227,7 +227,9 @@
             return request('POST', '/business/documents', fd, { multipart: true });
         },
         documents: function () { return request('GET', '/business/documents'); },
-        resubmit: function () { return request('POST', '/business/resubmit', {}); }
+        resubmit: function () { return request('POST', '/business/resubmit', {}); },
+
+        submitBulkEnquiry: function (body) { return request('POST', '/bulk-enquiries', body); }
     };
 
     global.VC = api;

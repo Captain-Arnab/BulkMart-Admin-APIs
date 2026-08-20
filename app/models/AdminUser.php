@@ -11,9 +11,10 @@ class AdminUser extends Model
         'customers'     => 'Customers / KYC',
         'offers'        => 'Offers & Banners',
         'market_prices' => 'Market Prices',
-        'support'       => 'Support Tickets',
-        'reports'       => 'Reports & Analytics',
-        'roles'         => 'Roles & Sub-Admins',
+        'support'         => 'Support Tickets',
+        'bulk_enquiries'  => 'Bulk Enquiries',
+        'reports'         => 'Reports & Analytics',
+        'roles'           => 'Roles & Sub-Admins',
     ];
 
     public function findByEmail(string $email): ?array

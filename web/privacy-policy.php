@@ -54,6 +54,10 @@
 
                     <div class="vc-privacy-sidebar-box">
 
+                        <?php $currentPolicy = 'privacy'; include __DIR__ . '/includes/legal-policies-nav.php'; ?>
+
+                        <hr style="border:0;border-top:1px solid #e5eee7;margin:16px 0;">
+
                         <span class="vc-privacy-sidebar-label">
                             On This Page
                         </span>

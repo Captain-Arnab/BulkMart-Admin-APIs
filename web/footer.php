@@ -266,16 +266,9 @@
                         </li>
 
                         <li>
-                            <a href="shipping-policy.php">
+                            <a href="shipping-returns-policy.php">
                                 <i class="fa-solid fa-chevron-right"></i>
-                                Shipping Policy
-                            </a>
-                        </li>
-
-                        <li>
-                            <a href="return-refund-policy.php">
-                                <i class="fa-solid fa-chevron-right"></i>
-                                Return & Refund Policy
+                                Shipping & Returns Policy
                             </a>
                         </li>
 
@@ -487,8 +480,8 @@
 
                     <span></span>
 
-                    <a href="shipping-policy.php">
-                        Shipping
+                    <a href="shipping-returns-policy.php">
+                        Shipping &amp; Returns
                     </a>
 
                     <span></span>

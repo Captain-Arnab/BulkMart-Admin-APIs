@@ -19954,15 +19954,59 @@ input {
     display: flex;
     flex-direction: column;
     gap: 18px;
+    min-width: 0;
 }
 
-.vc-summary-card {
+.vc-cart-summary .vc-summary-card {
+    display: block;
     padding: 26px;
     border-radius: 22px;
+    border: 0;
     background:
         linear-gradient(145deg, #173e23, #246433);
     box-shadow: 0 20px 48px rgba(25, 75, 36, 0.20);
     color: #ffffff;
+    overflow: hidden;
+}
+
+.vc-cart-summary .vc-summary-card:hover {
+    transform: none;
+    box-shadow: 0 20px 48px rgba(25, 75, 36, 0.20);
+}
+
+.vc-cart-summary .vc-summary-row,
+.vc-cart-summary .vc-summary-total {
+    width: 100%;
+}
+
+.vc-cart-summary .vc-summary-row span {
+    display: inline;
+    margin-bottom: 0;
+    color: rgba(255, 255, 255, 0.80);
+    font-size: 14px;
+}
+
+.vc-cart-summary .vc-summary-total > span {
+    display: inline;
+    margin-bottom: 0;
+    color: #ffffff;
+    font-size: 16px;
+    font-weight: 700;
+}
+
+.vc-cart-summary .vc-summary-row strong {
+    display: inline;
+    color: #ffffff;
+    font-size: 15px;
+    font-weight: 700;
+}
+
+.vc-cart-summary .vc-summary-total strong {
+    display: block;
+    color: #ffffff;
+    font-size: 30px;
+    line-height: 1;
+    font-weight: 800;
 }
 
 .vc-summary-header {
@@ -20303,7 +20347,7 @@ input {
         width: 100%;
     }
 
-    .vc-summary-card {
+    .vc-cart-summary .vc-summary-card {
         padding: 21px 18px;
     }
 
@@ -21462,6 +21506,250 @@ input {
     border-color: #347d41;
     background: #347d41;
     color: #fff;
+}
+
+.vc-bulk-quote-row {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    margin-top: 16px;
+    padding: 14px 16px;
+    border: 1px dashed #b7d0b5;
+    border-radius: 12px;
+    background: #f7fbf6;
+}
+
+.vc-bulk-quote-row > span {
+    color: #4d6552;
+    font-size: 13px;
+    font-weight: 600;
+}
+
+.vc-bulk-quote-btn {
+    min-height: 40px;
+    padding: 0 16px;
+    border: 1.5px solid #2f7a3d;
+    border-radius: 10px;
+    background: transparent;
+    color: #2f7a3d;
+    font-family: inherit;
+    font-size: 13px;
+    font-weight: 700;
+    cursor: pointer;
+    transition: .2s ease;
+}
+
+.vc-bulk-quote-btn:hover {
+    background: #2f7a3d;
+    color: #fff;
+}
+
+.vc-qty-line-total {
+    margin: 12px 0 0;
+    color: #1f4f28;
+    font-size: 14px;
+    font-weight: 700;
+}
+
+.vc-product-purchase.vc-purchase-tiers-only {
+    grid-template-columns: 1fr;
+}
+
+body.vc-modal-open {
+    overflow: hidden;
+}
+
+.vc-bulk-modal {
+    position: fixed;
+    z-index: 99999;
+    inset: 0;
+    display: none;
+    align-items: center;
+    justify-content: center;
+    padding: 20px;
+    background: rgba(15, 35, 18, .65);
+    backdrop-filter: blur(7px);
+}
+
+.vc-bulk-modal.show {
+    display: flex;
+}
+
+.vc-bulk-modal-card {
+    position: relative;
+    width: min(640px, 100%);
+    max-height: min(92vh, 900px);
+    overflow: auto;
+    padding: 28px 26px 24px;
+    border-radius: 20px;
+    background: #fff;
+    box-shadow: 0 24px 60px rgba(20, 50, 28, .28);
+}
+
+.vc-bulk-modal-close {
+    position: absolute;
+    top: 12px;
+    right: 12px;
+    width: 34px;
+    height: 34px;
+    display: grid;
+    place-items: center;
+    border: 0;
+    border-radius: 50%;
+    background: #f0f3ef;
+    color: #35513b;
+    cursor: pointer;
+}
+
+.vc-bulk-modal-head {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin-bottom: 10px;
+    padding-right: 36px;
+}
+
+.vc-bulk-modal-icon {
+    width: 48px;
+    height: 48px;
+    display: grid;
+    place-items: center;
+    border-radius: 14px;
+    background: #e8f6ea;
+    color: #2a7a39;
+    font-size: 20px;
+}
+
+.vc-bulk-modal-head small {
+    display: block;
+    color: #6f7f72;
+    font-size: 12px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: .4px;
+}
+
+.vc-bulk-modal-head h2 {
+    margin: 2px 0 0;
+    color: #17351d;
+    font-size: 22px;
+    font-weight: 800;
+}
+
+.vc-bulk-modal-lead {
+    margin: 0 0 18px;
+    color: #607066;
+    font-size: 13px;
+    line-height: 1.55;
+}
+
+.vc-bulk-form-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 12px;
+}
+
+.vc-bulk-form-grid label {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+}
+
+.vc-bulk-form-grid label > span {
+    color: #405447;
+    font-size: 12px;
+    font-weight: 700;
+}
+
+.vc-bulk-form-grid input,
+.vc-bulk-form-grid textarea {
+    width: 100%;
+    min-height: 44px;
+    padding: 10px 12px;
+    border: 1px solid #d8e4d6;
+    border-radius: 10px;
+    outline: none;
+    color: #243b29;
+    font-family: inherit;
+    font-size: 14px;
+    background: #fff;
+}
+
+.vc-bulk-form-grid textarea {
+    min-height: 90px;
+    resize: vertical;
+}
+
+.vc-bulk-form-grid input:focus,
+.vc-bulk-form-grid textarea:focus {
+    border-color: #65a65e;
+    box-shadow: 0 0 0 3px rgba(67, 144, 72, 0.1);
+}
+
+.vc-bulk-form-grid input[readonly] {
+    background: #f5f8f4;
+    color: #4d6352;
+}
+
+.vc-bulk-span-2 {
+    grid-column: 1 / -1;
+}
+
+.vc-bulk-form-error {
+    margin: 12px 0 0;
+    color: #b42318;
+    font-size: 13px;
+    font-weight: 600;
+}
+
+.vc-bulk-form-success {
+    margin: 12px 0 0;
+    padding: 12px 14px;
+    border-radius: 10px;
+    background: #eaf8ee;
+    color: #176b32;
+    font-size: 14px;
+    font-weight: 700;
+}
+
+.vc-bulk-submit-btn {
+    width: 100%;
+    min-height: 50px;
+    margin-top: 16px;
+    border: 0;
+    border-radius: 12px;
+    background: #2a7537;
+    color: #fff;
+    font-family: inherit;
+    font-size: 15px;
+    font-weight: 800;
+    cursor: pointer;
+}
+
+.vc-bulk-submit-btn:hover {
+    background: #1f5f2b;
+}
+
+.vc-bulk-submit-btn:disabled {
+    opacity: .65;
+    cursor: wait;
+}
+
+@media (max-width: 640px) {
+    .vc-bulk-form-grid {
+        grid-template-columns: 1fr;
+    }
+
+    .vc-bulk-quote-row {
+        flex-direction: column;
+        align-items: stretch;
+    }
+
+    .vc-bulk-quote-btn {
+        width: 100%;
+    }
 }
 
 
@@ -27909,7 +28197,7 @@ RESPONSIVE
     margin-bottom: 28px;
 }
 
-.vc-summary-card {
+.vc-orders-summary .vc-summary-card {
     background: #fff;
     border: 1px solid #e5eee7;
     border-radius: 18px;
@@ -27921,7 +28209,7 @@ RESPONSIVE
     transition: 0.3s ease;
 }
 
-.vc-summary-card:hover {
+.vc-orders-summary .vc-summary-card:hover {
     transform: translateY(-4px);
     box-shadow: 0 16px 35px rgba(26, 72, 42, 0.1);
 }
@@ -27954,14 +28242,14 @@ RESPONSIVE
     color: #13853e;
 }
 
-.vc-summary-card span {
+.vc-orders-summary .vc-summary-card span {
     display: block;
     color: #6b766f;
     font-size: 14px;
     margin-bottom: 3px;
 }
 
-.vc-summary-card strong {
+.vc-orders-summary .vc-summary-card strong {
     display: block;
     font-size: 25px;
     font-weight: 750;
@@ -28575,7 +28863,7 @@ RESPONSIVE
         gap: 10px;
     }
 
-    .vc-summary-card {
+    .vc-orders-summary .vc-summary-card {
         padding: 14px;
         gap: 10px;
     }
@@ -28587,7 +28875,7 @@ RESPONSIVE
         font-size: 17px;
     }
 
-    .vc-summary-card strong {
+    .vc-orders-summary .vc-summary-card strong {
         font-size: 20px;
     }
 
@@ -28705,7 +28993,7 @@ RESPONSIVE
         grid-template-columns: 1fr 1fr;
     }
 
-    .vc-summary-card {
+    .vc-orders-summary .vc-summary-card {
         flex-direction: column;
         align-items: flex-start;
     }
@@ -35578,7 +35866,7 @@ RESPONSIVE
     gap: 22px;
 }
 
-.vc-coupon-card {
+.vc-coupons-grid .vc-coupon-card {
     position: relative;
     padding: 26px;
     border: 1px dashed #9ac895;
@@ -35586,8 +35874,8 @@ RESPONSIVE
     background: #f9fdf8;
 }
 
-.vc-coupon-card::before,
-.vc-coupon-card::after {
+.vc-coupons-grid .vc-coupon-card::before,
+.vc-coupons-grid .vc-coupon-card::after {
     content: "";
     position: absolute;
     top: 63%;
@@ -35597,12 +35885,12 @@ RESPONSIVE
     background: #fff;
 }
 
-.vc-coupon-card::before {
+.vc-coupons-grid .vc-coupon-card::before {
     left: -12px;
     border-right: 1px dashed #9ac895;
 }
 
-.vc-coupon-card::after {
+.vc-coupons-grid .vc-coupon-card::after {
     right: -12px;
     border-left: 1px dashed #9ac895;
 }
@@ -36128,7 +36416,7 @@ RESPONSIVE
         height: 245px;
     }
 
-    .vc-coupon-card {
+    .vc-coupons-grid .vc-coupon-card {
         padding: 22px;
     }
 
@@ -46685,4 +46973,377 @@ RESPONSIVE
     .vc-wishlist-grid {
         grid-template-columns: 1fr;
     }
+}
+
+
+/* =========================================================
+   UNIFIED LEGAL / POLICY PAGES
+========================================================= */
+
+.vc-legal-page,
+.vc-legal-page * {
+    box-sizing: border-box;
+}
+
+.vc-legal-page {
+    width: 100%;
+    margin: 0;
+    padding: 0;
+    font-family: "Poppins", sans-serif;
+ color: #1E1F22;
+ background:
+ radial-gradient(circle at top left, rgba(54, 150, 74, 0.08), transparent 28%),
+ radial-gradient(circle at bottom right, rgba(139, 195, 74, 0.08), transparent 28%),
+ #f7faf6;
+}
+
+.vc-legal-container {
+ width: min(1180px, calc(100% - 40px));
+ margin: 0 auto;
+}
+
+.vc-legal-hero {
+ padding: 52px 0 28px;
+ text-align: center;
+}
+
+.vc-legal-eyebrow {
+ display: inline-flex;
+ align-items: center;
+ gap: 8px;
+ margin-bottom: 12px;
+ padding: 8px 16px;
+ border-radius: 50px;
+ background: rgba(18, 131, 59, 0.10);
+ color: #12833B;
+ font-size: 13px;
+ font-weight: 700;
+ letter-spacing: .4px;
+ text-transform: uppercase;
+}
+
+.vc-legal-hero h1 {
+ margin: 0;
+ color: #1E1F22;
+ font-size: clamp(32px, 4vw, 48px);
+ font-weight: 800;
+ line-height: 1.15;
+}
+
+.vc-legal-hero h1 span {
+ color: #12833B;
+}
+
+.vc-legal-hero > .vc-legal-container > p {
+ max-width: 640px;
+ margin: 12px auto 0;
+ color: #657268;
+ font-size: 16px;
+ line-height: 1.7;
+}
+
+.vc-legal-updated {
+ display: inline-flex;
+ align-items: center;
+ gap: 7px;
+ margin-top: 14px;
+ color: #6b7a6e;
+ font-size: 13px;
+ font-weight: 600;
+}
+
+.vc-legal-main {
+ padding: 10px 0 80px;
+}
+
+.vc-legal-layout {
+ display: grid;
+ grid-template-columns: 270px minmax(0, 1fr);
+ gap: 28px;
+ align-items: start;
+}
+
+.vc-legal-sidebar {
+ position: sticky;
+ top: 110px;
+ display: flex;
+ flex-direction: column;
+ gap: 16px;
+}
+
+.vc-legal-sidebar-card {
+ padding: 20px;
+ border: 1px solid #e2ebe0;
+ border-radius: 18px;
+ background: #fff;
+ box-shadow: 0 10px 30px rgba(36, 72, 40, 0.06);
+}
+
+.vc-legal-policies-label,
+.vc-legal-toc-label {
+ display: block;
+ color: #12833B;
+ font-size: 11px;
+ font-weight: 800;
+ letter-spacing: .7px;
+ text-transform: uppercase;
+}
+
+.vc-legal-policies-menu h3,
+.vc-legal-toc h3 {
+ margin: 4px 0 14px;
+ color: #1E1F22;
+ font-size: 18px;
+ font-weight: 800;
+}
+
+.vc-legal-policies-nav,
+.vc-legal-toc-nav {
+ display: flex;
+ flex-direction: column;
+ gap: 6px;
+}
+
+.vc-legal-policies-nav a,
+.vc-legal-toc-nav a {
+ display: flex;
+ align-items: center;
+ gap: 10px;
+ padding: 10px 12px;
+ border-radius: 11px;
+ color: #4a5b4e;
+ text-decoration: none;
+ font-size: 13px;
+ font-weight: 600;
+ transition: .2s ease;
+}
+
+.vc-legal-policies-nav a i {
+ width: 28px;
+ height: 28px;
+ display: grid;
+ place-items: center;
+ border-radius: 8px;
+ background: #eaf6ea;
+ color: #12833B;
+ font-size: 12px;
+}
+
+.vc-legal-policies-nav a:hover,
+.vc-legal-toc-nav a:hover,
+.vc-legal-policies-nav a.active,
+.vc-legal-toc-nav a.active {
+ background: #edf7ee;
+ color: #12833B;
+}
+
+.vc-legal-policies-nav a.active {
+ background: #12833B;
+ color: #fff;
+}
+
+.vc-legal-policies-nav a.active i {
+ background: rgba(255,255,255,.18);
+ color: #fff;
+}
+
+.vc-legal-content {
+ max-width: 800px;
+ padding: 28px 30px;
+ border: 1px solid #e2ebe0;
+ border-radius: 22px;
+ background: #fff;
+ box-shadow: 0 12px 34px rgba(36, 72, 40, 0.06);
+}
+
+.vc-legal-lead {
+ margin: 0 0 28px;
+ padding-bottom: 22px;
+ border-bottom: 1px solid #edf1eb;
+ color: #4d5f52;
+ font-size: 15px;
+ line-height: 1.75;
+}
+
+.vc-legal-section {
+ margin: 0 0 34px;
+ padding-top: 4px;
+ scroll-margin-top: 120px;
+}
+
+.vc-legal-section:last-of-type {
+ margin-bottom: 18px;
+}
+
+.vc-legal-section h2 {
+ margin: 0 0 12px;
+ color: #12833B;
+ font-size: 22px;
+ font-weight: 800;
+ line-height: 1.3;
+}
+
+.vc-legal-section h3 {
+ margin: 18px 0 8px;
+ color: #1E1F22;
+ font-size: 16px;
+ font-weight: 750;
+}
+
+.vc-legal-section p {
+ margin: 0 0 12px;
+ color: #3f4f43;
+ font-size: 15px;
+ line-height: 1.75;
+}
+
+.vc-legal-section ul {
+ margin: 0 0 14px;
+ padding: 0;
+ list-style: none;
+}
+
+.vc-legal-section ul li {
+ position: relative;
+ margin: 0 0 8px;
+ padding: 0 0 0 22px;
+ color: #3f4f43;
+ font-size: 15px;
+ line-height: 1.65;
+}
+
+.vc-legal-section ul li::before {
+    content: "";
+    position: absolute;
+    left: 0;
+    top: 9px;
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    background: #12833B;
+}
+
+.vc-legal-section a {
+ color: #12833B;
+ font-weight: 700;
+ text-decoration: none;
+}
+
+.vc-legal-section a:hover {
+ text-decoration: underline;
+}
+
+.vc-legal-divider {
+ margin: 36px 0 28px;
+ border: 0;
+ border-top: 1px dashed #d5e2d4;
+}
+
+.vc-legal-part-title {
+ margin: 0 0 18px;
+ padding: 14px 16px;
+ border-radius: 12px;
+ background: #edf7ee;
+ color: #12833B;
+ font-size: 18px;
+ font-weight: 800;
+}
+
+.vc-legal-contact-card {
+ display: grid;
+ grid-template-columns: 1fr 1fr;
+ gap: 12px;
+ margin-top: 18px;
+ padding: 18px;
+ border-radius: 16px;
+ background:
+ linear-gradient(145deg, #173e23, #246433);
+ color: #fff;
+}
+
+.vc-legal-contact-card .vc-legal-contact-brand {
+ grid-column: 1 / -1;
+ margin-bottom: 2px;
+}
+
+.vc-legal-contact-card .vc-legal-contact-brand strong {
+ display: block;
+ font-size: 18px;
+ font-weight: 800;
+}
+
+.vc-legal-contact-card .vc-legal-contact-brand span {
+ color: rgba(255,255,255,.72);
+ font-size: 13px;
+}
+
+.vc-legal-contact-card a {
+ display: flex;
+ align-items: center;
+ gap: 10px;
+ padding: 12px 14px;
+ border-radius: 12px;
+ background: rgba(255,255,255,.1);
+ color: #fff;
+ text-decoration: none;
+ font-size: 14px;
+ font-weight: 700;
+}
+
+.vc-legal-contact-card a i {
+ color: #b9ff9f;
+}
+
+.vc-legal-notice {
+ display: flex;
+ gap: 10px;
+ margin: 14px 0;
+ padding: 12px 14px;
+ border-radius: 12px;
+ background: #f4faf3;
+ border: 1px solid #dce9da;
+ color: #3f5444;
+ font-size: 14px;
+ line-height: 1.6;
+}
+
+.vc-legal-notice i {
+ margin-top: 2px;
+ color: #12833B;
+}
+
+.vc-legal-acceptance {
+ margin-top: 24px;
+ padding: 18px 20px;
+ border-radius: 14px;
+ background: #edf7ee;
+ color: #1f4a28;
+ font-size: 14px;
+ line-height: 1.65;
+ font-weight: 600;
+}
+
+@media (max-width: 980px) {
+ .vc-legal-layout {
+ grid-template-columns: 1fr;
+ }
+ .vc-legal-sidebar {
+ position: static;
+ }
+}
+
+@media (max-width: 640px) {
+ .vc-legal-container {
+ width: calc(100% - 24px);
+ }
+ .vc-legal-content {
+ padding: 20px 16px;
+ border-radius: 16px;
+ }
+ .vc-legal-contact-card {
+ grid-template-columns: 1fr;
+ }
+ .vc-legal-section h2 {
+ font-size: 19px;
+ }
 }

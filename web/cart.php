@@ -162,17 +162,17 @@
 
                     <div class="vc-summary-row">
                         <span>Subtotal</span>
-                        <strong>₹220</strong>
+                        <strong data-cart-subtotal>₹0</strong>
                     </div>
 
                     <div class="vc-summary-row">
                         <span>Delivery</span>
-                        <strong class="vc-free">FREE</strong>
+                        <strong class="vc-free" data-cart-delivery>FREE</strong>
                     </div>
 
                     <div class="vc-summary-row">
                         <span>Discount</span>
-                        <strong>- ₹20</strong>
+                        <strong data-cart-discount>₹0</strong>
                     </div>
 
 
@@ -184,7 +184,7 @@
 
                         <div>
                             <small>Including all charges</small>
-                            <strong>₹200</strong>
+                            <strong data-cart-total>₹0</strong>
                         </div>
                     </div>
 
@@ -220,8 +220,8 @@
                     </div>
 
                     <div class="vc-coupon-form">
-                        <input type="text" placeholder="Coupon code">
-                        <button type="button">Apply</button>
+                        <input type="text" placeholder="Coupon code" id="vcCartCouponInput">
+                        <button type="button" id="vcCartCouponBtn">Apply</button>
                     </div>
 
                 </div>

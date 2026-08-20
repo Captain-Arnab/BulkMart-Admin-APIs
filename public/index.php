@@ -119,6 +119,8 @@ $router->post('/api/v1/support/tickets', [SupportApiController::class, 'createTi
 $router->get('/api/v1/support/tickets', [SupportApiController::class, 'myTickets'], $apiAuth);
 $router->get('/api/v1/support/tickets/{id}', [SupportApiController::class, 'ticketDetail'], $apiAuth);
 
+$router->post('/api/v1/bulk-enquiries', [BulkEnquiryApiController::class, 'create']);
+
 $router->get('/api/v1/delivery-slots', [OrderApiController::class, 'deliverySlots'], $apiAuth);
 $router->post('/api/v1/orders', [OrderApiController::class, 'place'], $apiAuth);
 $router->get('/api/v1/orders', [OrderApiController::class, 'index'], $apiAuth);
@@ -209,6 +211,10 @@ $router->get('/support', [SupportController::class, 'index'], [require_module('s
 $router->get('/support/{id}', [SupportController::class, 'show'], [require_module('support')]);
 $router->post('/support/{id}/reply', [SupportController::class, 'reply'], [require_module('support')]);
 $router->post('/support/{id}/status', [SupportController::class, 'updateStatus'], [require_module('support')]);
+
+$router->get('/bulk-enquiries', [BulkEnquiryController::class, 'index'], [require_module('bulk_enquiries')]);
+$router->get('/bulk-enquiries/{id}', [BulkEnquiryController::class, 'show'], [require_module('bulk_enquiries')]);
+$router->post('/bulk-enquiries/{id}/status', [BulkEnquiryController::class, 'updateStatus'], [require_module('bulk_enquiries')]);
 
 $router->get('/reports', [ReportController::class, 'index'], [require_module('reports')]);
 $router->get('/reports/export', [ReportController::class, 'export'], [require_module('reports')]);
