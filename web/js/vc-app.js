@@ -1853,16 +1853,181 @@
         if (!requireAuth()) {
             return;
         }
-        var addressCard = document.querySelectorAll('.vc-checkout-card')[1];
-        var slotCard = document.querySelectorAll('.vc-checkout-card')[2];
+        var addressCard = document.getElementById('vcCheckoutAddressCard')
+            || document.querySelectorAll('.vc-checkout-card')[1];
+        var slotCard = document.getElementById('vcCheckoutSlotCard')
+            || document.querySelectorAll('.vc-checkout-card')[2];
+        var addressMount = document.getElementById('vcCheckoutAddressMount') || addressCard;
+        var slotMount = document.getElementById('vcCheckoutSlotMount') || slotCard;
         var selectedAddress = null;
         var selectedSlot = null;
+        var deliveryMode = 'single';
+        var selectedMultiIds = [];
+        var cartRef = { items: [], total: 0, subtotal: 0, discount: 0 };
+        var addressesRef = [];
+        var slotsRef = [];
+        var placeBtn = document.querySelector('.vc-place-order-btn');
+
+        function addrServiceable(a) {
+            return a && a.serviceable !== false;
+        }
+
+        function slotLabel(id) {
+            var s = slotsRef.find(function (x) { return Number(x.id) === Number(id); });
+            return s ? (s.date + ' · ' + s.label) : '';
+        }
+
+        function renderAllocationUI(host) {
+            var box = host.querySelector('#vcMultiAlloc');
+            if (!box) {
+                return;
+            }
+            if (deliveryMode !== 'split' || selectedMultiIds.length < 2) {
+                box.innerHTML = selectedMultiIds.length < 2
+                    ? '<div class="vc-checkout-empty-note"><i class="fa-solid fa-diagram-project"></i><p>Select <strong>at least 2 addresses</strong> above, then allocate each product’s quantity across them.</p></div>'
+                    : '';
+                updatePlaceEnabled();
+                return;
+            }
+            var addrs = selectedMultiIds.map(function (id) {
+                return addressesRef.find(function (a) { return Number(a.id) === Number(id); });
+            }).filter(Boolean);
+
+            var slotsHtml = addrs.map(function (a) {
+                return '<div class="vc-multi-slot-row" data-addr-slot="' + a.id + '">' +
+                    '<span class="vc-multi-slot-label">' + escapeHtml(a.label || 'Address') + '</span>' +
+                    '<select class="vc-multi-slot-select" data-slot-for="' + a.id + '">' +
+                    '<option value="">Any / later</option>' +
+                    slotsRef.slice(0, 12).map(function (s) {
+                        return '<option value="' + s.id + '">' + escapeHtml(s.date + ' · ' + s.label) + '</option>';
+                    }).join('') +
+                    '</select></div>';
+            }).join('');
+
+            var rows = (cartRef.items || []).map(function (item) {
+                var pid = item.product_id || item.id;
+                var totalQty = Number(item.quantity) || 0;
+                var inputs = addrs.map(function (a) {
+                    return '<label class="vc-alloc-cell"><span>' + escapeHtml(a.label || ('#' + a.id)) + '</span>' +
+                        '<input type="number" min="0" step="0.01" class="vc-alloc-input" data-pid="' + pid +
+                        '" data-aid="' + a.id + '" value="0"></label>';
+                }).join('');
+                return '<div class="vc-alloc-row" data-pid="' + pid + '" data-total="' + totalQty + '">' +
+                    '<div class="vc-alloc-head"><strong>' + escapeHtml(titleCaseName(item.name)) +
+                    '</strong> <span class="vc-alloc-need-wrap">Cart total: <b class="vc-alloc-need">' + totalQty + '</b></span>' +
+                    ' <span class="vc-alloc-status" data-status-for="' + pid + '">Allocate fully</span></div>' +
+                    '<div class="vc-alloc-inputs">' + inputs + '</div></div>';
+            }).join('');
+
+            box.innerHTML =
+                '<div class="vc-multi-panel">' +
+                    '<div class="vc-multi-panel-title">Slot per location</div>' +
+                    '<div class="vc-multi-slots">' + slotsHtml + '</div>' +
+                '</div>' +
+                '<div class="vc-multi-panel">' +
+                    '<div class="vc-multi-panel-title">Allocate quantities</div>' +
+                    '<p class="vc-multi-panel-sub">Each product’s inputs must add up exactly to the cart total.</p>' +
+                    '<div class="vc-multi-alloc-list">' + rows + '</div>' +
+                '</div>';
+
+            box.querySelectorAll('.vc-alloc-input').forEach(function (inp) {
+                inp.addEventListener('input', validateAllocations);
+            });
+            validateAllocations();
+        }
+
+        function validateAllocations() {
+            var box = document.getElementById('vcMultiAlloc');
+            if (!box || deliveryMode !== 'split') {
+                updatePlaceEnabled();
+                return true;
+            }
+            var ok = true;
+            box.querySelectorAll('.vc-alloc-row').forEach(function (row) {
+                var need = Number(row.getAttribute('data-total')) || 0;
+                var pid = row.getAttribute('data-pid');
+                var sum = 0;
+                row.querySelectorAll('.vc-alloc-input').forEach(function (inp) {
+                    sum += Number(inp.value) || 0;
+                });
+                sum = Math.round(sum * 100) / 100;
+                need = Math.round(need * 100) / 100;
+                var status = box.querySelector('[data-status-for="' + pid + '"]');
+                var match = Math.abs(sum - need) < 0.001;
+                if (!match) ok = false;
+                if (status) {
+                    status.textContent = match ? '✓ Fully allocated' : ('Allocated ' + sum + ' / ' + need);
+                    status.style.color = match ? '#1a7f37' : '#b42318';
+                }
+            });
+            updatePlaceEnabled(ok);
+            return ok;
+        }
+
+        function updatePlaceEnabled(allocOk) {
+            if (!placeBtn) return;
+            if (deliveryMode === 'split') {
+                var can = selectedMultiIds.length >= 2 && cartRef.items.length > 0 && allocOk !== false && validateAllocationsSilent();
+                placeBtn.disabled = !can;
+                placeBtn.style.opacity = can ? '1' : '0.55';
+            } else {
+                placeBtn.disabled = false;
+                placeBtn.style.opacity = '1';
+            }
+        }
+
+        function validateAllocationsSilent() {
+            var box = document.getElementById('vcMultiAlloc');
+            if (!box) return false;
+            var ok = true;
+            box.querySelectorAll('.vc-alloc-row').forEach(function (row) {
+                var need = Math.round((Number(row.getAttribute('data-total')) || 0) * 100) / 100;
+                var sum = 0;
+                row.querySelectorAll('.vc-alloc-input').forEach(function (inp) {
+                    sum += Number(inp.value) || 0;
+                });
+                if (Math.abs(Math.round(sum * 100) / 100 - need) > 0.001) ok = false;
+            });
+            return ok && (cartRef.items || []).length > 0;
+        }
+
+        function buildMultiPayload(notes) {
+            var box = document.getElementById('vcMultiAlloc');
+            var blocks = selectedMultiIds.map(function (aid) {
+                var items = [];
+                (cartRef.items || []).forEach(function (item) {
+                    var pid = item.product_id || item.id;
+                    var inp = box.querySelector('.vc-alloc-input[data-pid="' + pid + '"][data-aid="' + aid + '"]');
+                    var qty = inp ? Number(inp.value) || 0 : 0;
+                    if (qty > 0) {
+                        items.push({ product_id: Number(pid), quantity: qty });
+                    }
+                });
+                var slotSel = box.querySelector('.vc-multi-slot-select[data-slot-for="' + aid + '"]');
+                var slotId = slotSel && slotSel.value ? Number(slotSel.value) : null;
+                var blockNotes = notes || '';
+                if (slotId) {
+                    var sl = slotLabel(slotId);
+                    if (sl) blockNotes = (blockNotes ? blockNotes + ' — ' : '') + 'Slot: ' + sl;
+                }
+                return {
+                    address_id: Number(aid),
+                    delivery_slot_id: slotId,
+                    notes: blockNotes,
+                    items: items
+                };
+            });
+            return { addresses: blocks };
+        }
 
         Promise.all([VC.cart(), VC.addresses(), VC.deliverySlots(), VC.profile()]).then(function (pack) {
             var cart = pack[0] && pack[0].success ? pack[0].data : { items: [], total: 0, subtotal: 0, discount: 0 };
             var addresses = pack[1] && pack[1].success ? pack[1].data.addresses : [];
             var slots = pack[2] && pack[2].success ? pack[2].data.slots : [];
             var profile = pack[3] && pack[3].success ? pack[3].data : VC.getCustomer();
+            cartRef = cart;
+            addressesRef = addresses;
+            slotsRef = slots;
 
             if (profile) {
                 var nameInput = document.querySelector('.vc-checkout-form-grid input[name="name"]');
@@ -1873,38 +2038,204 @@
                 if (emailInput && profile.email) emailInput.value = profile.email;
             }
 
-            if (addressCard) {
+            if (addressMount) {
+                addressMount.querySelectorAll('.vc-live-address-picker, .vc-delivery-mode, .vc-multi-alloc, #vcMultiAlloc').forEach(function (n) { n.remove(); });
+
+                var modeBox = document.createElement('div');
+                modeBox.className = 'vc-delivery-mode';
+                modeBox.innerHTML =
+                    '<div class="vc-mode-label">How should we deliver?</div>' +
+                    '<div class="vc-mode-toggle" role="radiogroup" aria-label="Delivery mode">' +
+                        '<button type="button" class="vc-mode-option is-active" data-mode="single">' +
+                            '<span class="vc-mode-radio" aria-hidden="true"></span>' +
+                            '<span class="vc-mode-copy"><strong>One address</strong><small>Send the full cart to a single location</small></span>' +
+                        '</button>' +
+                        '<button type="button" class="vc-mode-option" data-mode="split">' +
+                            '<span class="vc-mode-radio" aria-hidden="true"></span>' +
+                            '<span class="vc-mode-copy"><strong>Split addresses</strong><small>Divide quantities across 2+ locations</small></span>' +
+                        '</button>' +
+                    '</div>';
+                addressMount.appendChild(modeBox);
+
                 var picker = document.createElement('div');
                 picker.className = 'vc-live-address-picker';
-                picker.innerHTML = '<p><strong>Saved addresses</strong> <a href="manage-address.php">(manage)</a></p>' +
-                    (addresses.length ? addresses.map(function (a) {
-                        return '<label class="vc-live-address"><input type="radio" name="vc_address_id" value="' + a.id + '"' +
-                            (a.is_default ? ' checked' : '') + '> <span><strong>' + escapeHtml(a.label || 'Address') + '</strong><br>' +
-                            escapeHtml([a.line1, a.line2, a.city, a.state, a.pincode].filter(Boolean).join(', ')) + '</span></label>';
-                    }).join('') : '<p>No saved address. <a href="manage-address.php">Add one</a> before placing an order.</p>');
-                addressCard.appendChild(picker);
-                var def = addresses.find(function (a) { return a.is_default; }) || addresses[0];
-                selectedAddress = def ? def.id : null;
+                picker.id = 'vcAddressPicker';
+                addressMount.appendChild(picker);
+
+                var multiHost = document.createElement('div');
+                multiHost.id = 'vcMultiAlloc';
+                multiHost.className = 'vc-multi-alloc';
+                multiHost.style.display = 'none';
+                addressMount.appendChild(multiHost);
+
+                function syncModeButtons() {
+                    modeBox.querySelectorAll('.vc-mode-option').forEach(function (btn) {
+                        btn.classList.toggle('is-active', btn.getAttribute('data-mode') === deliveryMode);
+                    });
+                }
+
+                function addressCardHtml(a, inputHtml) {
+                    return (
+                        '<label class="vc-addr-choice">' +
+                            inputHtml +
+                            '<span class="vc-addr-choice-mark" aria-hidden="true"></span>' +
+                            '<span class="vc-addr-choice-body">' +
+                                '<span class="vc-addr-choice-top">' +
+                                    '<strong>' + escapeHtml(a.label || 'Address') + '</strong>' +
+                                    (a.is_default ? '<em class="vc-addr-default">Default</em>' : '') +
+                                '</span>' +
+                                '<span class="vc-addr-choice-line">' +
+                                    escapeHtml([a.line1, a.line2, a.city, a.state, a.pincode].filter(Boolean).join(', ')) +
+                                '</span>' +
+                            '</span>' +
+                        '</label>'
+                    );
+                }
+
+                function paintAddresses() {
+                    var serviceable = addresses.filter(addrServiceable);
+                    var blocked = addresses.filter(function (a) { return !addrServiceable(a); });
+                    syncModeButtons();
+
+                    if (deliveryMode === 'single') {
+                        multiHost.style.display = 'none';
+                        if (slotCard) slotCard.style.display = '';
+
+                        if (!serviceable.length) {
+                            picker.innerHTML =
+                                '<div class="vc-checkout-empty">' +
+                                    '<div class="vc-checkout-empty-icon"><i class="fa-solid fa-location-dot"></i></div>' +
+                                    '<strong>No delivery address yet</strong>' +
+                                    '<p>Add a Hyderabad address to continue checkout.</p>' +
+                                    '<a class="vc-checkout-empty-btn" href="manage-address.php">Add address</a>' +
+                                '</div>' +
+                                (blocked.length
+                                    ? '<div class="vc-addr-warn">Some saved addresses are outside our Hyderabad service area and can’t be used.</div>'
+                                    : '');
+                            selectedAddress = null;
+                            return;
+                        }
+
+                        picker.innerHTML =
+                            '<div class="vc-addr-picker-head">' +
+                                '<strong>Saved addresses</strong>' +
+                                '<a href="manage-address.php">Manage</a>' +
+                            '</div>' +
+                            '<div class="vc-addr-choice-list">' +
+                                serviceable.map(function (a) {
+                                    return addressCardHtml(
+                                        a,
+                                        '<input type="radio" name="vc_address_id" value="' + a.id + '"' + (a.is_default ? ' checked' : '') + '>'
+                                    );
+                                }).join('') +
+                            '</div>' +
+                            (blocked.length
+                                ? '<div class="vc-addr-warn">Not serviceable: ' +
+                                    blocked.map(function (a) {
+                                        return escapeHtml((a.label || 'Address') + ' (' + (a.pincode || '') + ')');
+                                    }).join(', ') +
+                                  '</div>'
+                                : '');
+
+                        var def = serviceable.find(function (a) { return a.is_default; }) || serviceable[0];
+                        selectedAddress = def ? def.id : null;
+                        if (def) {
+                            var radio = picker.querySelector('input[value="' + def.id + '"]');
+                            if (radio) radio.checked = true;
+                        }
+                        picker.querySelectorAll('.vc-addr-choice').forEach(function (lab) {
+                            lab.classList.toggle('is-selected', !!(lab.querySelector('input') && lab.querySelector('input').checked));
+                        });
+                    } else {
+                        if (slotCard) slotCard.style.display = 'none';
+                        multiHost.style.display = '';
+
+                        if (serviceable.length < 2) {
+                            picker.innerHTML =
+                                '<div class="vc-checkout-empty">' +
+                                    '<div class="vc-checkout-empty-icon"><i class="fa-solid fa-map-location-dot"></i></div>' +
+                                    '<strong>Need 2+ Hyderabad addresses</strong>' +
+                                    '<p>Split delivery needs at least two saved serviceable addresses.</p>' +
+                                    '<a class="vc-checkout-empty-btn" href="manage-address.php">Add / manage addresses</a>' +
+                                '</div>';
+                            selectedMultiIds = [];
+                            renderAllocationUI(addressMount);
+                            return;
+                        }
+
+                        picker.innerHTML =
+                            '<div class="vc-addr-picker-head">' +
+                                '<strong>Select 2 or more addresses</strong>' +
+                                '<a href="manage-address.php">Manage</a>' +
+                            '</div>' +
+                            '<div class="vc-addr-choice-list">' +
+                                serviceable.map(function (a) {
+                                    var checked = selectedMultiIds.indexOf(Number(a.id)) !== -1 ? ' checked' : '';
+                                    return addressCardHtml(
+                                        a,
+                                        '<input type="checkbox" name="vc_multi_address" value="' + a.id + '"' + checked + '>'
+                                    );
+                                }).join('') +
+                            '</div>';
+                        picker.querySelectorAll('.vc-addr-choice').forEach(function (lab) {
+                            lab.classList.toggle('is-selected', !!(lab.querySelector('input') && lab.querySelector('input').checked));
+                        });
+                        renderAllocationUI(addressMount);
+                    }
+                }
+
+                paintAddresses();
+
+                modeBox.addEventListener('click', function (e) {
+                    var btn = e.target.closest('.vc-mode-option');
+                    if (!btn || !modeBox.contains(btn)) return;
+                    e.preventDefault();
+                    var next = btn.getAttribute('data-mode');
+                    if (!next || next === deliveryMode) return;
+                    deliveryMode = next;
+                    selectedMultiIds = [];
+                    paintAddresses();
+                    updatePlaceEnabled();
+                });
+
                 picker.addEventListener('change', function (e) {
                     if (e.target.name === 'vc_address_id') {
                         selectedAddress = Number(e.target.value);
+                        picker.querySelectorAll('.vc-addr-choice').forEach(function (lab) {
+                            lab.classList.toggle('is-selected', lab.querySelector('input') && lab.querySelector('input').checked);
+                        });
+                    }
+                    if (e.target.name === 'vc_multi_address') {
+                        selectedMultiIds = Array.prototype.slice.call(
+                            picker.querySelectorAll('input[name="vc_multi_address"]:checked')
+                        ).map(function (el) { return Number(el.value); });
+                        picker.querySelectorAll('.vc-addr-choice').forEach(function (lab) {
+                            lab.classList.toggle('is-selected', lab.querySelector('input') && lab.querySelector('input').checked);
+                        });
+                        renderAllocationUI(addressMount);
                     }
                 });
             }
 
-            if (slotCard && slots.length) {
+            if (slotMount && slots.length) {
+                slotMount.querySelectorAll('.vc-live-slots').forEach(function (n) { n.remove(); });
                 var slotBox = document.createElement('div');
                 slotBox.className = 'vc-live-slots';
-                slotBox.innerHTML = '<p><strong>Delivery slot</strong></p>' + slots.slice(0, 12).map(function (s) {
+                slotBox.innerHTML = '<p><strong>Available slots</strong></p>' + slots.slice(0, 12).map(function (s) {
                     return '<label class="vc-live-slot"><input type="radio" name="vc_slot_id" value="' + s.id + '"> ' +
                         escapeHtml(s.date) + ' · ' + escapeHtml(s.label) + '</label>';
                 }).join('');
-                slotCard.appendChild(slotBox);
+                slotMount.appendChild(slotBox);
                 slotBox.addEventListener('change', function (e) {
                     if (e.target.name === 'vc_slot_id') {
                         selectedSlot = Number(e.target.value);
+                        slotBox.querySelectorAll('.vc-live-slot').forEach(function (lab) {
+                            lab.classList.toggle('is-selected', lab.querySelector('input') && lab.querySelector('input').checked);
+                        });
                     }
                 });
+            } else if (slotMount) {
+                slotMount.innerHTML = '<p class="vc-checkout-hint">No delivery slots available right now. You can still place the order — we will confirm timing.</p>';
             }
 
             var summary = document.querySelector('.vc-order-summary-card');
@@ -1926,10 +2257,12 @@
 
             var couponForm = document.querySelector('.vc-checkout-coupon');
             if (couponForm) {
-                var couponInput = couponForm.querySelector('input');
                 var couponBtn = couponForm.querySelector('button');
+                var couponInput = couponForm.querySelector('input');
                 if (couponBtn && couponInput) {
-                    couponBtn.addEventListener('click', function (e) {
+                    var freshCouponBtn = couponBtn.cloneNode(true);
+                    couponBtn.parentNode.replaceChild(freshCouponBtn, couponBtn);
+                    freshCouponBtn.addEventListener('click', function (e) {
                         e.preventDefault();
                         VC.applyCoupon(couponInput.value.trim()).then(function (res) {
                             if (res && res.success) {
@@ -1943,20 +2276,62 @@
                 }
             }
 
-            var placeBtn = document.querySelector('.vc-place-order-btn');
+            placeBtn = document.querySelector('.vc-place-order-btn');
             if (placeBtn) {
+                var freshPlace = placeBtn.cloneNode(true);
+                placeBtn.parentNode.replaceChild(freshPlace, placeBtn);
+                placeBtn = freshPlace;
                 placeBtn.addEventListener('click', function (e) {
                     e.preventDefault();
-                    if (!selectedAddress) {
-                        toast('Select or add a delivery address.', 'error');
-                        return;
-                    }
-                    if (!cart.items.length) {
+                    if (!cartRef.items.length) {
                         toast('Your cart is empty.', 'error');
                         return;
                     }
                     var notes = (document.querySelector('textarea[name="instructions"]') || {}).value || '';
                     placeBtn.disabled = true;
+
+                    if (deliveryMode === 'split') {
+                        if (selectedMultiIds.length < 2) {
+                            placeBtn.disabled = false;
+                            toast('Select at least two addresses.', 'error');
+                            return;
+                        }
+                        if (!validateAllocations()) {
+                            placeBtn.disabled = false;
+                            toast('Allocate each product fully across addresses.', 'error');
+                            return;
+                        }
+                        VC.placeMultiAddressOrder(buildMultiPayload(notes)).then(function (res) {
+                            placeBtn.disabled = false;
+                            if (res && res.success) {
+                                var batchId = res.data.batch_id;
+                                var orders = res.data.orders || [];
+                                var first = orders[0];
+                                var ids = orders.map(function (o) { return o.order_id; }).join(',');
+                                window.location.href = 'order-success.php?batch=' + encodeURIComponent(batchId) +
+                                    '&ids=' + encodeURIComponent(ids) +
+                                    (first ? '&id=' + encodeURIComponent(first.order_id) : '');
+                            } else {
+                                toast((res && res.error && res.error.message) || 'Could not place orders.', 'error');
+                            }
+                        }).catch(function () {
+                            placeBtn.disabled = false;
+                            toast('Could not place orders.', 'error');
+                        });
+                        return;
+                    }
+
+                    if (!selectedAddress) {
+                        placeBtn.disabled = false;
+                        toast('Select or add a delivery address.', 'error');
+                        return;
+                    }
+                    var chosen = addressesRef.find(function (a) { return Number(a.id) === Number(selectedAddress); });
+                    if (chosen && !addrServiceable(chosen)) {
+                        placeBtn.disabled = false;
+                        toast("We currently deliver only within Hyderabad — this pincode isn't serviceable yet", 'error');
+                        return;
+                    }
                     VC.placeOrder({
                         address_id: selectedAddress,
                         delivery_slot_id: selectedSlot,
@@ -1975,6 +2350,7 @@
                     });
                 });
             }
+            updatePlaceEnabled();
         });
     }
 
@@ -2098,7 +2474,11 @@
                 return (
                     '<article class="vc-order-card" data-status="' + escapeHtml(st) + '" data-order="' + escapeHtml(o.order_number) + '">' +
                         '<div class="vc-order-card-header">' +
-                            '<div class="vc-order-id"><span>Order ID</span><strong>' + escapeHtml(o.order_number) + '</strong></div>' +
+                            '<div class="vc-order-id"><span>Order ID</span><strong>' + escapeHtml(o.order_number) + '</strong>' +
+                            (o.is_multi_location || o.batch_id
+                                ? '<div class="vc-batch-badge" style="font-size:0.78rem;color:#0b6bcb;margin-top:0.25rem;">Part of a multi-location order</div>'
+                                : '') +
+                            '</div>' +
                             '<div class="vc-order-date"><i class="fa-regular fa-calendar"></i><div><span>Order Date</span><strong>' +
                                 escapeHtml((o.placed_at || '').slice(0, 10)) + '</strong></div></div>' +
                             '<span class="vc-order-status ' + escapeHtml(st) + '">' + escapeHtml(o.status_label || o.status) + '</span>' +
@@ -2161,11 +2541,47 @@
             var cust = VC.getCustomer() || {};
             var addr = o.address || {};
             var line = addrLine(addr);
+            var batchParam = qs('batch');
+            var idsParam = qs('ids');
             var h1 = document.querySelector('h1');
             if (h1 && pageName() !== 'order-success') {
                 h1.textContent = 'Order ' + (o.order_number || '');
             }
+            if (pageName() === 'order-success' && (batchParam || o.batch_id || o.is_multi_location)) {
+                var successLabel = document.querySelector('.vc-success-label');
+                if (successLabel) successLabel.textContent = 'Multi-location order confirmed';
+                if (h1) h1.textContent = 'Orders placed across your locations';
+                var successCopy = document.querySelector('.vc-success-card > p');
+                var idList = (idsParam || '').split(',').filter(Boolean);
+                var count = idList.length || 2;
+                if (successCopy) {
+                    successCopy.textContent = count + ' orders were placed across ' + count +
+                        ' locations in one checkout. Each location is fulfilled separately.';
+                }
+                var orderNoWrap = document.querySelector('.vc-success-order-number');
+                if (orderNoWrap && idList.length) {
+                    Promise.all(idList.map(function (oid) { return VC.order(oid); })).then(function (packs) {
+                        var nums = packs.filter(function (p) { return p && p.success; }).map(function (p) {
+                            return p.data.order.order_number;
+                        });
+                        if (nums.length) {
+                            orderNoWrap.innerHTML = '<span>' + nums.length + ' order numbers</span><strong>' +
+                                escapeHtml(nums.map(function (n) { return '#' + n; }).join(', ')) + '</strong>';
+                        }
+                    });
+                }
+            }
             setText('vcSuccessOrderNo', o.order_number ? '#' + o.order_number : '—');
+            if (o.is_multi_location || o.batch_id) {
+                var detailBadge = document.querySelector('.vc-order-id') || document.getElementById('vcSuccessOrderNo');
+                if (detailBadge && pageName() !== 'order-success') {
+                    var note = document.createElement('div');
+                    note.className = 'vc-batch-badge';
+                    note.style.cssText = 'font-size:0.85rem;color:#0b6bcb;margin-top:0.35rem;';
+                    note.textContent = 'Part of a multi-location order';
+                    detailBadge.parentNode && detailBadge.parentNode.appendChild(note);
+                }
+            }
             setText('vcSuccessOrderDate', formatInDate(o.placed_at));
             setText('vcSuccessEta', formatInDate(o.estimated_delivery_date));
             setText('vcSuccessPay', o.payment_method || 'Cash on Delivery');
@@ -2468,20 +2884,57 @@
         });
         var form = document.querySelector('#vgNewAddressForm form, .vg-address-form');
         if (form) {
+            var pinHint = document.getElementById('vgPincodeHint');
+            var pinInput = form.querySelector('[name="pincode"]');
+            var pinOk = false;
+            var pinTimer = null;
+
+            function setPinHint(msg, ok) {
+                pinOk = !!ok;
+                if (!pinHint) return;
+                pinHint.textContent = msg || '';
+                pinHint.style.color = ok ? '#1a7f37' : (msg ? '#b42318' : '');
+            }
+
+            function checkPinLive() {
+                if (!pinInput) return;
+                var pin = (pinInput.value || '').trim();
+                if (!/^\d{6}$/.test(pin)) {
+                    setPinHint(pin.length ? 'Enter a valid 6-digit pincode.' : '', false);
+                    return;
+                }
+                setPinHint('Checking…', false);
+                VC.checkPincode(pin).then(function (res) {
+                    if ((pinInput.value || '').trim() !== pin) return;
+                    if (res && res.success && res.data && res.data.serviceable) {
+                        setPinHint('✓ We deliver here' + (res.data.city ? ' (' + res.data.city + ')' : ''), true);
+                    } else {
+                        setPinHint('✗ Not serviceable in this area yet', false);
+                    }
+                }).catch(function () {
+                    setPinHint('Could not verify pincode.', false);
+                });
+            }
+
+            if (pinInput) {
+                pinInput.addEventListener('input', function () {
+                    clearTimeout(pinTimer);
+                    pinTimer = setTimeout(checkPinLive, 400);
+                });
+                pinInput.addEventListener('blur', checkPinLive);
+            }
+
             form.addEventListener('submit', function (e) {
                 e.preventDefault();
-                var inputs = form.querySelectorAll('input[type="text"], input[type="tel"], select');
-                var values = [];
-                inputs.forEach(function (i) { values.push(i.value.trim()); });
                 var type = (form.querySelector('input[name="address_type"]:checked') || {}).value || 'Home';
                 var body = {
                     label: type,
-                    line1: (values[4] || values[0] || ''),
-                    line2: values[5] || '',
-                    pincode: values[3] || '',
-                    landmark: values[6] || '',
-                    city: values[7] || '',
-                    state: values[8] || '',
+                    line1: '',
+                    line2: '',
+                    pincode: '',
+                    landmark: '',
+                    city: '',
+                    state: '',
                     is_default: true
                 };
                 var named = {
@@ -2502,13 +2955,36 @@
                     body.landmark = named.landmark ? named.landmark.value.trim() : '';
                     body.label = named.label ? named.label.value.trim() : type;
                 }
-                VC.createAddress(body).then(function (res) {
-                    if (res && res.success) {
-                        toast('Address saved');
-                        form.reset();
-                        render();
+                if (!/^\d{6}$/.test(body.pincode)) {
+                    toast('Enter a valid 6-digit pincode.', 'error');
+                    setPinHint('Enter a valid 6-digit pincode.', false);
+                    return;
+                }
+                function saveAddress() {
+                    VC.createAddress(body).then(function (res) {
+                        if (res && res.success) {
+                            toast('Address saved');
+                            form.reset();
+                            setPinHint('', false);
+                            pinOk = false;
+                            render();
+                        } else {
+                            toast((res && res.error && res.error.message) || 'Could not save address.', 'error');
+                        }
+                    });
+                }
+                if (pinOk) {
+                    saveAddress();
+                    return;
+                }
+                VC.checkPincode(body.pincode).then(function (res) {
+                    if (res && res.success && res.data && res.data.serviceable) {
+                        pinOk = true;
+                        setPinHint('✓ We deliver here', true);
+                        saveAddress();
                     } else {
-                        toast((res && res.error && res.error.message) || 'Could not save address.', 'error');
+                        setPinHint('✗ Not serviceable in this area yet', false);
+                        toast("We currently deliver only within Hyderabad — this pincode isn't serviceable yet", 'error');
                     }
                 });
             });

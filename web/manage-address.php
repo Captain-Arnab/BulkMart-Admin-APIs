@@ -179,6 +179,7 @@
                                    maxlength="6"
                                    required>
                         </div>
+                        <p class="vg-pincode-hint" id="vgPincodeHint" aria-live="polite" style="margin:0.4rem 0 0;font-size:0.88rem;"></p>
 
                     </div>
 

@@ -22,6 +22,12 @@ $totalShown = count($result['rows'] ?? []);
 
 <?php if ($success): ?><div class="alert alert-success"><?= e($success) ?></div><?php endif; ?>
 <?php if ($error): ?><div class="alert alert-danger"><?= e($error) ?></div><?php endif; ?>
+<?php if (!empty($filters['batch_id'])): ?>
+  <div class="alert alert-info d-flex flex-wrap justify-content-between align-items-center gap-2">
+    <span>Showing orders in multi-location batch <code><?= e($filters['batch_id']) ?></code></span>
+    <a class="btn btn-sm btn-outline-secondary" href="<?= e(url('orders')) ?>">Clear batch filter</a>
+  </div>
+<?php endif; ?>
 
 <section class="section vc-orders">
   <div class="card vc-filter-card mb-3">
@@ -87,6 +93,14 @@ $totalShown = count($result['rows'] ?? []);
                 <a class="vc-order-id" href="<?= e(url('orders/' . $o['id'])) ?>">
                   <span class="vc-order-id-hash">#</span><?= e($o['order_number']) ?>
                 </a>
+                <?php if (!empty($o['batch_id'])): ?>
+                  <div class="mt-1">
+                    <span class="badge bg-info text-dark">Multi-location</span>
+                    <a class="small ms-1" href="<?= e(url('orders?batch_id=' . urlencode((string) $o['batch_id']))) ?>">
+                      View batch
+                    </a>
+                  </div>
+                <?php endif; ?>
               </td>
               <td>
                 <div class="vc-customer-cell">

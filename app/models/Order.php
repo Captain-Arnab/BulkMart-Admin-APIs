@@ -122,6 +122,11 @@ class Order extends Model
             }
         }
 
+        if (!empty($filters['batch_id'])) {
+            $where[] = 'o.batch_id = ?';
+            $params[] = $filters['batch_id'];
+        }
+
         $sqlWhere = implode(' AND ', $where);
         $countRow = $this->fetchOne(
             "SELECT COUNT(*) AS c
@@ -235,7 +240,7 @@ class Order extends Model
         $page = max(1, min($page, $pages));
         $offset = ($page - 1) * $perPage;
         $rows = $this->fetchAll(
-            "SELECT o.id, o.order_number, o.status, o.subtotal, o.delivery_fee, o.discount_amount, o.coupon_code, o.total,
+            "SELECT o.id, o.order_number, o.status, o.subtotal, o.delivery_fee, o.discount_amount, o.coupon_code, o.batch_id, o.total,
                     o.payment_method, o.estimated_delivery_date, o.placed_at, o.delivered_at,
                     (SELECT COUNT(*) FROM order_items oi WHERE oi.order_id = o.id) AS item_count
              FROM orders o
@@ -254,5 +259,33 @@ class Order extends Model
             return null;
         }
         return $order;
+    }
+
+    /** @return list<array<string,mixed>> */
+    public function listByBatchId(string $batchId): array
+    {
+        if ($batchId === '') {
+            return [];
+        }
+        return $this->fetchAll(
+            "SELECT o.id, o.order_number, o.status, o.total, o.address_id, o.placed_at, o.batch_id,
+                    a.label AS address_label, a.line1, a.city, a.pincode
+             FROM orders o
+             LEFT JOIN addresses a ON a.id = o.address_id
+             WHERE o.batch_id = ?
+             ORDER BY o.id ASC",
+            [$batchId]
+        );
+    }
+
+    public function countByBatchId(string $batchId): int
+    {
+        if ($batchId === '') {
+            return 0;
+        }
+        return (int) ($this->fetchOne(
+            'SELECT COUNT(*) AS c FROM orders WHERE batch_id = ?',
+            [$batchId]
+        )['c'] ?? 0);
     }
 }

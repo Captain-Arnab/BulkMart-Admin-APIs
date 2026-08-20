@@ -83,6 +83,13 @@ class AddressApiController extends ApiController
         }
         if (isset($body['pincode']) && $body['pincode'] !== '' && !preg_match('/^\d{6}$/', (string) $body['pincode'])) {
             $fields['pincode'] = 'Enter a valid 6-digit pincode.';
+        } elseif (
+            isset($body['pincode'])
+            && $body['pincode'] !== ''
+            && empty($fields['pincode'])
+            && !(new ServiceablePincode())->isServiceable(trim((string) $body['pincode']))
+        ) {
+            $fields['pincode'] = ServiceablePincode::unserviceableMessage();
         }
         return $fields;
     }
@@ -104,22 +111,24 @@ class AddressApiController extends ApiController
         ];
     }
 
-    /** @param array<string,mixed> $row */
-    private function format(array $row): array
+    public function format(array $row): array
     {
+        $pincode = (string) ($row['pincode'] ?? '');
+        $serviceable = $pincode !== '' && (new ServiceablePincode())->isServiceable($pincode);
         return [
-            'id'         => (int) ($row['id'] ?? 0),
-            'label'      => $row['label'] ?? null,
-            'line1'      => $row['line1'] ?? null,
-            'line2'      => $row['line2'] ?? null,
-            'city'       => $row['city'] ?? null,
-            'state'      => $row['state'] ?? null,
-            'pincode'    => $row['pincode'] ?? null,
-            'landmark'   => $row['landmark'] ?? null,
-            'geo_lat'    => isset($row['geo_lat']) ? (float) $row['geo_lat'] : null,
-            'geo_lng'    => isset($row['geo_lng']) ? (float) $row['geo_lng'] : null,
-            'is_default' => (int) ($row['is_default'] ?? 0) === 1,
-            'created_at' => $row['created_at'] ?? null,
+            'id'           => (int) ($row['id'] ?? 0),
+            'label'        => $row['label'] ?? null,
+            'line1'        => $row['line1'] ?? null,
+            'line2'        => $row['line2'] ?? null,
+            'city'         => $row['city'] ?? null,
+            'state'        => $row['state'] ?? null,
+            'pincode'      => $row['pincode'] ?? null,
+            'landmark'     => $row['landmark'] ?? null,
+            'geo_lat'      => isset($row['geo_lat']) ? (float) $row['geo_lat'] : null,
+            'geo_lng'      => isset($row['geo_lng']) ? (float) $row['geo_lng'] : null,
+            'is_default'   => (int) ($row['is_default'] ?? 0) === 1,
+            'serviceable'  => $serviceable,
+            'created_at'   => $row['created_at'] ?? null,
         ];
     }
 }

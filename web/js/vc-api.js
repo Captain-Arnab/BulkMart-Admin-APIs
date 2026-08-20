@@ -209,9 +209,11 @@
         orders: function (query) { return request('GET', '/orders', query); },
         order: function (id) { return request('GET', '/orders/' + id); },
         placeOrder: function (body) { return request('POST', '/orders', body); },
+        placeMultiAddressOrder: function (body) { return request('POST', '/orders/multi-address', body); },
         cancelOrder: function (id, reason) { return request('POST', '/orders/' + id + '/cancel', { reason: reason || '' }); },
         reorder: function (id) { return request('POST', '/orders/' + id + '/reorder'); },
         deliverySlots: function () { return request('GET', '/delivery-slots'); },
+        checkPincode: function (pincode) { return request('GET', '/check-pincode', { pincode: pincode }); },
 
         notifications: function () { return request('GET', '/notifications'); },
         markNotificationRead: function (id) { return request('POST', '/notifications/' + id + '/read'); },

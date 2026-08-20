@@ -101,6 +101,41 @@ class OrderApiController extends ApiController
         }
     }
 
+    public function placeMultiAddress(): never
+    {
+        try {
+            $body = $this->input();
+            $customer = $this->requireCustomer();
+            if (($customer['kyc_status'] ?? '') !== 'approved') {
+                if ((bool) (app_config('checkout.require_kyc_approved') ?? false)) {
+                    $this->fail('KYC_REQUIRED', 'Your business verification must be approved before placing orders.', 403);
+                }
+            }
+
+            $result = $this->checkout->placeMultiAddressCodOrder($this->customerId(), $body);
+            $orders = [];
+            foreach ($result['orders'] as $pack) {
+                $orders[] = [
+                    'order_id'     => (int) ($pack['order']['id'] ?? 0),
+                    'order_number' => $pack['order']['order_number'] ?? null,
+                    'address_id'   => (int) ($pack['order']['address_id'] ?? 0),
+                    'total'        => (float) ($pack['order']['total'] ?? 0),
+                    'order'        => $this->formatOrder($pack['order'], $pack['items'], []),
+                ];
+            }
+
+            $this->ok([
+                'message'  => count($orders) . ' orders placed across your selected addresses.',
+                'batch_id' => $result['batch_id'],
+                'orders'   => $orders,
+            ], 201);
+        } catch (DomainException $e) {
+            $this->fail('VALIDATION_ERROR', $e->getMessage(), 422);
+        } catch (Throwable $e) {
+            $this->handleException($e);
+        }
+    }
+
     public function index(): never
     {
         $page = max(1, (int) ($_GET['page'] ?? 1));
@@ -117,6 +152,8 @@ class OrderApiController extends ApiController
                     'delivery_fee'             => (float) $o['delivery_fee'],
                     'discount_amount'          => (float) ($o['discount_amount'] ?? 0),
                     'coupon_code'              => $o['coupon_code'] ?? null,
+                    'batch_id'                 => $o['batch_id'] ?? null,
+                    'is_multi_location'        => !empty($o['batch_id']),
                     'total'                    => (float) $o['total'],
                     'payment_method'           => $o['payment_method'],
                     'estimated_delivery_date'  => $o['estimated_delivery_date'],
@@ -359,6 +396,8 @@ Order ' . $esc($invoice['order_number']) . ' · ' . $esc($invoice['placed_at']) 
             'delivery_fee'            => (float) ($order['delivery_fee'] ?? 0),
             'discount_amount'         => (float) ($order['discount_amount'] ?? 0),
             'coupon_code'             => $order['coupon_code'] ?? null,
+            'batch_id'                => $order['batch_id'] ?? null,
+            'is_multi_location'       => !empty($order['batch_id']),
             'total'                   => (float) ($order['total'] ?? 0),
             'payment_method'          => $order['payment_method'] ?? null,
             'estimated_delivery_date' => $order['estimated_delivery_date'] ?? null,

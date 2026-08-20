@@ -59,6 +59,21 @@ if ($order['status'] === 'cancelled') {
             </div>
           </div>
 
+          <?php
+            $batchOrders = $batchOrders ?? [];
+            if (!empty($order['batch_id']) && $batchOrders):
+          ?>
+            <div class="alert alert-info mt-3 mb-0 py-2">
+              <strong>Multi-location batch</strong>
+              — this order is part of a split checkout
+              (<a href="<?= e(url('orders?batch_id=' . urlencode((string) $order['batch_id']))) ?>">view all <?= count($batchOrders) ?> orders</a>):
+              <?php foreach ($batchOrders as $bo): ?>
+                <?php if ((int) $bo['id'] === (int) $order['id']) continue; ?>
+                <a class="ms-1" href="<?= e(url('orders/' . $bo['id'])) ?>"><?= e($bo['order_number']) ?></a>
+              <?php endforeach; ?>
+            </div>
+          <?php endif; ?>
+
           <?php if ($order['status'] !== 'cancelled'): ?>
             <div class="vc-status-stepper" aria-label="Order progress">
               <?php foreach ($statusFlow as $i => $step): ?>

@@ -21,11 +21,12 @@ function rbac_modules(): array
         'roles'        => 'Roles & Sub-Admins',
         'offers'       => 'Offers & Banners',
         'market_prices'=> 'Market Prices',
-        'support'         => 'Support Tickets',
-        'bulk_enquiries'  => 'Bulk Enquiries',
-        'reports'         => 'Reports & Analytics',
-        'settings'        => 'Settings',
-        'profile'         => 'Profile',
+        'support'             => 'Support Tickets',
+        'bulk_enquiries'      => 'Bulk Enquiries',
+        'serviceable_pincodes'=> 'Serviceable Pincodes',
+        'reports'             => 'Reports & Analytics',
+        'settings'            => 'Settings',
+        'profile'             => 'Profile',
     ];
 }
 
@@ -168,6 +169,12 @@ function rbac_sidebar_items(?array $user = null): array
             'label' => 'Bulk Enquiries',
             'icon'  => 'bi-clipboard-data',
             'route' => 'bulk-enquiries',
+        ],
+        [
+            'key'   => 'serviceable_pincodes',
+            'label' => 'Serviceable Pincodes',
+            'icon'  => 'bi-geo-alt',
+            'route' => 'serviceable-pincodes',
         ],
         [
             'key'   => 'reports',

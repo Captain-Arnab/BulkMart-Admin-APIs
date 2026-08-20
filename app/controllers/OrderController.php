@@ -13,6 +13,7 @@ class OrderController extends Controller
             'date_to'   => trim((string) ($_GET['date_to'] ?? '')),
             'q'         => trim((string) ($_GET['q'] ?? '')),
             'pending'   => $pending,
+            'batch_id'  => trim((string) ($_GET['batch_id'] ?? '')),
         ];
         $page = max(1, (int) ($_GET['page'] ?? 1));
         $result = (new Order())->paginate($filters, $page, 15);
@@ -35,9 +36,15 @@ class OrderController extends Controller
             redirect('orders');
         }
 
+        $batchOrders = [];
+        if (!empty($order['batch_id'])) {
+            $batchOrders = $model->listByBatchId((string) $order['batch_id']);
+        }
+
         $this->view('orders/show', [
-            'title'    => 'Order ' . $order['order_number'],
-            'order'    => $order,
+            'title'       => 'Order ' . $order['order_number'],
+            'order'       => $order,
+            'batchOrders' => $batchOrders,
             'items'    => $model->items((int) $id),
             'log'      => $model->statusLog((int) $id),
             'managers' => $model->deliveryManagers(),

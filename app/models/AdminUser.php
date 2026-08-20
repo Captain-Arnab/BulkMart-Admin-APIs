@@ -12,9 +12,10 @@ class AdminUser extends Model
         'offers'        => 'Offers & Banners',
         'market_prices' => 'Market Prices',
         'support'         => 'Support Tickets',
-        'bulk_enquiries'  => 'Bulk Enquiries',
-        'reports'         => 'Reports & Analytics',
-        'roles'           => 'Roles & Sub-Admins',
+        'bulk_enquiries'      => 'Bulk Enquiries',
+        'serviceable_pincodes'=> 'Serviceable Pincodes',
+        'reports'             => 'Reports & Analytics',
+        'roles'               => 'Roles & Sub-Admins',
     ];
 
     public function findByEmail(string $email): ?array

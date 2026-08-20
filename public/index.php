@@ -120,9 +120,11 @@ $router->get('/api/v1/support/tickets', [SupportApiController::class, 'myTickets
 $router->get('/api/v1/support/tickets/{id}', [SupportApiController::class, 'ticketDetail'], $apiAuth);
 
 $router->post('/api/v1/bulk-enquiries', [BulkEnquiryApiController::class, 'create']);
+$router->get('/api/v1/check-pincode', [ServiceablePincodeApiController::class, 'check']);
 
 $router->get('/api/v1/delivery-slots', [OrderApiController::class, 'deliverySlots'], $apiAuth);
 $router->post('/api/v1/orders', [OrderApiController::class, 'place'], $apiAuth);
+$router->post('/api/v1/orders/multi-address', [OrderApiController::class, 'placeMultiAddress'], $apiAuth);
 $router->get('/api/v1/orders', [OrderApiController::class, 'index'], $apiAuth);
 $router->get('/api/v1/orders/{id}/invoice', [OrderApiController::class, 'invoice'], $apiAuth);
 $router->post('/api/v1/orders/{id}/reorder', [OrderApiController::class, 'reorder'], $apiAuth);
@@ -215,6 +217,10 @@ $router->post('/support/{id}/status', [SupportController::class, 'updateStatus']
 $router->get('/bulk-enquiries', [BulkEnquiryController::class, 'index'], [require_module('bulk_enquiries')]);
 $router->get('/bulk-enquiries/{id}', [BulkEnquiryController::class, 'show'], [require_module('bulk_enquiries')]);
 $router->post('/bulk-enquiries/{id}/status', [BulkEnquiryController::class, 'updateStatus'], [require_module('bulk_enquiries')]);
+
+$router->get('/serviceable-pincodes', [ServiceablePincodeController::class, 'index'], [require_module('serviceable_pincodes')]);
+$router->post('/serviceable-pincodes', [ServiceablePincodeController::class, 'store'], [require_module('serviceable_pincodes')]);
+$router->post('/serviceable-pincodes/{id}/toggle', [ServiceablePincodeController::class, 'toggle'], [require_module('serviceable_pincodes')]);
 
 $router->get('/reports', [ReportController::class, 'index'], [require_module('reports')]);
 $router->get('/reports/export', [ReportController::class, 'export'], [require_module('reports')]);

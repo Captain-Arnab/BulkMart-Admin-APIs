@@ -14,7 +14,7 @@
             <h1>Complete Your Order</h1>
 
             <p>
-                Enter your delivery details and review your fresh Veggicart order before placing it.
+                Confirm contact details, pick a saved Hyderabad address, choose a delivery slot, and place your COD order.
             </p>
 
         </div>
@@ -97,8 +97,8 @@
                 </div>
 
 
-                <!-- DELIVERY ADDRESS -->
-                <div class="vc-checkout-card">
+                <!-- DELIVERY ADDRESS — saved addresses from API -->
+                <div class="vc-checkout-card" id="vcCheckoutAddressCard">
 
                     <div class="vc-checkout-card-header">
 
@@ -113,240 +113,57 @@
 
                     </div>
 
+                    <p class="vc-checkout-hint">
+                        Use a saved Hyderabad address, or
+                        <a href="manage-address.php">add one in Manage Address</a>.
+                    </p>
 
-                    <div class="vc-checkout-form-grid">
+                    <div id="vcCheckoutAddressMount" class="vc-checkout-mount"></div>
 
+                    <div class="vc-checkout-form-grid" style="margin-top:1rem;">
                         <div class="vc-form-group vc-full-width">
-
-                            <label>Address <span>*</span></label>
-
-                            <div class="vc-input-wrap">
-                                <i class="fa-solid fa-house"></i>
-
-                                <input
-                                    type="text"
-                                    name="address"
-                                    placeholder="House number, building, street"
-                                    required>
-                            </div>
-
-                        </div>
-
-
-                        <div class="vc-form-group vc-full-width">
-
-                            <label>Apartment / Landmark</label>
-
-                            <div class="vc-input-wrap">
-                                <i class="fa-solid fa-map-pin"></i>
-
-                                <input
-                                    type="text"
-                                    name="landmark"
-                                    placeholder="Apartment, landmark or nearby location">
-                            </div>
-
-                        </div>
-
-
-                        <div class="vc-form-group">
-
-                            <label>City <span>*</span></label>
-
-                            <div class="vc-input-wrap">
-                                <i class="fa-solid fa-city"></i>
-
-                                <input
-                                    type="text"
-                                    name="city"
-                                    placeholder="Enter city"
-                                    required>
-                            </div>
-
-                        </div>
-
-
-                        <div class="vc-form-group">
-
-                            <label>State <span>*</span></label>
-
-                            <div class="vc-input-wrap">
-
-                                <i class="fa-solid fa-location-arrow"></i>
-
-                                <select name="state" required>
-
-                                    <option value="">Select State</option>
-
-                                    <option>Uttarakhand</option>
-                                    <option>Uttar Pradesh</option>
-                                    <option>Delhi</option>
-                                    <option>Haryana</option>
-                                    <option>Punjab</option>
-                                    <option>Rajasthan</option>
-                                    <option>Maharashtra</option>
-
-                                </select>
-
-                            </div>
-
-                        </div>
-
-
-                        <div class="vc-form-group">
-
-                            <label>PIN Code <span>*</span></label>
-
-                            <div class="vc-input-wrap">
-
-                                <i class="fa-solid fa-location-crosshairs"></i>
-
-                                <input
-                                    type="text"
-                                    name="pincode"
-                                    placeholder="Enter PIN code"
-                                    maxlength="6"
-                                    required>
-
-                            </div>
-
-                        </div>
-
-
-                        <div class="vc-form-group">
-
-                            <label>Address Type</label>
-
-                            <div class="vc-input-wrap">
-
-                                <i class="fa-solid fa-building"></i>
-
-                                <select name="address_type">
-
-                                    <option>Home</option>
-                                    <option>Office</option>
-                                    <option>Other</option>
-
-                                </select>
-
-                            </div>
-
-                        </div>
-
-
-                        <div class="vc-form-group vc-full-width">
-
                             <label>Delivery Instructions</label>
-
                             <textarea
                                 name="instructions"
                                 placeholder="Example: Please call before delivery, leave order at reception, etc."></textarea>
-
                         </div>
-
                     </div>
 
                 </div>
 
 
-                <!-- DELIVERY METHOD -->
-                <div class="vc-checkout-card">
+                <!-- DELIVERY SLOT (preferred window — not Standard/Express fees) -->
+                <div class="vc-checkout-card" id="vcCheckoutSlotCard">
 
                     <div class="vc-checkout-card-header">
 
                         <span class="vc-checkout-card-icon">
-                            <i class="fa-solid fa-truck-fast"></i>
+                            <i class="fa-regular fa-calendar-check"></i>
                         </span>
 
                         <div>
                             <span>Step 03</span>
-                            <h2>Delivery Method</h2>
+                            <h2>Preferred Delivery Slot</h2>
                         </div>
 
                     </div>
 
+                    <p class="vc-checkout-hint">
+                        Pick a preferred date and time. Final timing is confirmed by our team after order review.
+                    </p>
 
-                    <div class="vc-delivery-options">
-
-
-                        <label class="vc-delivery-option active">
-
-                            <input
-                                type="radio"
-                                name="delivery"
-                                value="standard"
-                                checked>
-
-                            <span class="vc-option-radio"></span>
-
-
-                            <span class="vc-delivery-icon">
-                                <i class="fa-solid fa-truck"></i>
-                            </span>
-
-
-                            <span class="vc-delivery-content">
-
-                                <strong>Standard Delivery</strong>
-
-                                <small>
-                                    Delivery within 2–4 hours
-                                </small>
-
-                            </span>
-
-
-                            <span class="vc-delivery-price">
-                                FREE
-                            </span>
-
-                        </label>
-
-
-                        <label class="vc-delivery-option">
-
-                            <input
-                                type="radio"
-                                name="delivery"
-                                value="express">
-
-                            <span class="vc-option-radio"></span>
-
-
-                            <span class="vc-delivery-icon">
-                                <i class="fa-solid fa-bolt"></i>
-                            </span>
-
-
-                            <span class="vc-delivery-content">
-
-                                <strong>Express Delivery</strong>
-
-                                <small>
-                                    Priority delivery within 60–90 minutes
-                                </small>
-
-                            </span>
-
-
-                            <span class="vc-delivery-price">
-                                ₹49
-                            </span>
-
-                        </label>
-
-                    </div>
+                    <div id="vcCheckoutSlotMount" class="vc-checkout-mount"></div>
 
                 </div>
 
 
-                <!-- PAYMENT -->
-                <div class="vc-checkout-card">
+                <!-- PAYMENT — COD only -->
+                <div class="vc-checkout-card" id="vcCheckoutPaymentCard">
 
                     <div class="vc-checkout-card-header">
 
                         <span class="vc-checkout-card-icon">
-                            <i class="fa-regular fa-credit-card"></i>
+                            <i class="fa-solid fa-money-bill-wave"></i>
                         </span>
 
                         <div>
@@ -356,11 +173,8 @@
 
                     </div>
 
-
                     <div class="vc-payment-options">
 
-
-                        <!-- COD -->
                         <label class="vc-payment-option active">
 
                             <input
@@ -371,76 +185,16 @@
 
                             <span class="vc-payment-radio"></span>
 
-
                             <span class="vc-payment-icon">
                                 <i class="fa-solid fa-money-bill-wave"></i>
                             </span>
-
 
                             <span class="vc-payment-content">
 
                                 <strong>Cash on Delivery</strong>
 
                                 <small>
-                                    Pay when your fresh order arrives
-                                </small>
-
-                            </span>
-
-                        </label>
-
-
-                        <!-- UPI -->
-                        <label class="vc-payment-option">
-
-                            <input
-                                type="radio"
-                                name="payment"
-                                value="upi">
-
-                            <span class="vc-payment-radio"></span>
-
-
-                            <span class="vc-payment-icon">
-                                <i class="fa-solid fa-mobile-screen-button"></i>
-                            </span>
-
-
-                            <span class="vc-payment-content">
-
-                                <strong>UPI Payment</strong>
-
-                                <small>
-                                    Google Pay, PhonePe, Paytm & other UPI apps
-                                </small>
-
-                            </span>
-
-                        </label>
-
-
-                        <!-- CARD -->
-                        <label class="vc-payment-option">
-
-                            <input
-                                type="radio"
-                                name="payment"
-                                value="card">
-
-                            <span class="vc-payment-radio"></span>
-
-
-                            <span class="vc-payment-icon">
-                                <i class="fa-regular fa-credit-card"></i>
-                            </span>
-
-
-                            <span class="vc-payment-content">
-
-                                <strong>Debit / Credit Card</strong>
-
-                                <small>
-                                    Secure online card payment
+                                    Pay in cash when your order arrives. Currently the only available method.
                                 </small>
 
                             </span>
@@ -448,6 +202,10 @@
                         </label>
 
                     </div>
+
+                    <p class="vc-checkout-hint" style="margin-top:0.75rem;">
+                        UPI and card payments are not enabled yet — COD only for now.
+                    </p>
 
                 </div>
 
@@ -480,70 +238,6 @@
                     </div>
 
 
-                    <!-- PRODUCT -->
-                    <div class="vc-order-product">
-
-                        <div class="vc-order-product-image">
-
-                            <img
-                                src="https://images.unsplash.com/photo-1447175008436-054170c2e979?auto=format&fit=crop&w=400&q=80"
-                                alt="Fresh Tomato">
-
-                            <span>1</span>
-
-                        </div>
-
-
-                        <div class="vc-order-product-content">
-
-                            <h3>Fresh Tomatoes</h3>
-
-                            <small>
-                                500 g
-                            </small>
-
-                        </div>
-
-
-                        <strong>
-                            ₹60
-                        </strong>
-
-                    </div>
-
-
-                    <!-- PRODUCT -->
-                    <div class="vc-order-product">
-
-                        <div class="vc-order-product-image">
-
-                            <img
-                                src="https://images.unsplash.com/photo-1582515073490-39981397c445?auto=format&fit=crop&w=400&q=80"
-                                alt="Fresh Carrot">
-
-                            <span>2</span>
-
-                        </div>
-
-
-                        <div class="vc-order-product-content">
-
-                            <h3>Fresh Carrots</h3>
-
-                            <small>
-                                1 Kg
-                            </small>
-
-                        </div>
-
-
-                        <strong>
-                            ₹160
-                        </strong>
-
-                    </div>
-
-
                     <div class="vc-summary-line"></div>
 
 
@@ -567,7 +261,7 @@
                     <!-- PRICING -->
                     <div class="vc-checkout-price-row">
                         <span>Subtotal</span>
-                        <strong>₹220</strong>
+                        <strong>₹0</strong>
                     </div>
 
 
@@ -582,7 +276,7 @@
                     <div class="vc-checkout-price-row">
                         <span>Discount</span>
                         <strong>
-                            -₹20
+                            ₹0
                         </strong>
                     </div>
 
@@ -599,14 +293,14 @@
                             </span>
 
                             <small>
-                                Inclusive of all charges
+                                Inclusive of all charges · Pay on delivery
                             </small>
 
                         </div>
 
 
                         <strong>
-                            ₹200
+                            ₹0
                         </strong>
 
                     </div>
@@ -614,7 +308,7 @@
 
                     <!-- PLACE ORDER -->
                     <button
-                        type="submit"
+                        type="button"
                         class="vc-place-order-btn">
 
                         <span>
