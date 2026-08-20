@@ -27,12 +27,13 @@ class ServiceablePincode extends Model
     {
         $pincode = trim($pincode);
         if (!preg_match('/^\d{6}$/', $pincode)) {
-            return ['serviceable' => false, 'city' => null, 'valid_format' => false];
+            return ['serviceable' => false, 'city' => null, 'state' => null, 'valid_format' => false];
         }
         $row = $this->findActiveByPincode($pincode);
         return [
             'serviceable'  => $row !== null,
             'city'         => $row['city'] ?? null,
+            'state'        => $row['state'] ?? null,
             'valid_format' => true,
         ];
     }
@@ -42,8 +43,9 @@ class ServiceablePincode extends Model
         $where = ['1=1'];
         $params = [];
         if ($q !== null && $q !== '') {
-            $where[] = '(pincode LIKE ? OR city LIKE ?)';
+            $where[] = '(pincode LIKE ? OR city LIKE ? OR state LIKE ?)';
             $like = '%' . $q . '%';
+            $params[] = $like;
             $params[] = $like;
             $params[] = $like;
         }
@@ -57,11 +59,15 @@ class ServiceablePincode extends Model
         return $this->fetchAll($sql, $params);
     }
 
-    public function create(string $pincode, string $city = 'Hyderabad', bool $isActive = true): int
-    {
+    public function create(
+        string $pincode,
+        string $city = 'Hyderabad',
+        string $state = 'Telangana',
+        bool $isActive = true
+    ): int {
         $this->execute(
-            'INSERT INTO serviceable_pincodes (pincode, city, is_active) VALUES (?,?,?)',
-            [$pincode, $city, $isActive ? 1 : 0]
+            'INSERT INTO serviceable_pincodes (pincode, city, state, is_active) VALUES (?,?,?,?)',
+            [$pincode, $city, $state, $isActive ? 1 : 0]
         );
         return (int) $this->db->lastInsertId();
     }

@@ -42,7 +42,7 @@
                 </span>
 
                 <div>
-                    <strong>3</strong>
+                    <strong id="vgSavedAddressCount">0</strong>
                     <span>Saved Addresses</span>
                 </div>
             </div>
@@ -54,7 +54,7 @@
                 </span>
 
                 <div>
-                    <strong>Home</strong>
+                    <strong id="vgDefaultAddressLabel">—</strong>
                     <span>Default Address</span>
                 </div>
             </div>

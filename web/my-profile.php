@@ -44,12 +44,19 @@
                 <!-- Profile Card -->
                 <div class="vg-user-card">
 
-                    <div class="vg-user-avatar">
+                    <div class="vg-user-avatar" id="vgProfileAvatar">
 
-                        <span>SM</span>
+                        <span id="vgProfileAvatarInitials">—</span>
+                        <img id="vgProfileAvatarImg" alt="Profile photo" hidden>
+
+                        <input type="file"
+                               id="vgProfileAvatarFile"
+                               accept="image/jpeg,image/png,image/webp,image/gif"
+                               hidden>
 
                         <button type="button"
                                 class="vg-avatar-edit"
+                                id="vgProfileAvatarBtn"
                                 aria-label="Change profile photo">
 
                             <i class="fa-solid fa-camera"></i>

@@ -30018,6 +30018,45 @@ RESPONSIVE
 
     box-shadow:
         0 10px 25px rgba(39, 137, 56, .25);
+
+    overflow: visible;
+}
+
+.vg-user-avatar img {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    border-radius: 50%;
+    z-index: 1;
+}
+
+.vg-user-avatar.has-photo span {
+    opacity: 0;
+}
+
+.vg-user-avatar .vg-avatar-edit {
+    z-index: 2;
+}
+
+.vc-account-avatar.has-photo,
+.vc-account-avatar:has(img) {
+    overflow: hidden;
+    padding: 0;
+}
+
+.vc-account-avatar img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    display: block;
+}
+
+.vc-account-avatar span {
+    font-weight: 800;
+    font-size: 1.1rem;
+    color: #fff;
 }
 
 

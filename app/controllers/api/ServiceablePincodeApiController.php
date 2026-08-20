@@ -9,6 +9,7 @@ class ServiceablePincodeApiController extends ApiController
         $this->ok([
             'serviceable' => (bool) $result['serviceable'],
             'city'        => $result['city'],
+            'state'       => $result['state'] ?? null,
         ]);
     }
 
@@ -22,6 +23,7 @@ class ServiceablePincodeApiController extends ApiController
                 return [
                     'pincode' => (string) $row['pincode'],
                     'city'    => (string) ($row['city'] ?? 'Hyderabad'),
+                    'state'   => (string) ($row['state'] ?? 'Telangana'),
                 ];
             }, $rows),
         ]);

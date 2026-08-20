@@ -199,6 +199,12 @@
 
         profile: function () { return request('GET', '/profile'); },
         updateProfile: function (body) { return request('PUT', '/profile', body); },
+        uploadAvatar: function (file) {
+            var fd = new FormData();
+            fd.append('avatar', file);
+            return request('POST', '/profile/avatar', fd, { multipart: true });
+        },
+        removeAvatar: function () { return request('DELETE', '/profile/avatar'); },
 
         addresses: function () { return request('GET', '/addresses'); },
         createAddress: function (body) { return request('POST', '/addresses', body); },

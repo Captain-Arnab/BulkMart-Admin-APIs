@@ -32,10 +32,14 @@ $rows = $rows ?? [];
               <input type="text" name="city" class="form-control" value="Hyderabad">
             </div>
             <div class="col-12">
+              <label class="form-label">State</label>
+              <input type="text" name="state" class="form-control" value="Telangana">
+            </div>
+            <div class="col-12">
               <button class="btn btn-primary w-100" type="submit">Add</button>
             </div>
           </form>
-          <p class="small text-muted mt-3 mb-0">Delivery is limited to active Hyderabad pincodes. Deactivate instead of deleting to keep history.</p>
+          <p class="small text-muted mt-3 mb-0">Add active pincodes for serviceable cities. Deactivate instead of deleting to keep history.</p>
         </div>
       </div>
     </div>
@@ -46,7 +50,7 @@ $rows = $rows ?? [];
           <form class="row g-2 align-items-end mb-3" method="GET" action="<?= e(url('serviceable-pincodes')) ?>">
             <div class="col-md-5">
               <label class="form-label mb-1">Search</label>
-              <input type="text" name="q" value="<?= e($filters['q'] ?? '') ?>" class="form-control" placeholder="Pincode or city">
+              <input type="text" name="q" value="<?= e($filters['q'] ?? '') ?>" class="form-control" placeholder="Pincode, city or state">
             </div>
             <div class="col-md-4">
               <label class="form-label mb-1">Status</label>
@@ -68,6 +72,7 @@ $rows = $rows ?? [];
                 <tr>
                   <th>Pincode</th>
                   <th>City</th>
+                  <th>State</th>
                   <th>Status</th>
                   <th>Added</th>
                   <th></th>
@@ -75,12 +80,13 @@ $rows = $rows ?? [];
               </thead>
               <tbody>
                 <?php if (!$rows): ?>
-                  <tr><td colspan="5" class="text-center text-muted py-4">No pincodes found.</td></tr>
+                  <tr><td colspan="6" class="text-center text-muted py-4">No pincodes found.</td></tr>
                 <?php endif; ?>
                 <?php foreach ($rows as $row): ?>
                   <tr>
                     <td><code><?= e($row['pincode']) ?></code></td>
                     <td><?= e($row['city']) ?></td>
+                    <td><?= e($row['state'] ?? 'Telangana') ?></td>
                     <td>
                       <?php if ((int) $row['is_active'] === 1): ?>
                         <span class="badge bg-success">Active</span>

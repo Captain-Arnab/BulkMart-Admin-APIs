@@ -335,6 +335,99 @@
         return (c && (c.owner_name || c.business_name || c.mobile)) || 'Customer';
     }
 
+    function initialsFrom(c) {
+        var n = String(displayName(c) || '').trim();
+        if (!n || n === 'Customer') {
+            return '?';
+        }
+        var parts = n.split(/\s+/).filter(Boolean);
+        if (parts.length >= 2) {
+            return (parts[0].charAt(0) + parts[1].charAt(0)).toUpperCase();
+        }
+        return n.slice(0, 2).toUpperCase();
+    }
+
+    function paintProfileAvatar(customer) {
+        var initialsEl = document.getElementById('vgProfileAvatarInitials');
+        var imgEl = document.getElementById('vgProfileAvatarImg');
+        var wrap = document.getElementById('vgProfileAvatar');
+        var url = customer && customer.avatar_url ? String(customer.avatar_url) : '';
+        if (initialsEl) {
+            initialsEl.textContent = initialsFrom(customer);
+        }
+        if (imgEl) {
+            if (url) {
+                imgEl.src = url;
+                imgEl.hidden = false;
+                if (wrap) wrap.classList.add('has-photo');
+            } else {
+                imgEl.removeAttribute('src');
+                imgEl.hidden = true;
+                if (wrap) wrap.classList.remove('has-photo');
+            }
+        }
+        var dashAvatar = document.querySelector('.vc-account-avatar');
+        if (dashAvatar) {
+            if (url) {
+                dashAvatar.innerHTML = '<img src="' + escapeHtml(url) + '" alt="">';
+                dashAvatar.classList.add('has-photo');
+            } else {
+                dashAvatar.innerHTML = '<span>' + escapeHtml(initialsFrom(customer)) + '</span>';
+                dashAvatar.classList.remove('has-photo');
+            }
+        }
+    }
+
+    function bindProfileAvatarUpload() {
+        if (pageName() !== 'my-profile') {
+            return;
+        }
+        var btn = document.getElementById('vgProfileAvatarBtn');
+        var fileInput = document.getElementById('vgProfileAvatarFile');
+        if (!btn || !fileInput || btn.getAttribute('data-vc-bound')) {
+            return;
+        }
+        btn.setAttribute('data-vc-bound', '1');
+        btn.addEventListener('click', function (e) {
+            e.preventDefault();
+            fileInput.click();
+        });
+        fileInput.addEventListener('change', function () {
+            var file = fileInput.files && fileInput.files[0];
+            if (!file) {
+                return;
+            }
+            if (!/^image\//.test(file.type)) {
+                toast('Please choose an image file (JPG, PNG, or WebP).', 'error');
+                fileInput.value = '';
+                return;
+            }
+            if (file.size > 5 * 1024 * 1024) {
+                toast('Image must be under 5 MB.', 'error');
+                fileInput.value = '';
+                return;
+            }
+            btn.disabled = true;
+            toast('Uploading photo…');
+            VC.uploadAvatar(file).then(function (res) {
+                btn.disabled = false;
+                fileInput.value = '';
+                if (res && res.success) {
+                    VC.setSession({ customer: res.data });
+                    paintProfileAvatar(res.data);
+                    applyHeaderCustomer(res.data);
+                    toast('Profile photo updated');
+                } else {
+                    toast((res && res.error && res.error.message) || 'Could not upload photo.', 'error');
+                }
+            }).catch(function () {
+                btn.disabled = false;
+                fileInput.value = '';
+                toast('Could not upload photo.', 'error');
+            });
+        });
+    }
+
     function applyHeaderCustomer(customer) {
         var account = document.querySelector('.vc-account');
         var mobileAccount = document.querySelector('.vc-mobile-account a');
@@ -2736,6 +2829,8 @@
             var c = res.data;
             VC.setSession({ customer: c });
             applyHeaderCustomer(c);
+            paintProfileAvatar(c);
+            bindProfileAvatarUpload();
             var nameEl = document.querySelector('.vg-user-card h3, .vc-account-user h3');
             var emailEl = document.querySelector('.vg-user-card p, .vc-account-user p');
             if (nameEl) nameEl.textContent = displayName(c);
@@ -2753,7 +2848,7 @@
             };
             Object.keys(inputs).forEach(function (k) {
                 var el = document.querySelector('[name="' + k + '"]');
-                if (el && inputs[k]) el.value = inputs[k];
+                if (el) el.value = inputs[k] || '';
             });
             var kyc = kycUi(c.kyc_status);
             var kycBadge = document.getElementById('vcProfileKycBadge');
@@ -2846,6 +2941,15 @@
         function render() {
             VC.addresses().then(function (res) {
                 var list = (res && res.success && res.data.addresses) || [];
+                var countEl = document.getElementById('vgSavedAddressCount');
+                var defaultEl = document.getElementById('vgDefaultAddressLabel');
+                if (countEl) {
+                    countEl.textContent = String(list.length);
+                }
+                if (defaultEl) {
+                    var def = list.find(function (a) { return a.is_default; }) || list[0];
+                    defaultEl.textContent = def ? (def.label || 'Address') : 'None';
+                }
                 if (!grid) {
                     return;
                 }
@@ -2901,11 +3005,11 @@
                 pinHint.className = 'vg-pincode-hint' + (ok ? ' is-ok' : (msg ? ' is-bad' : ''));
             }
 
-            function selectPin(pin, city) {
+            function selectPin(pin, city, state) {
                 if (pinHidden) pinHidden.value = pin;
                 if (pinSearch) pinSearch.value = pin + (city ? ' · ' + city : '');
                 if (cityInput) cityInput.value = city || 'Hyderabad';
-                if (stateInput) stateInput.value = 'Telangana';
+                if (stateInput) stateInput.value = state || 'Telangana';
                 setPinHint('✓ We deliver here' + (city ? ' (' + city + ')' : ''), true);
                 closePinDropdown();
             }
@@ -2938,8 +3042,9 @@
                     if (!q) return true;
                     var pin = String(row.pincode || '');
                     var city = String(row.city || '').toLowerCase();
+                    var state = String(row.state || '').toLowerCase();
                     if (raw && pin.indexOf(raw) !== -1) return true;
-                    return pin.indexOf(q) !== -1 || city.indexOf(q) !== -1;
+                    return pin.indexOf(q) !== -1 || city.indexOf(q) !== -1 || state.indexOf(q) !== -1;
                 });
                 if (!list.length) {
                     pinDropdown.innerHTML = '<div class="vg-pincode-empty">No matching Hyderabad pincode</div>';
@@ -2949,9 +3054,10 @@
                 pinDropdown.innerHTML = list.slice(0, 80).map(function (row) {
                     var selected = pinHidden && pinHidden.value === row.pincode ? ' is-selected' : '';
                     return '<button type="button" class="vg-pincode-option' + selected + '" data-pin="' +
-                        escapeHtml(row.pincode) + '" data-city="' + escapeHtml(row.city || 'Hyderabad') + '" role="option">' +
+                        escapeHtml(row.pincode) + '" data-city="' + escapeHtml(row.city || 'Hyderabad') +
+                        '" data-state="' + escapeHtml(row.state || 'Telangana') + '" role="option">' +
                         '<strong>' + escapeHtml(row.pincode) + '</strong>' +
-                        '<span>' + escapeHtml(row.city || 'Hyderabad') + '</span></button>';
+                        '<span>' + escapeHtml((row.city || 'Hyderabad') + ', ' + (row.state || 'Telangana')) + '</span></button>';
                 }).join('');
                 openPinDropdown();
             }
@@ -2980,7 +3086,7 @@
                 pinDropdown.addEventListener('click', function (e) {
                     var btn = e.target.closest('.vg-pincode-option');
                     if (!btn) return;
-                    selectPin(btn.getAttribute('data-pin'), btn.getAttribute('data-city'));
+                    selectPin(btn.getAttribute('data-pin'), btn.getAttribute('data-city'), btn.getAttribute('data-state'));
                 });
 
                 document.addEventListener('click', function (e) {
@@ -3053,6 +3159,7 @@
                         pinOk = true;
                         setPinHint('✓ We deliver here', true);
                         if (cityInput && res.data.city) cityInput.value = res.data.city;
+                        if (stateInput && res.data.state) stateInput.value = res.data.state;
                         saveAddress();
                     } else {
                         setPinHint('✗ Not serviceable in this area yet', false);

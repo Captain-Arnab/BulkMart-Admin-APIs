@@ -25,6 +25,7 @@ class ServiceablePincodeController extends Controller
     {
         $pincode = trim((string) ($_POST['pincode'] ?? ''));
         $city = trim((string) ($_POST['city'] ?? 'Hyderabad')) ?: 'Hyderabad';
+        $state = trim((string) ($_POST['state'] ?? 'Telangana')) ?: 'Telangana';
         if (!preg_match('/^\d{6}$/', $pincode)) {
             flash('error', 'Enter a valid 6-digit pincode.');
             redirect('serviceable-pincodes');
@@ -35,7 +36,7 @@ class ServiceablePincodeController extends Controller
             redirect('serviceable-pincodes');
         }
         try {
-            $model->create($pincode, $city, true);
+            $model->create($pincode, $city, $state, true);
             flash('success', "Pincode {$pincode} added.");
         } catch (Throwable $e) {
             flash('error', $e->getMessage());
