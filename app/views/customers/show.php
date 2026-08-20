@@ -105,8 +105,8 @@ $joined = !empty($customer['created_at']) ? date('d M Y', strtotime((string) $cu
     </div>
   </div>
 
-  <div class="row g-3 mt-2">
-    <div class="col-lg-8">
+  <div class="row g-3 mt-2 align-items-start">
+    <div class="col-lg-8 d-flex flex-column gap-3">
       <div class="vc-cust-card vc-fade-up" style="--delay:60ms">
         <div class="vc-cust-card-head">
           <h3><i class="bi bi-person-vcard"></i> Profile details</h3>
@@ -249,7 +249,7 @@ $joined = !empty($customer['created_at']) ? date('d M Y', strtotime((string) $cu
       </div>
     </div>
 
-    <div class="col-lg-4">
+    <div class="col-lg-4 d-flex flex-column gap-3">
       <div class="vc-cust-card vc-cust-actions vc-fade-up" style="--delay:100ms">
         <div class="vc-cust-card-head">
           <h3><i class="bi bi-shield-lock"></i> KYC actions</h3>

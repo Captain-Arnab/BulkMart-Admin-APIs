@@ -4305,20 +4305,14 @@ input {
 ============================================================ */
 
 .vgh-overlay {
-
     position: absolute;
-
     inset: 0;
-
     z-index: 2;
-
-    background:
-
-        linear-gradient(
+    background: linear-gradient(
             90deg,
             rgba(0, 32, 10, .97) 0%,
-            rgba(2, 74, 24, .88) 35%,
-            rgba(2, 70, 22, .57) 60%,
+            rgba(2, 74, 24, .88) 15%,
+            rgba(2, 70, 22, .57) 25%,
             rgba(0, 0, 0, .18) 100%
         );
 }

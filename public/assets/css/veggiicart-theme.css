@@ -2215,7 +2215,7 @@ a.vc-kpi-link:focus {
   border-radius: var(--cust-radius);
   box-shadow: var(--vc-shadow-sm);
   padding: 1.15rem 1.25rem 1.25rem;
-  height: 100%;
+  height: auto;
   transition: box-shadow 0.2s ease;
 }
 .vc-cust-card:hover {
@@ -2295,7 +2295,7 @@ a.vc-kpi-link:focus {
 
 .vc-cust-empty {
   text-align: center;
-  padding: 1.5rem 1rem;
+  padding: 1rem 0.85rem;
   color: var(--vc-muted);
   border: 1.5px dashed rgba(18, 131, 59, 0.2);
   border-radius: 14px;
