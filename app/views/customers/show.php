@@ -45,9 +45,12 @@ $joined = !empty($customer['created_at']) ? date('d M Y', strtotime((string) $cu
 <?php if ($error): ?><div class="alert alert-danger vc-fade-in"><?= e($error) ?></div><?php endif; ?>
 
 <section class="section vc-cust-detail">
-  <!-- Hero -->
   <div class="vc-cust-hero vc-fade-up">
-    <div class="vc-cust-hero-bg" aria-hidden="true"></div>
+    <div class="vc-cust-hero-cover" aria-hidden="true">
+      <span class="vc-cust-hero-orb vc-cust-hero-orb--a"></span>
+      <span class="vc-cust-hero-orb vc-cust-hero-orb--b"></span>
+    </div>
+
     <div class="vc-cust-hero-body">
       <div class="vc-cust-avatar-wrap">
         <?php if ($avatarUrl !== ''): ?>
@@ -55,7 +58,6 @@ $joined = !empty($customer['created_at']) ? date('d M Y', strtotime((string) $cu
         <?php else: ?>
           <div class="vc-cust-avatar vc-cust-avatar--initials" aria-hidden="true"><?= e($initials) ?></div>
         <?php endif; ?>
-        <span class="vc-cust-avatar-ring"></span>
       </div>
 
       <div class="vc-cust-hero-meta">
@@ -85,25 +87,25 @@ $joined = !empty($customer['created_at']) ? date('d M Y', strtotime((string) $cu
           <span><i class="bi bi-calendar3"></i> Joined <?= e($joined) ?></span>
         </div>
       </div>
+    </div>
 
-      <div class="vc-cust-hero-stats">
-        <div class="vc-cust-stat">
-          <strong><?= count($orders) ?></strong>
-          <span>Orders</span>
-        </div>
-        <div class="vc-cust-stat">
-          <strong><?= count($addresses) ?></strong>
-          <span>Addresses</span>
-        </div>
-        <div class="vc-cust-stat">
-          <strong><?= count($documents) ?></strong>
-          <span>Docs</span>
-        </div>
+    <div class="vc-cust-hero-stats">
+      <div class="vc-cust-stat">
+        <strong><?= count($orders) ?></strong>
+        <span>Orders</span>
+      </div>
+      <div class="vc-cust-stat">
+        <strong><?= count($addresses) ?></strong>
+        <span>Addresses</span>
+      </div>
+      <div class="vc-cust-stat">
+        <strong><?= count($documents) ?></strong>
+        <span>Docs</span>
       </div>
     </div>
   </div>
 
-  <div class="row g-3 mt-1">
+  <div class="row g-3 mt-2">
     <div class="col-lg-8">
       <div class="vc-cust-card vc-fade-up" style="--delay:60ms">
         <div class="vc-cust-card-head">
