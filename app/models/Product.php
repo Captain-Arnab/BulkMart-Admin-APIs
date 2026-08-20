@@ -95,6 +95,29 @@ class Product extends Model
         return $this->fetchOne('SELECT * FROM products WHERE item_code = ?', [$code]);
     }
 
+    /**
+     * Random unique SKU, e.g. VC-A7K2M9.
+     * Excludes ambiguous characters (0/O, 1/I/L).
+     */
+    public function generateUniqueItemCode(string $prefix = 'VC-'): string
+    {
+        $alphabet = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
+        $len = strlen($alphabet) - 1;
+
+        for ($attempt = 0; $attempt < 50; $attempt++) {
+            $code = $prefix;
+            for ($i = 0; $i < 6; $i++) {
+                $code .= $alphabet[random_int(0, $len)];
+            }
+            if (!$this->findByItemCode($code)) {
+                return $code;
+            }
+        }
+
+        // Extremely unlikely fallback
+        return $prefix . strtoupper(bin2hex(random_bytes(4)));
+    }
+
     public function findByName(string $name): ?array
     {
         return $this->fetchOne('SELECT * FROM products WHERE LOWER(name) = LOWER(?)', [$name]);
@@ -102,6 +125,11 @@ class Product extends Model
 
     public function create(array $data): int
     {
+        $itemCode = trim((string) ($data['item_code'] ?? ''));
+        if ($itemCode === '') {
+            $itemCode = $this->generateUniqueItemCode();
+        }
+
         $this->execute(
             "INSERT INTO products
               (category_id, name, unit, moq, price, stock, image_url, batch_no, item_code,
@@ -116,7 +144,7 @@ class Product extends Model
                 $data['stock'],
                 $data['image_url'] ?? null,
                 $data['batch_no'] ?? null,
-                $data['item_code'] ?? null,
+                $itemCode,
                 $data['description'] ?? null,
                 $data['grade'] ?? null,
                 $data['origin'] ?? null,

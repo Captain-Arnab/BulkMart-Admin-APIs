@@ -62,14 +62,16 @@ class ProductController extends Controller
         $product = (new Product())->find((int) $id);
         if (!$product) {
             flash('error', 'Product not found.');
-            redirect('products');
+            redirect($this->productsListPath($_GET));
         }
+        $returnQuery = $this->listReturnQuery($_GET);
         $this->view('products/form', [
-            'title'      => 'Edit Product',
-            'product'    => $product,
-            'images'     => (new ProductImage())->forProduct((int) $id),
-            'categories' => (new Category())->options(),
-            'error'      => flash('error'),
+            'title'       => 'Edit Product',
+            'product'     => $product,
+            'images'      => (new ProductImage())->forProduct((int) $id),
+            'categories'  => (new Category())->options(),
+            'returnQuery' => $returnQuery,
+            'error'       => flash('error'),
         ]);
     }
 
@@ -77,9 +79,11 @@ class ProductController extends Controller
     {
         $model = new Product();
         $product = $model->find((int) $id);
+        $returnPath = $this->productsListPath($_POST);
+        $editReturn = $this->listReturnQuery($_POST);
         if (!$product) {
             flash('error', 'Product not found.');
-            redirect('products');
+            redirect($returnPath);
         }
         try {
             $data = $this->validatedPayload((int) $id);
@@ -90,10 +94,11 @@ class ProductController extends Controller
             $model->update((int) $id, $data);
             $this->saveProductImages((int) $id);
             flash('success', 'Product updated.');
-            redirect('products');
+            redirect($returnPath);
         } catch (Throwable $e) {
             flash('error', $e->getMessage());
-            redirect('products/' . (int) $id . '/edit');
+            $qs = $editReturn !== [] ? ('?' . http_build_query($editReturn)) : '';
+            redirect('products/' . (int) $id . '/edit' . $qs);
         }
     }
 
@@ -103,12 +108,12 @@ class ProductController extends Controller
         $product = $model->find((int) $id);
         if (!$product) {
             flash('error', 'Product not found.');
-            redirect('products');
+            redirect($this->productsListPath($_POST));
         }
         $new = !((int) $product['is_active'] === 1);
         $model->setActive((int) $id, $new);
         flash('success', $new ? 'Product activated.' : 'Product deactivated.');
-        redirect('products');
+        redirect($this->productsListPath($_POST));
     }
 
     public function updateStock(string $id): void
@@ -116,29 +121,29 @@ class ProductController extends Controller
         $stock = (float) ($_POST['stock'] ?? -1);
         if ($stock < 0) {
             flash('error', 'Stock must be zero or greater.');
-            redirect('products');
+            redirect($this->productsListPath($_POST));
         }
         $model = new Product();
         if (!$model->find((int) $id)) {
             flash('error', 'Product not found.');
-            redirect('products');
+            redirect($this->productsListPath($_POST));
         }
         $model->updateStock((int) $id, $stock);
         flash('success', 'Stock updated.');
-        redirect('products');
+        redirect($this->productsListPath($_POST));
     }
 
     public function delete(string $id): void
     {
         $this->deleteByIds([(int) $id]);
-        redirect('products');
+        redirect($this->productsListPath($_POST));
     }
 
     public function bulkDelete(): void
     {
         $ids = $this->postedIds();
         $this->deleteByIds($ids);
-        redirect('products');
+        redirect($this->productsListPath($_POST));
     }
 
     /** @param array<int,int> $ids */
@@ -230,6 +235,9 @@ class ProductController extends Controller
                     $itemCode = trim($row['item_code'] ?? '') ?: null;
                     if ($itemCode && $prodModel->findByItemCode($itemCode)) {
                         throw new RuntimeException("duplicate item_code \"{$itemCode}\"");
+                    }
+                    if ($itemCode === null) {
+                        $itemCode = $prodModel->generateUniqueItemCode();
                     }
 
                     $stock = (float) ($row['stock'] ?? 0);
@@ -410,6 +418,9 @@ class ProductController extends Controller
             if ($existing && (int) $existing['id'] !== (int) $ignoreId) {
                 throw new InvalidArgumentException("Item code \"{$itemCode}\" is already in use.");
             }
+        } elseif ($ignoreId === null) {
+            // New product with blank item code → auto-generate unique SKU
+            $itemCode = (new Product())->generateUniqueItemCode();
         }
 
         $inStock = isset($_POST['in_stock']) ? 1 : 0;
@@ -507,5 +518,49 @@ class ProductController extends Controller
             return $default;
         }
         return in_array($v, ['1', 'true', 'yes', 'y'], true);
+    }
+
+    /**
+     * Preserve products list filters/page across edit → save.
+     *
+     * @param array<string,mixed> $source
+     * @return array<string,scalar>
+     */
+    private function listReturnQuery(array $source): array
+    {
+        if (!empty($source['return_to']) && is_string($source['return_to'])) {
+            $parsed = [];
+            parse_str($source['return_to'], $parsed);
+            $source = array_merge($source, $parsed);
+        }
+
+        $out = [];
+        $page = max(1, (int) ($source['page'] ?? $source['return_page'] ?? 1));
+        if ($page > 1) {
+            $out['page'] = $page;
+        }
+        $q = trim((string) ($source['q'] ?? $source['return_q'] ?? ''));
+        if ($q !== '') {
+            $out['q'] = $q;
+        }
+        $categoryId = (int) ($source['category_id'] ?? $source['return_category_id'] ?? 0);
+        if ($categoryId > 0) {
+            $out['category_id'] = $categoryId;
+        }
+        $low = $source['low_stock'] ?? $source['return_low_stock'] ?? '';
+        if ($low === '1' || $low === 1 || $low === true) {
+            $out['low_stock'] = '1';
+        }
+        return $out;
+    }
+
+    /** @param array<string,mixed> $source */
+    private function productsListPath(array $source): string
+    {
+        $query = $this->listReturnQuery($source);
+        if ($query === []) {
+            return 'products';
+        }
+        return 'products?' . http_build_query($query);
     }
 }

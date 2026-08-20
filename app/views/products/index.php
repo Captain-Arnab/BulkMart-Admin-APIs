@@ -7,6 +7,13 @@ $error = $error ?? null;
 $q = $q ?? '';
 $categoryId = $categoryId ?? null;
 $result = $result ?? ['page' => 1, 'pages' => 1, 'total' => count($products ?? [])];
+$listQuery = array_filter([
+    'page' => ((int) ($result['page'] ?? 1)) > 1 ? (int) $result['page'] : null,
+    'q' => $q !== '' ? $q : null,
+    'category_id' => $categoryId ?: null,
+    'low_stock' => !empty($lowStock) ? '1' : null,
+], static fn ($v) => $v !== null && $v !== '');
+$listQs = $listQuery !== [] ? ('?' . http_build_query($listQuery)) : '';
 ?>
 <div class="pagetitle d-flex flex-wrap justify-content-between align-items-center gap-2">
   <div>
@@ -26,7 +33,11 @@ $result = $result ?? ['page' => 1, 'pages' => 1, 'total' => count($products ?? [
   </div>
 </div>
 
-<form id="vcBulkDeleteForm" method="POST" action="<?= e(url('products/bulk-delete')) ?>"></form>
+<form id="vcBulkDeleteForm" method="POST" action="<?= e(url('products/bulk-delete')) ?>">
+  <?php foreach ($listQuery as $lk => $lv): ?>
+    <input type="hidden" name="<?= e((string) $lk) ?>" value="<?= e((string) $lv) ?>">
+  <?php endforeach; ?>
+</form>
 
 <?php if ($success): ?><div class="alert alert-success"><?= e($success) ?></div><?php endif; ?>
 <?php if ($error): ?><div class="alert alert-danger"><?= e($error) ?></div><?php endif; ?>
@@ -121,6 +132,9 @@ $result = $result ?? ['page' => 1, 'pages' => 1, 'total' => count($products ?? [
               <td>₹<?= e(number_format((float)$p['price'], 2)) ?></td>
               <td style="min-width:140px">
                 <form method="POST" action="<?= e(url('products/' . $p['id'] . '/stock')) ?>" class="d-flex gap-1">
+                  <?php foreach ($listQuery as $lk => $lv): ?>
+                    <input type="hidden" name="<?= e((string) $lk) ?>" value="<?= e((string) $lv) ?>">
+                  <?php endforeach; ?>
                   <input type="number" step="0.01" min="0" name="stock" value="<?= e($p['stock']) ?>" class="form-control form-control-sm" style="max-width:90px">
                   <button class="btn btn-sm btn-outline-primary" type="submit" title="Save stock">Save</button>
                 </form>
@@ -128,14 +142,20 @@ $result = $result ?? ['page' => 1, 'pages' => 1, 'total' => count($products ?? [
               <td><span class="badge <?= e($badge['class']) ?>"><?= e($badge['label']) ?></span></td>
               <td><?= (int)$p['is_active'] === 1 ? '<span class="text-success">Yes</span>' : '<span class="text-muted">No</span>' ?></td>
               <td class="text-end text-nowrap">
-                <a class="btn btn-sm btn-outline-primary" href="<?= e(url('products/' . $p['id'] . '/edit')) ?>">Edit</a>
+                <a class="btn btn-sm btn-outline-primary" href="<?= e(url('products/' . $p['id'] . '/edit' . $listQs)) ?>">Edit</a>
                 <form class="d-inline" method="POST" action="<?= e(url('products/' . $p['id'] . '/deactivate')) ?>">
+                  <?php foreach ($listQuery as $lk => $lv): ?>
+                    <input type="hidden" name="<?= e((string) $lk) ?>" value="<?= e((string) $lv) ?>">
+                  <?php endforeach; ?>
                   <button class="btn btn-sm btn-outline-secondary" type="submit">
                     <?= (int)$p['is_active'] === 1 ? 'Deactivate' : 'Activate' ?>
                   </button>
                 </form>
                 <form class="d-inline" method="POST" action="<?= e(url('products/' . $p['id'] . '/delete')) ?>"
                       onsubmit="return confirm('Delete this product? Past orders keep the item name and price.');">
+                  <?php foreach ($listQuery as $lk => $lv): ?>
+                    <input type="hidden" name="<?= e((string) $lk) ?>" value="<?= e((string) $lv) ?>">
+                  <?php endforeach; ?>
                   <button class="btn btn-sm btn-outline-danger" type="submit">Delete</button>
                 </form>
               </td>
