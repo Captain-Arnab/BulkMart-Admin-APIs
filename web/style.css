@@ -6482,6 +6482,21 @@ input {
         #ffffff;
 }
 
+.vc-home-category-rows .vc-home-cat-row {
+    padding-top: 48px;
+    padding-bottom: 48px;
+}
+
+.vc-home-category-rows .vc-home-cat-row:nth-child(even) {
+    background:
+        radial-gradient(
+            circle at 96% 20%,
+            rgba(8,116,38,.06),
+            transparent 28%
+        ),
+        #f7faf6;
+}
+
 
 .vfresh-container {
 

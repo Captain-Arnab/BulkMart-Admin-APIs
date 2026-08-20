@@ -534,10 +534,14 @@
         if (slidesWrap) {
             slidesWrap.innerHTML = '';
         }
-        ['.vbestSlider .swiper-wrapper', '.vfreshSlider .swiper-wrapper', '.vsrSlider .swiper-wrapper'].forEach(function (sel) {
+        ['.vbestSlider .swiper-wrapper'].forEach(function (sel) {
             var w = document.querySelector(sel);
             if (w) w.innerHTML = '';
         });
+        var catRows = document.getElementById('vcCategoryProductRows');
+        if (catRows) {
+            catRows.innerHTML = '';
+        }
         var dotsWrap = document.querySelector('#vghSlider .vgh-dots, #vghSlider .vgh-pagination, .vgh-dots');
         if (!dotsWrap) {
             dotsWrap = document.querySelector('#vghSlider') && document.querySelector('#vghSlider').querySelector('[class*="dot"]');
@@ -598,12 +602,10 @@
         VC.products({ per_page: 16 }).then(function (res) {
             var products = (res && res.success && res.data.products) || [];
             fillSlider('.vbestSlider .swiper-wrapper', products.slice(0, 8), 'vbest');
-            fillSlider('.vfreshSlider .swiper-wrapper', products.slice(0, 8), 'vfresh');
-            fillSlider('.vsrSlider .swiper-wrapper', products.slice(8, 16).concat(products.slice(0, 8)), 'vsr');
             initSwiper('.vbestSlider', { navigation: { nextEl: '.vbest-next', prevEl: '.vbest-prev' }, pagination: { el: '.vbest-pagination', clickable: true } });
-            initSwiper('.vfreshSlider', { navigation: { nextEl: '.vfresh-next', prevEl: '.vfresh-prev' }, pagination: { el: '.vfresh-pagination', clickable: true } });
-            initSwiper('.vsrSlider', { navigation: { nextEl: '.vsr-next', prevEl: '.vsr-prev' }, pagination: { el: '.vsr-pagination', clickable: true } });
         });
+
+        renderHomeCategoryRows();
 
         document.querySelectorAll('a[href="shop.php"], a[href="products.php"]').forEach(function (a) {
             a.setAttribute('href', 'product.php');
@@ -616,6 +618,84 @@
         });
 
         bootHomeContinue();
+    }
+
+    function categoryProductRowHtml(cat, products, uid) {
+        var slides = products.map(function (p) { return sliderProductCard(p, 'vfresh'); }).join('');
+        return (
+            '<section class="vfresh-section vc-home-cat-row" data-category-id="' + escapeHtml(cat.id) + '">' +
+                '<div class="vfresh-container">' +
+                    '<div class="vfresh-heading">' +
+                        '<div>' +
+                            '<span class="vfresh-subtitle"><i class="fa-solid fa-leaf"></i> Shop by Category</span>' +
+                            '<h2>' + escapeHtml(titleCaseName(cat.name)) + ' <span>Products</span></h2>' +
+                            '<p>Fresh picks from ' + escapeHtml(titleCaseName(cat.name)) + ' — quality produce for bulk and everyday orders.</p>' +
+                        '</div>' +
+                        '<div class="vfresh-heading-actions">' +
+                            '<button class="vfresh-nav ' + uid + '-prev" type="button" aria-label="Previous">' +
+                                '<i class="fa-solid fa-chevron-left"></i>' +
+                            '</button>' +
+                            '<button class="vfresh-nav ' + uid + '-next" type="button" aria-label="Next">' +
+                                '<i class="fa-solid fa-chevron-right"></i>' +
+                            '</button>' +
+                            '<a href="' + categoryHref(cat) + '" class="vfresh-view-all">' +
+                                'View All <i class="fa-solid fa-arrow-right"></i>' +
+                            '</a>' +
+                        '</div>' +
+                    '</div>' +
+                    '<div class="swiper vfreshSlider ' + uid + '-slider">' +
+                        '<div class="swiper-wrapper">' + slides + '</div>' +
+                        '<div class="swiper-pagination ' + uid + '-pagination"></div>' +
+                    '</div>' +
+                '</div>' +
+            '</section>'
+        );
+    }
+
+    function renderHomeCategoryRows() {
+        var host = document.getElementById('vcCategoryProductRows');
+        if (!host) {
+            return;
+        }
+        host.innerHTML = '<div class="vfresh-section"><div class="vfresh-container">' + emptyNote('Loading categories…') + '</div></div>';
+
+        VC.categories().then(function (res) {
+            var cats = (res && res.success && res.data.categories) || [];
+            cats = cats.filter(function (c) { return Number(c.product_count || 0) > 0; });
+            if (!cats.length) {
+                host.innerHTML = '';
+                return null;
+            }
+            return Promise.all(cats.map(function (c) {
+                return VC.products({ category_id: c.id, per_page: 12 }).then(function (pr) {
+                    return {
+                        cat: c,
+                        products: (pr && pr.success && pr.data.products) || []
+                    };
+                });
+            }));
+        }).then(function (rows) {
+            if (!rows) {
+                return;
+            }
+            rows = rows.filter(function (r) { return r.products.length > 0; });
+            if (!rows.length) {
+                host.innerHTML = '';
+                return;
+            }
+            host.innerHTML = rows.map(function (r) {
+                return categoryProductRowHtml(r.cat, r.products, 'vcatrow-' + r.cat.id);
+            }).join('');
+            rows.forEach(function (r) {
+                var uid = 'vcatrow-' + r.cat.id;
+                initSwiper('.' + uid + '-slider', {
+                    navigation: { nextEl: '.' + uid + '-next', prevEl: '.' + uid + '-prev' },
+                    pagination: { el: '.' + uid + '-pagination', clickable: true }
+                });
+            });
+        }).catch(function () {
+            host.innerHTML = '';
+        });
     }
 
     function bootHomeContinue() {
