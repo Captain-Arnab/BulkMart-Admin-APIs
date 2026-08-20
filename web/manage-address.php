@@ -109,8 +109,7 @@
                     <h2>Add New Delivery Address</h2>
 
                     <p>
-                        Save a new delivery location to make your
-                        future Vegiicart orders faster.
+                        We currently deliver in Hyderabad only — pick a serviceable PIN code from the list.
                     </p>
                 </div>
 
@@ -168,18 +167,24 @@
 
                     <div class="vg-form-group">
 
-                        <label>PIN Code *</label>
+                        <label>PIN Code * <span class="vg-field-note">(Hyderabad only)</span></label>
 
-                        <div class="vg-input-box">
-                            <i class="fa-solid fa-location-crosshairs"></i>
-
-                            <input type="text"
-                                   name="pincode"
-                                   placeholder="Enter PIN code"
-                                   maxlength="6"
-                                   required>
+                        <div class="vg-pincode-select" id="vgPincodeSelect">
+                            <div class="vg-input-box vg-pincode-trigger">
+                                <i class="fa-solid fa-location-crosshairs"></i>
+                                <input type="text"
+                                       id="vgPincodeSearch"
+                                       placeholder="Search & select PIN code"
+                                       autocomplete="off"
+                                       aria-autocomplete="list"
+                                       aria-controls="vgPincodeDropdown"
+                                       aria-expanded="false">
+                                <i class="fa-solid fa-chevron-down vg-pincode-caret"></i>
+                            </div>
+                            <input type="hidden" name="pincode" id="vgPincodeValue" required>
+                            <div class="vg-pincode-dropdown" id="vgPincodeDropdown" hidden role="listbox"></div>
                         </div>
-                        <p class="vg-pincode-hint" id="vgPincodeHint" aria-live="polite" style="margin:0.4rem 0 0;font-size:0.88rem;"></p>
+                        <p class="vg-pincode-hint" id="vgPincodeHint" aria-live="polite"></p>
 
                     </div>
 
@@ -233,15 +238,15 @@
 
                     <div class="vg-form-group">
 
-                        <label>City *</label>
+                        <label>City</label>
 
                         <div class="vg-input-box">
                             <i class="fa-solid fa-city"></i>
 
                             <input type="text"
                                    name="city"
-                                   placeholder="Enter city"
-                                   required>
+                                   value="Hyderabad"
+                                   readonly>
                         </div>
 
                     </div>
@@ -249,27 +254,15 @@
 
                     <div class="vg-form-group">
 
-                        <label>State *</label>
+                        <label>State</label>
 
                         <div class="vg-input-box">
-
                             <i class="fa-solid fa-map"></i>
 
-                            <select name="state" required>
-
-                                <option value="">
-                                    Select State
-                                </option>
-
-                                <option>Uttarakhand</option>
-                                <option>Uttar Pradesh</option>
-                                <option>Delhi</option>
-                                <option>Haryana</option>
-                                <option>Punjab</option>
-                                <option>Rajasthan</option>
-
-                            </select>
-
+                            <input type="text"
+                                   name="state"
+                                   value="Telangana"
+                                   readonly>
                         </div>
 
                     </div>
@@ -277,7 +270,7 @@
 
                     <div class="vg-form-group">
 
-                        <label>Country *</label>
+                        <label>Country</label>
 
                         <div class="vg-input-box">
                             <i class="fa-solid fa-earth-asia"></i>

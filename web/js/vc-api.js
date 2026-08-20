@@ -214,6 +214,7 @@
         reorder: function (id) { return request('POST', '/orders/' + id + '/reorder'); },
         deliverySlots: function () { return request('GET', '/delivery-slots'); },
         checkPincode: function (pincode) { return request('GET', '/check-pincode', { pincode: pincode }); },
+        serviceablePincodes: function (query) { return request('GET', '/serviceable-pincodes', query || {}); },
 
         notifications: function () { return request('GET', '/notifications'); },
         markNotificationRead: function (id) { return request('POST', '/notifications/' + id + '/read'); },

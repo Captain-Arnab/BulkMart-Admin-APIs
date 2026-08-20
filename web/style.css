@@ -47786,3 +47786,95 @@ RESPONSIVE
     }
 }
 
+/* Manage Address — searchable Hyderabad pincode select */
+.vg-field-note {
+    font-weight: 500;
+    color: #6a7a6c;
+    text-transform: none;
+    letter-spacing: 0;
+    font-size: 0.82em;
+}
+.vg-pincode-select {
+    position: relative;
+}
+.vg-pincode-trigger {
+    position: relative;
+}
+.vg-pincode-trigger .vg-pincode-caret {
+    left: auto !important;
+    right: 14px;
+    color: #7a8f7c;
+    pointer-events: none;
+}
+.vg-pincode-select.is-open .vg-pincode-trigger {
+    border-color: #2f7a3c;
+    box-shadow: 0 0 0 3px rgba(47, 122, 60, 0.12);
+}
+.vg-pincode-select.is-open .vg-pincode-caret {
+    transform: translateY(-50%) rotate(180deg);
+}
+.vg-pincode-dropdown {
+    position: absolute;
+    z-index: 40;
+    left: 0;
+    right: 0;
+    top: calc(100% + 6px);
+    max-height: 240px;
+    overflow-y: auto;
+    background: #fff;
+    border: 1px solid #d7e3d8;
+    border-radius: 12px;
+    box-shadow: 0 12px 28px rgba(35, 76, 40, 0.12);
+    padding: 0.35rem;
+}
+.vg-pincode-option {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.75rem;
+    width: 100%;
+    padding: 0.65rem 0.75rem;
+    border: 0;
+    border-radius: 8px;
+    background: transparent;
+    text-align: left;
+    cursor: pointer;
+    font: inherit;
+    color: inherit;
+}
+.vg-pincode-option:hover,
+.vg-pincode-option.is-selected {
+    background: #f1f8ef;
+}
+.vg-pincode-option strong {
+    color: #1f3d24;
+    font-size: 0.95rem;
+}
+.vg-pincode-option span {
+    color: #66756a;
+    font-size: 0.82rem;
+}
+.vg-pincode-empty {
+    padding: 0.85rem 0.75rem;
+    color: #6a7a6c;
+    font-size: 0.88rem;
+    text-align: center;
+}
+.vg-pincode-hint {
+    margin: 0.45rem 0 0;
+    font-size: 0.86rem;
+    min-height: 1.2em;
+}
+.vg-pincode-hint.is-ok {
+    color: #1a7f37;
+}
+.vg-pincode-hint.is-bad {
+    color: #b42318;
+}
+.vg-input-box input[readonly] {
+    background: #f5f8f5;
+    color: #3d5242;
+    cursor: default;
+}
+
+

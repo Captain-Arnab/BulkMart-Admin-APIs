@@ -2885,79 +2885,146 @@
         var form = document.querySelector('#vgNewAddressForm form, .vg-address-form');
         if (form) {
             var pinHint = document.getElementById('vgPincodeHint');
-            var pinInput = form.querySelector('[name="pincode"]');
+            var pinHidden = document.getElementById('vgPincodeValue') || form.querySelector('[name="pincode"]');
+            var pinSearch = document.getElementById('vgPincodeSearch');
+            var pinDropdown = document.getElementById('vgPincodeDropdown');
+            var pinWrap = document.getElementById('vgPincodeSelect');
+            var cityInput = form.querySelector('[name="city"]');
+            var stateInput = form.querySelector('[name="state"]');
+            var allPins = [];
             var pinOk = false;
-            var pinTimer = null;
 
             function setPinHint(msg, ok) {
                 pinOk = !!ok;
                 if (!pinHint) return;
                 pinHint.textContent = msg || '';
-                pinHint.style.color = ok ? '#1a7f37' : (msg ? '#b42318' : '');
+                pinHint.className = 'vg-pincode-hint' + (ok ? ' is-ok' : (msg ? ' is-bad' : ''));
             }
 
-            function checkPinLive() {
-                if (!pinInput) return;
-                var pin = (pinInput.value || '').trim();
-                if (!/^\d{6}$/.test(pin)) {
-                    setPinHint(pin.length ? 'Enter a valid 6-digit pincode.' : '', false);
+            function selectPin(pin, city) {
+                if (pinHidden) pinHidden.value = pin;
+                if (pinSearch) pinSearch.value = pin + (city ? ' · ' + city : '');
+                if (cityInput) cityInput.value = city || 'Hyderabad';
+                if (stateInput) stateInput.value = 'Telangana';
+                setPinHint('✓ We deliver here' + (city ? ' (' + city + ')' : ''), true);
+                closePinDropdown();
+            }
+
+            function clearPinSelection() {
+                if (pinHidden) pinHidden.value = '';
+                setPinHint('', false);
+            }
+
+            function openPinDropdown() {
+                if (!pinDropdown) return;
+                pinDropdown.hidden = false;
+                if (pinSearch) pinSearch.setAttribute('aria-expanded', 'true');
+                if (pinWrap) pinWrap.classList.add('is-open');
+            }
+
+            function closePinDropdown() {
+                if (!pinDropdown) return;
+                pinDropdown.hidden = true;
+                if (pinSearch) pinSearch.setAttribute('aria-expanded', 'false');
+                if (pinWrap) pinWrap.classList.remove('is-open');
+            }
+
+            function renderPinOptions(filter) {
+                if (!pinDropdown) return;
+                var q = String(filter || '').trim().toLowerCase();
+                // If display value is "500001 · Hyderabad", search by digits only when typing new query
+                var raw = q.replace(/[^\d]/g, '');
+                var list = allPins.filter(function (row) {
+                    if (!q) return true;
+                    var pin = String(row.pincode || '');
+                    var city = String(row.city || '').toLowerCase();
+                    if (raw && pin.indexOf(raw) !== -1) return true;
+                    return pin.indexOf(q) !== -1 || city.indexOf(q) !== -1;
+                });
+                if (!list.length) {
+                    pinDropdown.innerHTML = '<div class="vg-pincode-empty">No matching Hyderabad pincode</div>';
+                    openPinDropdown();
                     return;
                 }
-                setPinHint('Checking…', false);
-                VC.checkPincode(pin).then(function (res) {
-                    if ((pinInput.value || '').trim() !== pin) return;
-                    if (res && res.success && res.data && res.data.serviceable) {
-                        setPinHint('✓ We deliver here' + (res.data.city ? ' (' + res.data.city + ')' : ''), true);
-                    } else {
-                        setPinHint('✗ Not serviceable in this area yet', false);
-                    }
-                }).catch(function () {
-                    setPinHint('Could not verify pincode.', false);
-                });
+                pinDropdown.innerHTML = list.slice(0, 80).map(function (row) {
+                    var selected = pinHidden && pinHidden.value === row.pincode ? ' is-selected' : '';
+                    return '<button type="button" class="vg-pincode-option' + selected + '" data-pin="' +
+                        escapeHtml(row.pincode) + '" data-city="' + escapeHtml(row.city || 'Hyderabad') + '" role="option">' +
+                        '<strong>' + escapeHtml(row.pincode) + '</strong>' +
+                        '<span>' + escapeHtml(row.city || 'Hyderabad') + '</span></button>';
+                }).join('');
+                openPinDropdown();
             }
 
-            if (pinInput) {
-                pinInput.addEventListener('input', function () {
-                    clearTimeout(pinTimer);
-                    pinTimer = setTimeout(checkPinLive, 400);
+            if (pinWrap && pinSearch && pinDropdown) {
+                VC.serviceablePincodes().then(function (res) {
+                    allPins = (res && res.success && res.data.pincodes) || [];
+                    if (!allPins.length) {
+                        setPinHint('No serviceable pincodes available right now.', false);
+                    }
                 });
-                pinInput.addEventListener('blur', checkPinLive);
+
+                pinSearch.addEventListener('focus', function () {
+                    // Show full list when focusing with empty / selected display
+                    var q = pinHidden && pinHidden.value && pinSearch.value.indexOf(pinHidden.value) === 0
+                        ? ''
+                        : pinSearch.value;
+                    renderPinOptions(q);
+                });
+
+                pinSearch.addEventListener('input', function () {
+                    clearPinSelection();
+                    renderPinOptions(pinSearch.value);
+                });
+
+                pinDropdown.addEventListener('click', function (e) {
+                    var btn = e.target.closest('.vg-pincode-option');
+                    if (!btn) return;
+                    selectPin(btn.getAttribute('data-pin'), btn.getAttribute('data-city'));
+                });
+
+                document.addEventListener('click', function (e) {
+                    if (pinWrap && !pinWrap.contains(e.target)) {
+                        closePinDropdown();
+                        // Restore display if a pin was already chosen
+                        if (pinHidden && pinHidden.value && pinSearch) {
+                            var match = allPins.find(function (r) { return r.pincode === pinHidden.value; });
+                            pinSearch.value = pinHidden.value + (match ? ' · ' + (match.city || 'Hyderabad') : '');
+                        }
+                    }
+                });
             }
 
             form.addEventListener('submit', function (e) {
                 e.preventDefault();
                 var type = (form.querySelector('input[name="address_type"]:checked') || {}).value || 'Home';
+                var defaultBox = form.querySelector('input[name="is_default"], input[type="checkbox"]');
                 var body = {
                     label: type,
                     line1: '',
                     line2: '',
-                    pincode: '',
+                    pincode: pinHidden ? pinHidden.value.trim() : '',
                     landmark: '',
-                    city: '',
-                    state: '',
-                    is_default: true
+                    city: (cityInput && cityInput.value.trim()) || 'Hyderabad',
+                    state: (stateInput && stateInput.value.trim()) || 'Telangana',
+                    is_default: !defaultBox || defaultBox.checked
                 };
                 var named = {
                     line1: form.querySelector('[name="line1"]'),
                     line2: form.querySelector('[name="line2"]'),
-                    city: form.querySelector('[name="city"]'),
-                    state: form.querySelector('[name="state"]'),
-                    pincode: form.querySelector('[name="pincode"]'),
                     landmark: form.querySelector('[name="landmark"]'),
                     label: form.querySelector('[name="label"]')
                 };
                 if (named.line1) {
                     body.line1 = named.line1.value.trim();
                     body.line2 = named.line2 ? named.line2.value.trim() : '';
-                    body.city = named.city ? named.city.value.trim() : '';
-                    body.state = named.state ? named.state.value.trim() : '';
-                    body.pincode = named.pincode ? named.pincode.value.trim() : '';
                     body.landmark = named.landmark ? named.landmark.value.trim() : '';
                     body.label = named.label ? named.label.value.trim() : type;
                 }
                 if (!/^\d{6}$/.test(body.pincode)) {
-                    toast('Enter a valid 6-digit pincode.', 'error');
-                    setPinHint('Enter a valid 6-digit pincode.', false);
+                    toast('Please search and select a Hyderabad PIN code.', 'error');
+                    setPinHint('Select a PIN code from the list.', false);
+                    if (pinSearch) pinSearch.focus();
                     return;
                 }
                 function saveAddress() {
@@ -2965,6 +3032,10 @@
                         if (res && res.success) {
                             toast('Address saved');
                             form.reset();
+                            if (cityInput) cityInput.value = 'Hyderabad';
+                            if (stateInput) stateInput.value = 'Telangana';
+                            if (pinHidden) pinHidden.value = '';
+                            if (pinSearch) pinSearch.value = '';
                             setPinHint('', false);
                             pinOk = false;
                             render();
@@ -2981,6 +3052,7 @@
                     if (res && res.success && res.data && res.data.serviceable) {
                         pinOk = true;
                         setPinHint('✓ We deliver here', true);
+                        if (cityInput && res.data.city) cityInput.value = res.data.city;
                         saveAddress();
                     } else {
                         setPinHint('✗ Not serviceable in this area yet', false);

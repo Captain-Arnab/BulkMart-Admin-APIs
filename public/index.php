@@ -121,6 +121,7 @@ $router->get('/api/v1/support/tickets/{id}', [SupportApiController::class, 'tick
 
 $router->post('/api/v1/bulk-enquiries', [BulkEnquiryApiController::class, 'create']);
 $router->get('/api/v1/check-pincode', [ServiceablePincodeApiController::class, 'check']);
+$router->get('/api/v1/serviceable-pincodes', [ServiceablePincodeApiController::class, 'index']);
 
 $router->get('/api/v1/delivery-slots', [OrderApiController::class, 'deliverySlots'], $apiAuth);
 $router->post('/api/v1/orders', [OrderApiController::class, 'place'], $apiAuth);

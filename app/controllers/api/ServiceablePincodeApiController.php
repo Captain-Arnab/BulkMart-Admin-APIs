@@ -11,4 +11,19 @@ class ServiceablePincodeApiController extends ApiController
             'city'        => $result['city'],
         ]);
     }
+
+    /** Public list of active serviceable pincodes (for address form dropdown). */
+    public function index(): never
+    {
+        $q = trim((string) ($_GET['q'] ?? ''));
+        $rows = (new ServiceablePincode())->all($q !== '' ? $q : null, true);
+        $this->ok([
+            'pincodes' => array_map(static function (array $row): array {
+                return [
+                    'pincode' => (string) $row['pincode'],
+                    'city'    => (string) ($row['city'] ?? 'Hyderabad'),
+                ];
+            }, $rows),
+        ]);
+    }
 }
