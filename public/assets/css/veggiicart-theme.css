@@ -2432,4 +2432,49 @@ a.vc-kpi-link:focus {
   .vc-cust-hero-name { font-size: 1.35rem; }
 }
 
+/*--------------------------------------------------------------
+# SweetAlert2
+--------------------------------------------------------------*/
+.swal2-popup {
+  font-family: "DM Sans", "Open Sans", sans-serif;
+  border-radius: var(--vc-radius);
+  box-shadow: var(--vc-shadow);
+}
+
+.swal2-title {
+  font-family: "Outfit", "Nunito", sans-serif;
+  color: var(--vc-deep-forest);
+}
+
+.swal2-html-container,
+.swal2-content {
+  color: var(--vc-muted);
+}
+
+.swal2-styled.btn {
+  min-width: 6rem;
+  font-weight: 600;
+  border-radius: 10px;
+}
+
+.swal2-popup .btn-primary {
+  background: var(--vc-primary);
+  border-color: var(--vc-primary);
+}
+
+.swal2-popup .btn-primary:hover {
+  background: var(--vc-deep-forest);
+  border-color: var(--vc-deep-forest);
+}
+
+.swal2-popup .btn-danger {
+  background: var(--vc-error);
+  border-color: var(--vc-error);
+}
+
+.swal2-toast {
+  font-family: "DM Sans", "Open Sans", sans-serif;
+  border-radius: 12px;
+  box-shadow: var(--vc-shadow-sm);
+}
 

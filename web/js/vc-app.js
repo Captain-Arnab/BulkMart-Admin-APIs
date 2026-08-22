@@ -70,6 +70,9 @@
     }
 
     function toast(message, type) {
+        if (window.VC && typeof window.VC.toast === 'function' && typeof Swal !== 'undefined') {
+            return window.VC.toast(message, type);
+        }
         var el = document.getElementById('vcToast');
         if (!el) {
             el = document.createElement('div');
@@ -1770,16 +1773,24 @@
                     toast((res && res.error && res.error.message) || 'Could not send OTP.', 'error');
                     return;
                 }
-                var otp = window.prompt((res.data && res.data.dev_otp ? ('DEV OTP: ' + res.data.dev_otp + '\n') : '') + 'Enter the OTP sent to your mobile:');
-                if (!otp) {
-                    return;
-                }
-                VC.verifyOtp(mobile, otp).then(function (v) {
-                    if (v && v.success) {
-                        applyAuthSuccess(v.data, 'account-dashboard.php');
-                    } else {
-                        toast((v && v.error && v.error.message) || 'Invalid OTP.', 'error');
+                var promptFn = window.VC && typeof window.VC.prompt === 'function'
+                    ? window.VC.prompt
+                    : function (msg) { return Promise.resolve(window.prompt(msg)); };
+                promptFn('Enter the OTP sent to your mobile:', {
+                    title: 'Verify OTP',
+                    placeholder: '6-digit OTP',
+                    devOtp: res.data && res.data.dev_otp ? res.data.dev_otp : ''
+                }).then(function (otp) {
+                    if (!otp) {
+                        return;
                     }
+                    VC.verifyOtp(mobile, otp).then(function (v) {
+                        if (v && v.success) {
+                            applyAuthSuccess(v.data, 'account-dashboard.php');
+                        } else {
+                            toast((v && v.error && v.error.message) || 'Invalid OTP.', 'error');
+                        }
+                    });
                 });
             });
         });
@@ -2597,10 +2608,21 @@
         document.addEventListener('click', function (e) {
             var c = e.target.closest('[data-cancel-order]');
             if (c) {
-                if (!window.confirm('Cancel this order?')) return;
-                VC.cancelOrder(c.getAttribute('data-cancel-order')).then(function (res) {
-                    toast((res && res.success && res.data.message) || (res && res.error && res.error.message) || 'Updated');
-                    bootOrders();
+                var confirmFn = window.VC && typeof window.VC.confirm === 'function'
+                    ? window.VC.confirm
+                    : function (msg) { return Promise.resolve(window.confirm(msg)); };
+                confirmFn('Cancel this order?', {
+                    title: 'Cancel order',
+                    danger: true,
+                    confirmText: 'Yes, cancel order'
+                }).then(function (ok) {
+                    if (!ok) {
+                        return;
+                    }
+                    VC.cancelOrder(c.getAttribute('data-cancel-order')).then(function (res) {
+                        toast((res && res.success && res.data.message) || (res && res.error && res.error.message) || 'Updated');
+                        bootOrders();
+                    });
                 });
             }
             var r = e.target.closest('[data-reorder]');

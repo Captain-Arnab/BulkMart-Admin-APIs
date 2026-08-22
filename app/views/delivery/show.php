@@ -108,7 +108,8 @@ $codWarn = $codWarn ?? null;
 
           <?php if ($order['status'] === 'delivery_date_set'): ?>
             <form method="POST" action="<?= e(url('delivery/' . $order['id'] . '/out-for-delivery')) ?>" class="mb-3"
-                  onsubmit="return confirm('Mark this order out for delivery?');">
+                  data-vc-confirm="Mark this order out for delivery?"
+                  data-vc-confirm-title="Out for delivery">
               <button class="btn btn-warning w-100" type="submit">Mark out for delivery</button>
             </form>
           <?php endif; ?>

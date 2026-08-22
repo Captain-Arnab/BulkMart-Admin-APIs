@@ -42,7 +42,9 @@ $error = $error ?? null;
       </form>
       <?php if ($isEdit): ?>
         <form method="POST" action="<?= e(url('categories/' . (int) $category['id'] . '/delete')) ?>" class="mt-3"
-              onsubmit="return confirm('Delete this category? Categories that still have products cannot be deleted.');">
+              data-vc-confirm="Delete this category? Categories that still have products cannot be deleted."
+              data-vc-confirm-danger
+              data-vc-confirm-title="Delete category">
           <button class="btn btn-outline-danger" type="submit"><i class="bi bi-trash me-1"></i>Delete category</button>
         </form>
       <?php endif; ?>

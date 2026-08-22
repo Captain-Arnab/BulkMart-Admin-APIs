@@ -46435,6 +46435,49 @@ RESPONSIVE
 }
 .vc-toast.show { opacity: 1; transform: translateY(0); }
 .vc-toast.error { background: #D64545; }
+
+.swal2-popup {
+    font-family: "Inter", sans-serif;
+    border-radius: 16px;
+    box-shadow: 0 10px 30px rgba(11, 92, 39, 0.12);
+}
+.swal2-title {
+    color: #0B5C27;
+    font-weight: 700;
+}
+.swal2-html-container,
+.swal2-content {
+    color: #5f6b66;
+}
+.swal2-styled.btn {
+    min-width: 6rem;
+    font-weight: 600;
+    border-radius: 10px;
+    padding: 0.5rem 1.25rem;
+}
+.swal2-popup .btn-primary {
+    background: #12833B;
+    border-color: #12833B;
+    color: #fff;
+}
+.swal2-popup .btn-primary:hover {
+    background: #0B5C27;
+    border-color: #0B5C27;
+}
+.swal2-popup .btn-danger {
+    background: #D64545;
+    border-color: #D64545;
+    color: #fff;
+}
+.swal2-popup .btn-outline-secondary {
+    border: 1px solid #ced4da;
+    color: #495057;
+    background: #fff;
+}
+.swal2-toast {
+    font-family: "Inter", sans-serif;
+    border-radius: 12px;
+}
 .vc-live-empty {
     padding: 24px 8px;
     color: #5b6470;

@@ -81,7 +81,9 @@ $listQs = $listQuery !== [] ? ('?' . http_build_query($listQuery)) : '';
       <div class="d-flex flex-wrap justify-content-between align-items-center gap-2 mb-2">
         <div class="text-muted small" id="vcSelectedCount">0 selected</div>
         <button class="btn btn-sm btn-outline-danger" type="submit" form="vcBulkDeleteForm" id="vcBulkDeleteBtn" disabled
-                onclick="return confirm('Delete the selected products? Past orders keep item names and prices.');">
+                data-vc-confirm="Delete the selected products? Past orders keep item names and prices."
+                data-vc-confirm-danger
+                data-vc-confirm-title="Delete products">
           <i class="bi bi-trash me-1"></i>Delete selected
         </button>
       </div>
@@ -152,7 +154,9 @@ $listQs = $listQuery !== [] ? ('?' . http_build_query($listQuery)) : '';
                   </button>
                 </form>
                 <form class="d-inline" method="POST" action="<?= e(url('products/' . $p['id'] . '/delete')) ?>"
-                      onsubmit="return confirm('Delete this product? Past orders keep the item name and price.');">
+                      data-vc-confirm="Delete this product? Past orders keep the item name and price."
+                      data-vc-confirm-danger
+                      data-vc-confirm-title="Delete product">
                   <?php foreach ($listQuery as $lk => $lv): ?>
                     <input type="hidden" name="<?= e((string) $lk) ?>" value="<?= e((string) $lv) ?>">
                   <?php endforeach; ?>

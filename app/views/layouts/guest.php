@@ -16,9 +16,12 @@ $pageTitle = ($title ?? 'Login') . ' · ' . APP_NAME;
   <link href="<?= e(asset('vendor/bootstrap-icons/bootstrap-icons.css')) ?>" rel="stylesheet">
   <link href="<?= e(asset('css/style.css')) ?>" rel="stylesheet">
   <link href="<?= e(asset('css/veggiicart-theme.css')) ?>" rel="stylesheet">
+  <link href="https://cdn.jsdelivr.net/npm/sweetalert2@11/dist/sweetalert2.min.css" rel="stylesheet">
 </head>
 <body class="vc-login-body">
   <?= $content ?>
   <script src="<?= e(asset('vendor/bootstrap/js/bootstrap.bundle.min.js')) ?>"></script>
+  <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+  <script src="<?= e(asset('js/vc-swal.js')) ?>"></script>
 </body>
 </html>

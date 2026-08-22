@@ -27,6 +27,7 @@ $pageTitle = ($title ?? 'Admin') . ' · ' . APP_NAME;
   <link href="<?= e(asset('vendor/simple-datatables/style.css')) ?>" rel="stylesheet">
   <link href="<?= e(asset('css/style.css')) ?>" rel="stylesheet">
   <link href="<?= e(asset('css/veggiicart-theme.css')) ?>" rel="stylesheet">
+  <link href="https://cdn.jsdelivr.net/npm/sweetalert2@11/dist/sweetalert2.min.css" rel="stylesheet">
 </head>
 <body>
 
@@ -52,6 +53,8 @@ $pageTitle = ($title ?? 'Admin') . ' · ' . APP_NAME;
 <script src="<?= e(asset('vendor/quill/quill.js')) ?>"></script>
 <script src="<?= e(asset('vendor/simple-datatables/simple-datatables.js')) ?>"></script>
 <script src="<?= e(asset('vendor/tinymce/tinymce.min.js')) ?>"></script>
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+<script src="<?= e(asset('js/vc-swal.js')) ?>"></script>
 <script src="<?= e(asset('js/main.js')) ?>"></script>
 <script src="<?= e(asset('js/vc-header-search.js')) ?>"></script>
 <script src="<?= e(asset('js/vc-char-count.js')) ?>"></script>

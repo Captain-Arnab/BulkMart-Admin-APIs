@@ -528,7 +528,9 @@
 </footer>
 
 <script src="https://cdn.jsdelivr.net/npm/swiper@11/swiper-bundle.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 <script>window.VC_LIVE = true;</script>
 <script src="js/vc-api.js"></script>
+<script src="js/vc-swal.js"></script>
 <script src="js/vc-app.js"></script>
 <script src="common.js"></script>

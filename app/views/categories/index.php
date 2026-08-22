@@ -33,7 +33,9 @@ $error = $error ?? null;
       <div class="d-flex flex-wrap justify-content-between align-items-center gap-2 mb-2">
         <div class="text-muted small" id="vcSelectedCount">0 selected</div>
         <button class="btn btn-sm btn-outline-danger" type="submit" form="vcBulkDeleteForm" id="vcBulkDeleteBtn" disabled
-                onclick="return confirm('Delete the selected categories? Categories that still have products will be skipped.');">
+                data-vc-confirm="Delete the selected categories? Categories that still have products will be skipped."
+                data-vc-confirm-danger
+                data-vc-confirm-title="Delete categories">
           <i class="bi bi-trash me-1"></i>Delete selected
         </button>
       </div>
@@ -72,7 +74,7 @@ $error = $error ?? null;
               <td class="text-muted small"><?= e(date('d M Y', strtotime($cat['updated_at']))) ?></td>
               <td class="text-end">
                 <a class="btn btn-sm btn-outline-primary" href="<?= e(url('categories/' . $cat['id'] . '/edit')) ?>">Edit</a>
-                <form class="d-inline" method="POST" action="<?= e(url('categories/' . $cat['id'] . '/delete')) ?>" onsubmit="return confirm('Delete this category? Categories that still have products cannot be deleted.');">
+                <form class="d-inline" method="POST" action="<?= e(url('categories/' . $cat['id'] . '/delete')) ?>" data-vc-confirm="Delete this category? Categories that still have products cannot be deleted." data-vc-confirm-danger data-vc-confirm-title="Delete category">
                   <button class="btn btn-sm btn-outline-danger" type="submit">Delete</button>
                 </form>
               </td>

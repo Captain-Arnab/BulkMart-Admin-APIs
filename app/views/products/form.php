@@ -139,7 +139,9 @@ $returnPath = $returnQuery !== [] ? ('products?' . http_build_query($returnQuery
       </form>
       <?php if ($isEdit): ?>
         <form method="POST" action="<?= e(url('products/' . (int) $p['id'] . '/delete')) ?>" class="mt-3"
-              onsubmit="return confirm('Delete this product? Past orders keep the item name and price.');">
+              data-vc-confirm="Delete this product? Past orders keep the item name and price."
+              data-vc-confirm-danger
+              data-vc-confirm-title="Delete product">
           <?php if ($returnQuery !== []): ?>
             <input type="hidden" name="return_to" value="<?= e(http_build_query($returnQuery)) ?>">
           <?php endif; ?>

@@ -53,7 +53,7 @@
           <td><?= (int)$b['is_active']?'Yes':'No' ?></td>
           <td class="text-end text-nowrap">
             <a class="btn btn-sm btn-outline-primary" href="<?= e(url('offers/banners/'.$b['id'].'/edit')) ?>">Edit</a>
-            <form class="d-inline" method="POST" action="<?= e(url('offers/banners/'.$b['id'].'/delete')) ?>" onsubmit="return confirm('Delete banner?');"><button class="btn btn-sm btn-outline-danger" type="submit">Delete</button></form>
+            <form class="d-inline" method="POST" action="<?= e(url('offers/banners/'.$b['id'].'/delete')) ?>" data-vc-confirm="Delete banner?" data-vc-confirm-danger data-vc-confirm-title="Delete banner"><button class="btn btn-sm btn-outline-danger" type="submit">Delete</button></form>
           </td>
         </tr>
       <?php endforeach; ?>
@@ -78,7 +78,7 @@
           <td><?= (int)$o['is_active']?'Yes':'No' ?></td>
           <td class="text-end text-nowrap">
             <a class="btn btn-sm btn-outline-primary" href="<?= e(url('offers/'.$o['id'].'/edit')) ?>">Edit</a>
-            <form class="d-inline" method="POST" action="<?= e(url('offers/'.$o['id'].'/delete')) ?>" onsubmit="return confirm('Delete offer?');"><button class="btn btn-sm btn-outline-danger" type="submit">Delete</button></form>
+            <form class="d-inline" method="POST" action="<?= e(url('offers/'.$o['id'].'/delete')) ?>" data-vc-confirm="Delete offer?" data-vc-confirm-danger data-vc-confirm-title="Delete offer"><button class="btn btn-sm btn-outline-danger" type="submit">Delete</button></form>
           </td>
         </tr>
       <?php endforeach; ?>
