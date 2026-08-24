@@ -300,7 +300,7 @@
                     </p>
 
 
-                    <a href="tel:+919999999999"
+                    <a href="tel:+918099999086"
                        class="vc-footer-contact-card">
 
                         <span class="vc-footer-contact-icon">
@@ -312,7 +312,7 @@
                             <small>Call Us</small>
 
                             <strong>
-                                +91 99999 99999
+                                +91 8099999086
                             </strong>
 
                         </span>

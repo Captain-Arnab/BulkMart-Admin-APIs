@@ -34049,8 +34049,66 @@ RESPONSIVE
 
 .vg-order-status.delivered {
     background: #e7f7e7;
-
     color: #26833a;
+}
+
+.vg-order-status.placed {
+    background: #eef4ff;
+    color: #2f5bb7;
+}
+
+.vg-order-status.confirmed,
+.vg-order-status.scheduled {
+    background: #edf8eb;
+    color: #2f7d36;
+}
+
+.vg-order-status.out {
+    background: #fff6e5;
+    color: #a56b00;
+}
+
+.vg-order-status.cancelled {
+    background: #fdecec;
+    color: #b42318;
+}
+
+.vg-track-step.current .vg-track-circle {
+    border-color: #3d9b47;
+    background: #edf8eb;
+    color: #2f7d36;
+    box-shadow: 0 0 0 6px rgba(61, 155, 71, .1);
+}
+
+.vg-order-loading {
+    padding: 28px 10px;
+    text-align: center;
+    color: #7d887f;
+    font-size: 13px;
+}
+
+.vg-product-fallback {
+    width: 100%;
+    height: 100%;
+    min-height: 72px;
+    display: grid;
+    place-items: center;
+    background: linear-gradient(145deg, #eaf7e8, #f4faf2);
+    color: #3d9b47;
+    font-size: 22px;
+    border-radius: 12px;
+}
+
+.vg-payment-status.paid {
+    background: #e7f7e7;
+    color: #26833a;
+}
+
+.vg-invoice-btn,
+.vg-support-btn {
+    cursor: pointer;
+    border: 0;
+    font-family: inherit;
 }
 
 

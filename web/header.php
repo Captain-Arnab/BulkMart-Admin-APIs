@@ -79,9 +79,9 @@ $vcSiteFavicon = function_exists('site_favicon_src') ? site_favicon_src() : 'ima
 
                 <span>Need Help?</span>
 
-                <a href="tel:+919999999999">
+                <a href="tel:+918099999086">
                     <i class="fa-solid fa-phone"></i>
-                    +91 99999 99999
+                    +91 8099999086
                 </a>
 
                 <span class="vc-top-divider"></span>

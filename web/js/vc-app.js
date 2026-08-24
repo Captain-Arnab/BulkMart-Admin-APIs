@@ -2857,6 +2857,283 @@
         }
     }
 
+    function orderStatusUi(status) {
+        var s = String(status || 'placed').toLowerCase();
+        var map = {
+            placed: { cls: 'placed', icon: 'fa-clock' },
+            confirmed: { cls: 'confirmed', icon: 'fa-circle-check' },
+            delivery_date_set: { cls: 'scheduled', icon: 'fa-calendar-check' },
+            out_for_delivery: { cls: 'out', icon: 'fa-truck-fast' },
+            delivered: { cls: 'delivered', icon: 'fa-circle-check' },
+            cancelled: { cls: 'cancelled', icon: 'fa-ban' }
+        };
+        return map[s] || map.placed;
+    }
+
+    function splitDateTime(value) {
+        if (!value) {
+            return { date: '—', time: '' };
+        }
+        var d = new Date(String(value).replace(' ', 'T'));
+        if (isNaN(d.getTime())) {
+            return { date: String(value), time: '' };
+        }
+        return {
+            date: d.toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' }),
+            time: d.toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit' })
+        };
+    }
+
+    function fillOrderDetailsTracking(order) {
+        var root = document.getElementById('vgTrackingSteps');
+        if (!root) {
+            return;
+        }
+        var status = String(order.status || 'placed').toLowerCase();
+        var rank = {
+            placed: 1,
+            confirmed: 2,
+            delivery_date_set: 3,
+            out_for_delivery: 4,
+            delivered: 5,
+            cancelled: 0
+        };
+        var current = rank[status] || 1;
+        var byStatus = {};
+        (order.tracking || []).forEach(function (row) {
+            if (row && row.status) {
+                byStatus[String(row.status).toLowerCase()] = row;
+            }
+        });
+
+        var steps = ['placed', 'confirmed', 'delivery_date_set', 'out_for_delivery', 'delivered'];
+        steps.forEach(function (key, idx) {
+            var el = root.querySelector('[data-step="' + key + '"]');
+            if (!el) {
+                return;
+            }
+            var stepRank = idx + 1;
+            el.classList.toggle('completed', current >= stepRank && status !== 'cancelled');
+            el.classList.toggle('current', current === stepRank && status !== 'cancelled');
+            var stamp = byStatus[key] && byStatus[key].changed_at;
+            if (key === 'placed' && !stamp) {
+                stamp = order.placed_at;
+            }
+            if (key === 'delivered' && !stamp) {
+                stamp = order.delivered_at;
+            }
+            var parts = splitDateTime(stamp);
+            var dateEl = el.querySelector('[data-date]');
+            var timeEl = el.querySelector('[data-time]');
+            if (dateEl) {
+                dateEl.textContent = stamp ? parts.date : (current >= stepRank ? 'Done' : 'Pending');
+            }
+            if (timeEl) {
+                timeEl.textContent = stamp ? parts.time : '';
+            }
+            var line = root.querySelector('[data-line="' + stepRank + '"]');
+            if (line) {
+                line.classList.toggle('completed', current > stepRank && status !== 'cancelled');
+            }
+        });
+
+        var copy = document.getElementById('vgTrackCopy');
+        if (copy) {
+            if (status === 'cancelled') {
+                copy.textContent = 'This order was cancelled.';
+            } else if (status === 'delivered') {
+                copy.textContent = 'Your order has been successfully delivered.';
+            } else if (status === 'out_for_delivery') {
+                copy.textContent = 'Your order is out for delivery and will reach you today.';
+            } else {
+                copy.textContent = 'We will keep this timeline updated as your order progresses.';
+            }
+        }
+        setText('vgTrackingId', order.order_number ? ('Order: ' + order.order_number) : '—');
+    }
+
+    function fillOrderDetailsPage(order, cust, line) {
+        var payLabel = order.payment_method || 'Cash on Delivery';
+        if (/^cod$/i.test(String(payLabel).trim())) {
+            payLabel = 'Cash on Delivery';
+        }
+        var status = String(order.status || 'placed').toLowerCase();
+        var ui = orderStatusUi(status);
+
+        setText('vgOrderTitle', 'Order ' + (order.order_number || ''));
+        setText('vgOrderNumber', order.order_number ? '#' + order.order_number : '—');
+        setText('vgOrderStatusText', order.status_label || status);
+        var statusEl = document.getElementById('vgOrderStatus');
+        if (statusEl) {
+            statusEl.className = 'vg-order-status ' + ui.cls;
+            statusEl.innerHTML = '<i class="fa-solid ' + ui.icon + '"></i><span id="vgOrderStatusText">' +
+                escapeHtml(order.status_label || status) + '</span>';
+        }
+
+        setText('vgOrderDate', formatInDate(order.placed_at));
+        var etaLabel = document.getElementById('vgOrderEtaLabel');
+        if (etaLabel) {
+            etaLabel.textContent = status === 'delivered' ? 'Delivered On' : 'Expected Delivery';
+        }
+        setText(
+            'vgOrderEta',
+            status === 'delivered'
+                ? formatInDate(order.delivered_at)
+                : formatInDate(order.estimated_delivery_date)
+        );
+        setText('vgOrderTotalMeta', money(order.total));
+        setText('vgOrderPayMeta', payLabel === 'Cash on Delivery' ? 'COD' : payLabel);
+
+        fillOrderDetailsTracking(order);
+
+        var items = order.items || [];
+        var itemsHost = document.getElementById('vgOrderItems');
+        if (itemsHost) {
+            itemsHost.innerHTML = items.length ? items.map(function (it) {
+                var name = titleCaseName(it.name);
+                var qty = qtyLabel(it.quantity);
+                var unit = it.unit ? String(it.unit) : '';
+                var buyHref = it.product_id ? ('product.php?id=' + encodeURIComponent(it.product_id)) : 'products.php';
+                return '<div class="vg-order-product">' +
+                    '<div class="vg-product-image"><span class="vg-product-fallback"><i class="fa-solid fa-leaf"></i></span></div>' +
+                    '<div class="vg-product-info">' +
+                    '<span class="vg-product-category">Fresh Produce</span>' +
+                    '<h3>' + escapeHtml(name) + '</h3>' +
+                    '<div class="vg-product-meta">' +
+                    (unit ? '<span>' + escapeHtml(unit) + '</span>' : '') +
+                    '<span>Qty: ' + escapeHtml(qty) + '</span>' +
+                    '</div></div>' +
+                    '<div class="vg-product-price">' +
+                    '<small>' + money(it.unit_price) + ' × ' + escapeHtml(qty) + '</small>' +
+                    '<strong>' + money(it.line_total) + '</strong>' +
+                    '<a href="' + buyHref + '">Buy Again</a>' +
+                    '</div></div>';
+            }).join('') : '<div class="vg-order-loading">No items in this order.</div>';
+        }
+        var n = items.length;
+        setText('vgItemsCopy', n + (n === 1 ? ' item in this order.' : ' items in this order.'));
+        setText('vgSummaryItemCount', n + (n === 1 ? ' Item' : ' Items'));
+
+        setText('vcOrderAddrName', displayName(cust) || (order.address && order.address.label) || '—');
+        setText('vcOrderAddrText', line || '—');
+
+        setText('vgPayMethod', payLabel);
+        setText('vgPayNote', payLabel === 'Cash on Delivery'
+            ? 'Pay cash to the delivery partner at handover'
+            : 'Payment recorded for this order');
+        var paid = status === 'delivered';
+        setText('vgPayStatusText', paid ? 'Collected' : 'Pending');
+        var payStatus = document.getElementById('vgPayStatus');
+        if (payStatus) {
+            payStatus.classList.toggle('paid', paid);
+            payStatus.innerHTML = '<i class="fa-solid ' + (paid ? 'fa-circle-check' : 'fa-clock') +
+                '"></i><span id="vgPayStatusText">' + (paid ? 'Collected' : 'Pending') + '</span>';
+        }
+
+        setText('vgSumSubtotal', money(order.subtotal));
+        setText('vgSumFee', money(order.delivery_fee));
+        setText('vgSumTotal', money(order.total));
+        var disc = Number(order.discount_amount || 0);
+        var discRow = document.getElementById('vgSumDiscountRow');
+        var saveEl = document.getElementById('vgSumSaving');
+        if (discRow) {
+            if (disc > 0) {
+                discRow.hidden = false;
+                setText('vgSumDiscount', '- ' + money(disc));
+                if (saveEl) {
+                    saveEl.hidden = false;
+                    setText('vgSumSavingText', 'You saved ' + money(disc) + ' on this order');
+                }
+            } else {
+                discRow.hidden = true;
+                if (saveEl) saveEl.hidden = true;
+            }
+        }
+
+        var trackLink = document.getElementById('vgTrackLink');
+        if (trackLink && order.id) {
+            trackLink.href = 'order-details-tracking.php?id=' + encodeURIComponent(order.id);
+        }
+
+        var reorderBtn = document.getElementById('vgReorderBtn');
+        if (reorderBtn) {
+            reorderBtn.onclick = function () {
+                VC.reorder(order.id).then(function (res) {
+                    if (res && res.success) {
+                        toast('Items added to cart.', 'success');
+                        window.location.href = 'cart.php';
+                    } else {
+                        toast((res && res.error && res.error.message) || 'Could not reorder.', 'error');
+                    }
+                });
+            };
+        }
+
+        var cancelCard = document.getElementById('vgCancelCard');
+        var cancelBtn = document.getElementById('vgCancelBtn');
+        if (cancelCard && cancelBtn) {
+            if (order.can_cancel) {
+                cancelCard.hidden = false;
+                cancelBtn.onclick = function () {
+                    if (!window.confirm('Cancel this order?')) {
+                        return;
+                    }
+                    VC.cancelOrder(order.id).then(function (res) {
+                        if (res && res.success) {
+                            toast('Order cancelled.', 'success');
+                            window.location.reload();
+                        } else {
+                            toast((res && res.error && res.error.message) || 'Could not cancel.', 'error');
+                        }
+                    });
+                };
+            } else {
+                cancelCard.hidden = true;
+            }
+        }
+
+        var invoiceBtn = document.getElementById('vgInvoiceBtn');
+        if (invoiceBtn) {
+            invoiceBtn.onclick = function () {
+                VC.order(order.id).then(function (res) {
+                    if (!res || !res.success) {
+                        toast('Unable to load invoice data.', 'error');
+                        return;
+                    }
+                    var o = res.data.order;
+                    var lines = [
+                        'VeggiiCart Invoice',
+                        'Order: ' + (o.order_number || ''),
+                        'Date: ' + (o.placed_at || ''),
+                        'Status: ' + (o.status_label || o.status || ''),
+                        'Payment: ' + (o.payment_method || 'COD'),
+                        '',
+                        'Items:'
+                    ];
+                    (o.items || []).forEach(function (it) {
+                        lines.push('- ' + titleCaseName(it.name) + ' x ' + qtyLabel(it.quantity) + ' = ' + money(it.line_total));
+                    });
+                    lines.push('');
+                    lines.push('Subtotal: ' + money(o.subtotal));
+                    lines.push('Delivery: ' + money(o.delivery_fee));
+                    if (Number(o.discount_amount || 0) > 0) {
+                        lines.push('Discount: -' + money(o.discount_amount));
+                    }
+                    lines.push('Total: ' + money(o.total));
+                    var blob = new Blob([lines.join('\n')], { type: 'text/plain;charset=utf-8' });
+                    var url = URL.createObjectURL(blob);
+                    var a = document.createElement('a');
+                    a.href = url;
+                    a.download = 'invoice-' + (o.order_number || order.id) + '.txt';
+                    document.body.appendChild(a);
+                    a.click();
+                    a.remove();
+                    URL.revokeObjectURL(url);
+                });
+            };
+        }
+    }
+
     function bootOrderDetails() {
         if (!requireAuth()) {
             return;
@@ -2865,7 +3142,11 @@
         if (!id) {
             return;
         }
-        var isSuccess = pageName() === 'order-success';
+        var page = pageName();
+        var isSuccess = page === 'order-success';
+        var isDetails = page === 'order-details';
+        var isTracking = page === 'order-details-tracking';
+
         VC.order(id).then(function (res) {
             if (!res || !res.success) {
                 toast((res && res.error && res.error.message) || 'Order not found.', 'error');
@@ -2877,99 +3158,205 @@
             var line = addrLine(addr);
             var batchParam = qs('batch');
             var idsParam = qs('ids');
-            var h1 = document.querySelector(isSuccess ? '.vc-success-card h1' : 'h1');
-            if (h1 && !isSuccess) {
-                h1.textContent = 'Order ' + (o.order_number || '');
-            }
-            if (isSuccess && (batchParam || o.batch_id || o.is_multi_location)) {
-                var successLabel = document.querySelector('.vc-success-label');
-                if (successLabel) successLabel.textContent = 'Multi-location order confirmed';
-                if (h1) h1.textContent = 'Orders placed across your locations';
-                var successCopy = document.querySelector('.vc-success-card > p');
-                var idList = (idsParam || '').split(',').filter(Boolean);
-                var count = idList.length || 2;
-                if (successCopy) {
-                    successCopy.textContent = count + ' orders were placed across ' + count +
-                        ' locations in one checkout. Each location is fulfilled separately.';
-                }
-                var orderNoWrap = document.querySelector('.vc-success-order-number');
-                if (orderNoWrap && idList.length) {
-                    Promise.all(idList.map(function (oid) { return VC.order(oid); })).then(function (packs) {
-                        var nums = packs.filter(function (p) { return p && p.success; }).map(function (p) {
-                            return p.data.order.order_number;
-                        });
-                        if (nums.length) {
-                            orderNoWrap.innerHTML = '<span>' + nums.length + ' order numbers</span><strong>' +
-                                escapeHtml(nums.map(function (n) { return '#' + n; }).join(', ')) + '</strong>';
-                        }
-                    });
-                }
-            }
 
             if (isSuccess) {
+                var h1 = document.querySelector('.vc-success-card h1');
+                if (batchParam || o.batch_id || o.is_multi_location) {
+                    var successLabel = document.querySelector('.vc-success-label');
+                    if (successLabel) successLabel.textContent = 'Multi-location order confirmed';
+                    if (h1) h1.textContent = 'Orders placed across your locations';
+                    var successCopy = document.querySelector('.vc-success-card > p');
+                    var idList = (idsParam || '').split(',').filter(Boolean);
+                    var count = idList.length || 2;
+                    if (successCopy) {
+                        successCopy.textContent = count + ' orders were placed across ' + count +
+                            ' locations in one checkout. Each location is fulfilled separately.';
+                    }
+                    var orderNoWrap = document.querySelector('.vc-success-order-number');
+                    if (orderNoWrap && idList.length) {
+                        Promise.all(idList.map(function (oid) { return VC.order(oid); })).then(function (packs) {
+                            var nums = packs.filter(function (p) { return p && p.success; }).map(function (p) {
+                                return p.data.order.order_number;
+                            });
+                            if (nums.length) {
+                                orderNoWrap.innerHTML = '<span>' + nums.length + ' order numbers</span><strong>' +
+                                    escapeHtml(nums.map(function (n) { return '#' + n; }).join(', ')) + '</strong>';
+                            }
+                        });
+                    }
+                }
                 fillSuccessPage(o, cust, line);
                 return;
             }
 
-            if (o.is_multi_location || o.batch_id) {
-                var detailBadge = document.querySelector('.vc-order-id') || document.getElementById('vcSuccessOrderNo');
-                if (detailBadge) {
-                    var note = document.createElement('div');
-                    note.className = 'vc-batch-badge';
-                    note.style.cssText = 'font-size:0.85rem;color:#0b6bcb;margin-top:0.35rem;';
-                    note.textContent = 'Part of a multi-location order';
-                    detailBadge.parentNode && detailBadge.parentNode.appendChild(note);
-                }
+            if (isDetails) {
+                fillOrderDetailsPage(o, cust, line);
+                return;
             }
 
-            setText('vcSuccessOrderDate', formatInDate(o.placed_at));
-            setText('vcSuccessEta', formatInDate(o.estimated_delivery_date));
-            setText('vcSuccessPay', o.payment_method || 'Cash on Delivery');
-            setText('vcSuccessTotal', money(o.total));
-            setText('vcSuccessName', displayName(cust));
-            setText('vcSuccessAddr', line || '—');
-            setText('vcSuccessPhone', cust.mobile);
-            setText('vcSuccessEmail', cust.email);
+            if (isTracking) {
+                fillTrackingPage(o, cust, line);
+                return;
+            }
+
+            // Fallback for any residual legacy markup
+            var h1Legacy = document.querySelector('h1');
+            if (h1Legacy) {
+                h1Legacy.textContent = 'Order ' + (o.order_number || '');
+            }
             setText('vcOrderAddrName', displayName(cust));
             setText('vcOrderAddrText', line || '—');
             setText('vcTrackAddrName', displayName(cust));
             setText('vcTrackAddrLabel', addr.label || 'Address');
             setText('vcTrackAddrText', line || '—');
-
-            var host = document.querySelector('.vc-order-details, .vc-tracking-page, .vg-order-details-page');
-            if (!host) {
-                return;
-            }
-            var old = host.querySelector('.vc-live-order-box');
-            if (old) old.remove();
-            var items = (o.items || []).map(function (it) {
-                return '<li><span>' + escapeHtml(titleCaseName(it.name)) + ' × ' + escapeHtml(qtyLabel(it.quantity)) +
-                    '</span><strong>' + money(it.line_total || it.unit_price) + '</strong></li>';
-            }).join('');
-            var log = (o.tracking || o.status_log || o.timeline || []).map(function (s) {
-                return '<li><span>' + escapeHtml(s.status_label || s.status || '') + '</span>' +
-                    '<small>' + escapeHtml(formatInDateTime(s.changed_at || s.created_at || s.at || '')) + '</small></li>';
-            }).join('');
-            var box = document.createElement('div');
-            box.className = 'vc-live-order-box';
-            box.innerHTML =
-                '<div class="vc-live-order-box-head">' +
-                '<div><span>Live order</span><h3>' + escapeHtml(o.order_number || ('#' + id)) + '</h3></div>' +
-                '<strong class="vc-live-order-status">' + escapeHtml(o.status_label || o.status || '') + '</strong>' +
-                '</div>' +
-                '<p class="vc-live-order-total">Total <strong>' + money(o.total) + '</strong></p>' +
-                '<h4>Items</h4><ul class="vc-live-order-list">' + (items || '<li>No items</li>') + '</ul>' +
-                (log ? '<h4>Tracking</h4><ul class="vc-live-order-track">' + log + '</ul>' : '') +
-                (o.can_cancel ? '<button type="button" class="vc-order-btn vc-btn-outline" id="vcLiveCancel">Cancel order</button>' : '');
-            var mount = host.querySelector('.vc-orders-container, .vc-tracking-container, .vg-order-details-container') || host;
-            mount.insertBefore(box, mount.firstChild);
-            var btn = document.getElementById('vcLiveCancel');
-            if (btn) {
-                btn.addEventListener('click', function () {
-                    VC.cancelOrder(id).then(function () { window.location.reload(); });
-                });
-            }
         });
+    }
+
+    function fillTrackingPage(order, cust, line) {
+        var payLabel = order.payment_method || 'Cash on Delivery';
+        if (/^cod$/i.test(String(payLabel).trim())) {
+            payLabel = 'Cash on Delivery';
+        }
+        var status = String(order.status || 'placed').toLowerCase();
+        var ui = orderStatusUi(status);
+
+        setText('vcTrackOrderNo', order.order_number ? '#' + order.order_number : '—');
+        setText('vcTrackPlaced', 'Placed on ' + formatInDateTime(order.placed_at));
+        setText('vcTrackStatusText', order.status_label || status);
+        var badge = document.getElementById('vcTrackStatusBadge');
+        if (badge) {
+            badge.innerHTML = '<i class="fa-solid ' + ui.icon + '"></i><span id="vcTrackStatusText">' +
+                escapeHtml(order.status_label || status) + '</span>';
+        }
+
+        var etaLabel = document.getElementById('vcTrackEtaLabel');
+        if (etaLabel) {
+            etaLabel.textContent = status === 'delivered' ? 'Delivered On' : 'Expected Delivery';
+        }
+        setText(
+            'vcTrackEta',
+            status === 'delivered'
+                ? formatInDate(order.delivered_at)
+                : formatInDate(order.estimated_delivery_date)
+        );
+
+        var detailsLink = document.getElementById('vcTrackDetailsLink');
+        if (detailsLink && order.id) {
+            detailsLink.href = 'order-details.php?id=' + encodeURIComponent(order.id);
+        }
+
+        setText('vcTrackAddrName', displayName(cust) || (order.address && order.address.label) || '—');
+        setText('vcTrackAddrLabel', (order.address && order.address.label) || 'Address');
+        setText('vcTrackAddrText', line || '—');
+
+        var items = order.items || [];
+        setText('vcTrackItemCount', items.length + (items.length === 1 ? ' Item' : ' Items'));
+        var productsHost = document.getElementById('vcTrackItems');
+        if (productsHost) {
+            productsHost.innerHTML = items.length ? items.map(function (it) {
+                return '<div class="vc-order-product">' +
+                    '<div class="vc-product-image"><span class="vg-product-fallback"><i class="fa-solid fa-leaf"></i></span></div>' +
+                    '<div class="vc-product-info">' +
+                    '<span class="vc-product-category">Fresh Produce</span>' +
+                    '<h3>' + escapeHtml(titleCaseName(it.name)) + '</h3>' +
+                    '<div class="vc-product-meta"><span>Qty: ' + escapeHtml(qtyLabel(it.quantity)) +
+                    (it.unit ? ' ' + escapeHtml(it.unit) : '') + '</span></div></div>' +
+                    '<div class="vc-product-price"><strong>' + money(it.line_total) + '</strong></div></div>';
+            }).join('') : '<p>No items in this order.</p>';
+        }
+
+        setText('vcTrackSubtotal', money(order.subtotal));
+        setText('vcTrackFee', Number(order.delivery_fee || 0) === 0 ? 'FREE' : money(order.delivery_fee));
+        setText('vcTrackTotal', money(order.total));
+        var disc = Number(order.discount_amount || 0);
+        var discRow = document.getElementById('vcTrackDiscountRow');
+        if (discRow) {
+            if (disc > 0) {
+                discRow.hidden = false;
+                setText('vcTrackDiscount', '− ' + money(disc));
+            } else {
+                discRow.hidden = true;
+            }
+        }
+
+        setText('vcTrackPayMethod', payLabel);
+        var paid = status === 'delivered';
+        var payStatus = document.getElementById('vcTrackPayStatus');
+        if (payStatus) {
+            payStatus.innerHTML = '<i class="fa-solid ' + (paid ? 'fa-circle-check' : 'fa-clock') +
+                '"></i><span id="vcTrackPayStatusText">' +
+                (paid ? 'Collected' : 'Pending') + '</span>';
+        }
+
+        var root = document.getElementById('vcTrackProgress');
+        if (root) {
+            var rank = {
+                placed: 1,
+                confirmed: 2,
+                delivery_date_set: 2,
+                out_for_delivery: 3,
+                delivered: 4,
+                cancelled: 0
+            };
+            var current = rank[status] || 1;
+            var byStatus = {};
+            (order.tracking || []).forEach(function (row) {
+                if (row && row.status) {
+                    byStatus[String(row.status).toLowerCase()] = row;
+                }
+            });
+            [
+                { key: 'placed', sub: formatInDateTime(order.placed_at || (byStatus.placed && byStatus.placed.changed_at)) },
+                {
+                    key: 'preparing',
+                    sub: current >= 2
+                        ? formatInDateTime((byStatus.confirmed || byStatus.delivery_date_set || {}).changed_at) || 'In progress'
+                        : 'Waiting'
+                },
+                {
+                    key: 'out_for_delivery',
+                    sub: current >= 3
+                        ? formatInDateTime(byStatus.out_for_delivery && byStatus.out_for_delivery.changed_at) || 'On the way'
+                        : 'Coming soon'
+                },
+                {
+                    key: 'delivered',
+                    sub: current >= 4
+                        ? formatInDateTime(order.delivered_at || (byStatus.delivered && byStatus.delivered.changed_at))
+                        : (order.estimated_delivery_date ? ('Est. ' + formatInDate(order.estimated_delivery_date)) : 'Pending')
+                }
+            ].forEach(function (step, idx) {
+                var el = root.querySelector('[data-step="' + step.key + '"]');
+                if (!el) {
+                    return;
+                }
+                var stepNum = idx + 1;
+                el.classList.remove('completed', 'active');
+                if (current > stepNum) {
+                    el.classList.add('completed');
+                } else if (current === stepNum) {
+                    el.classList.add('active');
+                }
+                var sub = el.querySelector('[data-sub]');
+                if (sub) {
+                    sub.textContent = step.sub || '—';
+                }
+            });
+        }
+
+        var reorderBtn = document.getElementById('vcTrackReorderBtn');
+        if (reorderBtn) {
+            reorderBtn.onclick = function () {
+                VC.reorder(order.id).then(function (res) {
+                    if (res && res.success) {
+                        toast('Items added to cart.', 'success');
+                        window.location.href = 'cart.php';
+                    } else {
+                        toast((res && res.error && res.error.message) || 'Could not reorder.', 'error');
+                    }
+                });
+            };
+        }
     }
 
     function fillBusinessProfile(c, verify, addresses) {

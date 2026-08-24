@@ -2006,7 +2006,7 @@
                 <div class="vcta2-contact-grid">
 
 
-                    <a href="tel:+919999999999"
+                    <a href="tel:+918099999086"
                        class="vcta2-contact-card">
 
                         <span>
@@ -2015,7 +2015,7 @@
 
                         <div>
                             <small>Call Us</small>
-                            <strong>+91 99999 99999</strong>
+                            <strong>+91 8099999086</strong>
                         </div>
 
                     </a>
