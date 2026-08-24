@@ -27,10 +27,15 @@ class AuthApiController extends ApiController
                 'expires_at' => $result['expires_at'],
                 'message'    => 'OTP sent successfully.',
             ];
-            if (!empty($result['sms']['dev_mode'])) {
+            // Include OTP in API response only when SMS is disabled (local dev) or the
+            // live gateway send failed — never when a live send succeeded.
+            $sms = $result['sms'] ?? [];
+            if (!empty($sms['dev_mode']) || empty($sms['sent'])) {
                 $data['dev_mode'] = true;
                 $data['dev_otp'] = $result['otp'];
-                $data['dev_note'] = 'DEV MODE — remove before production';
+                $data['dev_note'] = empty($sms['sent']) && !empty(app_config('sms.enabled'))
+                    ? 'SMS gateway send failed — OTP returned for fallback testing only'
+                    : 'DEV MODE — SMS disabled; OTP returned for local testing';
             }
             $this->ok($data);
         } catch (InvalidArgumentException $e) {

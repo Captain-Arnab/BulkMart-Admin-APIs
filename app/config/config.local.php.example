@@ -3,7 +3,8 @@
  * Copy this file to config.local.php and fill in your credentials.
  * config.local.php is gitignored — never commit real secrets.
  *
- * Prefer copying config.local.php.example (same shape) if present.
+ * SMS: leave sms.enabled = false until ConnectBind/DSTRI template IDs
+ * for order_shipped and delivery_otp are confirmed with the vendor.
  */
 return [
     'db' => [

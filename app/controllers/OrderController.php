@@ -58,13 +58,15 @@ class OrderController extends Controller
     {
         $status = trim((string) ($_POST['status'] ?? ''));
         $eta = trim((string) ($_POST['estimated_delivery_date'] ?? ''));
+        $deliveryOtp = trim((string) ($_POST['delivery_otp'] ?? ''));
         try {
             (new OrderService())->changeStatus(
                 (int) $id,
                 $status,
                 (int) auth_user()['id'],
                 null,
-                $eta !== '' ? $eta : null
+                $eta !== '' ? $eta : null,
+                $deliveryOtp !== '' ? $deliveryOtp : null
             );
             flash('success', 'Order status updated to ' . (Order::STATUS_LABELS[$status] ?? $status) . '.');
         } catch (Throwable $e) {

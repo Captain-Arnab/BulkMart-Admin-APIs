@@ -112,10 +112,17 @@ class DeliveryController extends Controller
         $this->guardOrder((int) $id);
         $cod = (float) ($_POST['cod_collected'] ?? 0);
         $ack = !empty($_POST['cod_mismatch_ack']);
+        $otp = trim((string) ($_POST['delivery_otp'] ?? ''));
         try {
-            $result = (new OrderService())->markDelivered((int) $id, (int) auth_user()['id'], $cod, $ack);
+            $result = (new OrderService())->markDelivered(
+                (int) $id,
+                (int) auth_user()['id'],
+                $cod,
+                $ack,
+                $otp
+            );
             if (!empty($result['needs_confirm'])) {
-                $_SESSION['cod_warn'] = $result;
+                $_SESSION['cod_warn'] = $result + ['delivery_otp' => $otp];
                 flash('error', $result['message']);
                 redirect('delivery/' . (int) $id);
             }

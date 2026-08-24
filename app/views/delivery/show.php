@@ -24,6 +24,7 @@ $codWarn = $codWarn ?? null;
     <?= e($codWarn['message']) ?>
     <form method="POST" action="<?= e(url('delivery/' . $order['id'] . '/delivered')) ?>" class="mt-2 d-flex gap-2 align-items-end">
       <input type="hidden" name="cod_collected" value="<?= e($codWarn['cod_collected']) ?>">
+      <input type="hidden" name="delivery_otp" value="<?= e((string) ($codWarn['delivery_otp'] ?? '')) ?>">
       <input type="hidden" name="cod_mismatch_ack" value="1">
       <button class="btn btn-warning btn-sm" type="submit">Confirm anyway</button>
     </form>
@@ -116,6 +117,19 @@ $codWarn = $codWarn ?? null;
 
           <?php if ($order['status'] === 'out_for_delivery'): ?>
             <form method="POST" action="<?= e(url('delivery/' . $order['id'] . '/delivered')) ?>">
+              <label class="form-label fw-semibold">Customer delivery OTP</label>
+              <input type="text"
+                     name="delivery_otp"
+                     class="form-control mb-2"
+                     inputmode="numeric"
+                     pattern="\d{6}"
+                     maxlength="6"
+                     autocomplete="one-time-code"
+                     placeholder="6-digit OTP from customer"
+                     required>
+              <div class="form-text mb-3">
+                Ask the customer for the delivery OTP sent to their phone. Enter it only after they have physically received the order.
+              </div>
               <label class="form-label">COD amount collected (₹)</label>
               <input type="number" step="0.01" min="0" name="cod_collected" class="form-control mb-2"
                      value="<?= e($order['total']) ?>" required>

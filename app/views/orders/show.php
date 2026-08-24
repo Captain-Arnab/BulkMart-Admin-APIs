@@ -228,6 +228,22 @@ if ($order['status'] === 'cancelled') {
                 <div class="form-text">Required when moving to “Delivery date set”.</div>
               </div>
 
+              <div id="delivery-otp-wrap" hidden>
+                <label class="form-label mb-1" for="delivery_otp">
+                  <i class="bi bi-shield-lock me-1"></i>Customer delivery OTP
+                </label>
+                <input type="text"
+                       name="delivery_otp"
+                       id="delivery_otp"
+                       class="form-control"
+                       inputmode="numeric"
+                       pattern="\d{6}"
+                       maxlength="6"
+                       autocomplete="one-time-code"
+                       placeholder="6-digit OTP from customer">
+                <div class="form-text">Required to mark delivered. Customer shares this only on physical handover.</div>
+              </div>
+
               <button class="btn btn-primary" type="submit">Apply status</button>
             </form>
             <p class="small text-muted mt-2 mb-0">Forward-only. Cancel stays available until out for delivery.</p>
@@ -300,11 +316,20 @@ if ($order['status'] === 'cancelled') {
   var select = document.getElementById('order-next-status');
   var wrap = document.getElementById('eta-field-wrap');
   var input = document.getElementById('estimated_delivery_date');
-  if (!select || !wrap || !input) return;
+  var otpWrap = document.getElementById('delivery-otp-wrap');
+  var otpInput = document.getElementById('delivery_otp');
+  if (!select) return;
   function sync() {
-    var need = select.value === 'delivery_date_set';
-    wrap.hidden = !need;
-    input.required = need;
+    if (wrap && input) {
+      var needEta = select.value === 'delivery_date_set';
+      wrap.hidden = !needEta;
+      input.required = needEta;
+    }
+    if (otpWrap && otpInput) {
+      var needOtp = select.value === 'delivered';
+      otpWrap.hidden = !needOtp;
+      otpInput.required = needOtp;
+    }
   }
   select.addEventListener('change', sync);
   sync();

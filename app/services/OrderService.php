@@ -1,10 +1,13 @@
 <?php
 
 /**
- * Order status transitions, stock adjustments, notifications.
+ * Order status transitions, stock adjustments, notifications, SMS triggers.
  */
 class OrderService
 {
+    private const DELIVERY_OTP_TTL_SECONDS = 1800; // 30 mins (matches DLT template copy)
+    private const DELIVERY_OTP_MAX_ATTEMPTS = 5;
+
     private PDO $db;
     private Order $orders;
 
@@ -14,8 +17,14 @@ class OrderService
         $this->orders = new Order($this->db);
     }
 
-    public function changeStatus(int $orderId, string $newStatus, int $adminId, ?string $note = null, ?string $estimatedDeliveryDate = null): void
-    {
+    public function changeStatus(
+        int $orderId,
+        string $newStatus,
+        int $adminId,
+        ?string $note = null,
+        ?string $estimatedDeliveryDate = null,
+        ?string $deliveryOtp = null
+    ): void {
         $order = $this->orders->find($orderId);
         if (!$order) {
             throw new RuntimeException('Order not found.');
@@ -43,6 +52,12 @@ class OrderService
             }
         }
 
+        if ($newStatus === 'delivered') {
+            $this->assertDeliveryOtp($order, $deliveryOtp);
+        }
+
+        $generatedDeliveryOtp = null;
+
         $this->db->beginTransaction();
         try {
             if ($newStatus === 'confirmed' && $current === 'placed') {
@@ -56,10 +71,21 @@ class OrderService
             $fields = ['status' => $newStatus];
             if ($newStatus === 'delivered') {
                 $fields['delivered_at'] = date('Y-m-d H:i:s');
+                $fields['delivery_otp_verified'] = 1;
             }
             if ($newStatus === 'delivery_date_set') {
                 $fields['estimated_delivery_date'] = $estimatedDeliveryDate;
                 $note = $note ?: ('ETA set to ' . $estimatedDeliveryDate);
+            }
+            if ($newStatus === 'out_for_delivery') {
+                $generatedDeliveryOtp = $this->generateDeliveryOtpValue();
+                $fields['delivery_otp'] = $generatedDeliveryOtp;
+                $fields['delivery_otp_verified'] = 0;
+                $fields['delivery_otp_attempts'] = 0;
+                $fields['delivery_otp_expires_at'] = date(
+                    'Y-m-d H:i:s',
+                    time() + self::DELIVERY_OTP_TTL_SECONDS
+                );
             }
             $this->orders->updateFields($orderId, $fields);
             $this->logStatus($orderId, $newStatus, $adminId, $note);
@@ -70,7 +96,6 @@ class OrderService
                 $order['order_number'],
                 $newStatus === 'delivery_date_set' ? $estimatedDeliveryDate : null
             );
-            $this->triggerSms((int) $order['customer_id'], $newStatus, $order['order_number'], $estimatedDeliveryDate);
 
             $this->db->commit();
         } catch (Throwable $e) {
@@ -79,6 +104,18 @@ class OrderService
             }
             throw $e;
         }
+
+        // SMS after commit — never roll back order flow on gateway failure
+        $etaForSms = $newStatus === 'delivery_date_set'
+            ? $estimatedDeliveryDate
+            : ($order['estimated_delivery_date'] ?? null);
+        $this->triggerSms(
+            (int) $order['customer_id'],
+            $newStatus,
+            $order['order_number'],
+            $etaForSms,
+            $generatedDeliveryOtp
+        );
     }
 
     public function assignDeliveryManager(int $orderId, int $managerId, int $adminId): void
@@ -142,6 +179,8 @@ class OrderService
             throw new RuntimeException('Invalid delivery date.');
         }
 
+        $transitioned = false;
+
         $this->db->beginTransaction();
         try {
             if ($order['status'] === 'confirmed') {
@@ -151,6 +190,7 @@ class OrderService
                 ]);
                 $this->logStatus($orderId, 'delivery_date_set', $adminId, 'ETA set to ' . $date);
                 $this->notifyCustomer((int) $order['customer_id'], $orderId, 'delivery_date_set', $order['order_number'], $date);
+                $transitioned = true;
             } elseif ($order['status'] === 'delivery_date_set') {
                 $this->orders->updateFields($orderId, ['estimated_delivery_date' => $date]);
                 $this->logStatus($orderId, 'delivery_date_set', $adminId, 'ETA updated to ' . $date);
@@ -164,6 +204,16 @@ class OrderService
             }
             throw $e;
         }
+
+        // Order Shipped SMS only on the delivery_date_set status transition
+        if ($transitioned) {
+            $this->triggerSms(
+                (int) $order['customer_id'],
+                'delivery_date_set',
+                $order['order_number'],
+                $date
+            );
+        }
     }
 
     public function markOutForDelivery(int $orderId, int $adminId): void
@@ -171,12 +221,20 @@ class OrderService
         $this->changeStatus($orderId, 'out_for_delivery', $adminId);
     }
 
-    public function markDelivered(int $orderId, int $adminId, float $codCollected, bool $codMismatchAck = false): array
-    {
+    public function markDelivered(
+        int $orderId,
+        int $adminId,
+        float $codCollected,
+        bool $codMismatchAck = false,
+        ?string $deliveryOtp = null
+    ): array {
         $order = $this->orders->find($orderId);
         if (!$order) {
             throw new RuntimeException('Order not found.');
         }
+
+        // Validate OTP before COD mismatch soft-warning so wrong OTP fails clearly first
+        $this->assertDeliveryOtp($order, $deliveryOtp);
 
         $total = (float) $order['total'];
         $mismatch = abs($codCollected - $total) > 0.009;
@@ -193,7 +251,8 @@ class OrderService
         if ($mismatch) {
             $note .= ' (mismatch with total ₹' . number_format($total, 2) . ')';
         }
-        $this->changeStatus($orderId, 'delivered', $adminId, $note);
+        // OTP already verified above; changeStatus will verify again (idempotent success path)
+        $this->changeStatus($orderId, 'delivered', $adminId, $note, null, $deliveryOtp);
         return ['needs_confirm' => false];
     }
 
@@ -233,6 +292,60 @@ class OrderService
             }
             throw $e;
         }
+    }
+
+    /**
+     * @param array<string,mixed> $order
+     */
+    private function assertDeliveryOtp(array $order, ?string $enteredOtp): void
+    {
+        if ((int) ($order['delivery_otp_verified'] ?? 0) === 1 && $order['status'] === 'delivered') {
+            return;
+        }
+
+        $stored = trim((string) ($order['delivery_otp'] ?? ''));
+        if ($stored === '') {
+            throw new RuntimeException(
+                'No delivery OTP is set for this order. Mark it out for delivery again or contact support.'
+            );
+        }
+
+        $attempts = (int) ($order['delivery_otp_attempts'] ?? 0);
+        if ($attempts >= self::DELIVERY_OTP_MAX_ATTEMPTS) {
+            throw new RuntimeException(
+                'Too many incorrect delivery OTP attempts. Contact support to reset.'
+            );
+        }
+
+        $expiresAt = $order['delivery_otp_expires_at'] ?? null;
+        if ($expiresAt !== null && $expiresAt !== '' && strtotime((string) $expiresAt) < time()) {
+            throw new RuntimeException(
+                'Delivery OTP has expired (valid for 30 minutes). Contact support to regenerate.'
+            );
+        }
+
+        $entered = trim((string) $enteredOtp);
+        if ($entered === '' || !preg_match('/^\d{6}$/', $entered)) {
+            throw new RuntimeException('Enter the 6-digit delivery OTP shared by the customer.');
+        }
+
+        if (!hash_equals($stored, $entered)) {
+            $newAttempts = $attempts + 1;
+            $this->orders->updateFields((int) $order['id'], [
+                'delivery_otp_attempts' => $newAttempts,
+            ]);
+            $left = self::DELIVERY_OTP_MAX_ATTEMPTS - $newAttempts;
+            throw new RuntimeException(
+                $left > 0
+                    ? "Incorrect delivery OTP. {$left} attempt(s) remaining."
+                    : 'Incorrect delivery OTP. No attempts remaining. Contact support to reset.'
+            );
+        }
+    }
+
+    private function generateDeliveryOtpValue(): string
+    {
+        return (string) random_int(100000, 999999);
     }
 
     private function deductStock(int $orderId): void
@@ -306,7 +419,7 @@ class OrderService
             ],
             'out_for_delivery' => [
                 'title' => 'Out for delivery',
-                'body'  => "Good news! Your order {$orderNumber} is out for delivery.",
+                'body'  => "Good news! Your order {$orderNumber} is out for delivery. Share the delivery OTP with the delivery partner only when you receive the order.",
             ],
             'delivered' => [
                 'title' => 'Order delivered',
@@ -333,20 +446,48 @@ class OrderService
         $stmt->execute([$customerId, $title, $body, $type, $relatedId]);
     }
 
-    private function triggerSms(int $customerId, string $status, string $orderNumber, ?string $eta = null): void
-    {
-        $stmt = $this->db->prepare('SELECT mobile FROM customers WHERE id = ?');
-        $stmt->execute([$customerId]);
-        $mobile = (string) ($stmt->fetchColumn() ?: '');
-        if ($mobile === '') {
-            return;
-        }
+    private function triggerSms(
+        int $customerId,
+        string $status,
+        string $orderNumber,
+        ?string $eta = null,
+        ?string $deliveryOtp = null
+    ): void {
+        try {
+            $stmt = $this->db->prepare('SELECT mobile FROM customers WHERE id = ?');
+            $stmt->execute([$customerId]);
+            $mobile = (string) ($stmt->fetchColumn() ?: '');
+            if ($mobile === '') {
+                return;
+            }
 
-        match ($status) {
-            'confirmed', 'delivery_date_set' => SmsService::sendOrderShipped($mobile, $orderNumber, $eta),
-            'out_for_delivery' => SmsService::sendOutForDelivery($mobile, $orderNumber),
-            default => null,
-        };
+            match ($status) {
+                'delivery_date_set' => SmsService::sendOrderShipped($mobile, $orderNumber, $eta),
+                'out_for_delivery' => (static function () use ($mobile, $orderNumber, $deliveryOtp): void {
+                    SmsService::sendOutForDelivery($mobile, $orderNumber);
+                    if ($deliveryOtp !== null && $deliveryOtp !== '') {
+                        SmsService::sendDeliveryOtp($mobile, $orderNumber, $deliveryOtp);
+                    }
+                })(),
+                default => null,
+            };
+        } catch (Throwable $e) {
+            $dir = APP_ROOT . '/storage/logs';
+            if (!is_dir($dir)) {
+                @mkdir($dir, 0775, true);
+            }
+            @file_put_contents(
+                $dir . '/sms_dev.log',
+                json_encode([
+                    'ts'      => date('c'),
+                    'mode'    => 'OrderService::triggerSms swallowed error',
+                    'status'  => $status,
+                    'order'   => $orderNumber,
+                    'error'   => $e->getMessage(),
+                ], JSON_UNESCAPED_SLASHES) . PHP_EOL,
+                FILE_APPEND
+            );
+        }
     }
 
     private function fetchOne(string $sql, array $params = []): ?array

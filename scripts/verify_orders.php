@@ -133,15 +133,31 @@ $status = $pdo->query('SELECT status FROM orders WHERE id=' . $oid)->fetchColumn
 ok('Status delivery_date_set', $status === 'delivery_date_set');
 
 $svc->markOutForDelivery($oid, $dmId);
-$status = $pdo->query('SELECT status FROM orders WHERE id=' . $oid)->fetchColumn();
-ok('Status out_for_delivery', $status === 'out_for_delivery');
+$status = $pdo->query('SELECT status, delivery_otp FROM orders WHERE id=' . $oid)->fetch();
+ok('Status out_for_delivery', ($status['status'] ?? '') === 'out_for_delivery');
+$deliveryOtp = (string) ($status['delivery_otp'] ?? '');
+ok('Delivery OTP generated (6 digits)', preg_match('/^\d{6}$/', $deliveryOtp) === 1);
 
-$res = $svc->markDelivered($oid, $dmId, $sub + $fee + 10, false);
+$badOtpFailed = false;
+try {
+    $svc->markDelivered($oid, $dmId, $sub + $fee, false, '000000');
+} catch (Throwable $e) {
+    $badOtpFailed = str_contains($e->getMessage(), 'Incorrect delivery OTP')
+        || str_contains($e->getMessage(), 'delivery OTP');
+}
+ok('Mark delivered rejects wrong OTP', $badOtpFailed);
+
+$res = $svc->markDelivered($oid, $dmId, $sub + $fee + 10, false, $deliveryOtp);
 ok('COD mismatch warns', !empty($res['needs_confirm']));
-$res = $svc->markDelivered($oid, $dmId, $sub + $fee + 10, true);
-ok('Delivered after COD ack', empty($res['needs_confirm']));
-$status = $pdo->query('SELECT status, delivered_at FROM orders WHERE id=' . $oid)->fetch();
-ok('Status delivered + timestamp', $status['status'] === 'delivered' && !empty($status['delivered_at']));
+$res = $svc->markDelivered($oid, $dmId, $sub + $fee + 10, true, $deliveryOtp);
+ok('Delivered after COD ack + correct OTP', empty($res['needs_confirm']));
+$status = $pdo->query('SELECT status, delivered_at, delivery_otp_verified FROM orders WHERE id=' . $oid)->fetch();
+ok(
+    'Status delivered + timestamp + OTP verified',
+    ($status['status'] ?? '') === 'delivered'
+        && !empty($status['delivered_at'])
+        && (int) ($status['delivery_otp_verified'] ?? 0) === 1
+);
 
 $logs = (int) $pdo->query("SELECT COUNT(*) FROM order_status_log WHERE order_id={$oid}")->fetchColumn();
 ok('Status log has entries', $logs >= 4);
