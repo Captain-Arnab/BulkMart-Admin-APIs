@@ -764,12 +764,15 @@ a.vc-kpi-link:focus {
 
 .vc-login-brand-logo {
   display: block;
-  height: clamp(110px, 14vw, 160px);
+  height: clamp(72px, 10vw, 110px);
   width: auto;
-  max-width: min(100%, 520px);
+  max-width: min(100%, 420px);
   object-fit: contain;
   object-position: left center;
-  filter: brightness(0) invert(1);
+  padding: 10px 14px;
+  background: #ffffff;
+  border-radius: 14px;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.18);
 }
 
 .vc-login-brand-content {
