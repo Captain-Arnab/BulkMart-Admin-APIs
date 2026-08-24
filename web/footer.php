@@ -320,7 +320,7 @@
                     </a>
 
 
-                    <a href="mailto:veggiicartonline@gmail.com"
+                    <a href="mailto:Veggiicart@gmail.com"
                        class="vc-footer-contact-card">
 
                         <span class="vc-footer-contact-icon">
@@ -332,7 +332,7 @@
                             <small>Email Support</small>
 
                             <strong>
-                                veggiicartonline@gmail.com
+                                Veggiicart@gmail.com
                             </strong>
 
                         </span>

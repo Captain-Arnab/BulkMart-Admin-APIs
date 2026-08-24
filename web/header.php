@@ -86,9 +86,9 @@ $vcSiteFavicon = function_exists('site_favicon_src') ? site_favicon_src() : 'ima
 
                 <span class="vc-top-divider"></span>
 
-                <a href="mailto:veggiicartonline@gmail.com">
+                <a href="mailto:Veggiicart@gmail.com">
                     <i class="fa-regular fa-envelope"></i>
-                    veggiicartonline@gmail.com
+                    Veggiicart@gmail.com
                 </a>
 
             </div>

@@ -949,7 +949,7 @@
 
         <p class="vc-bulk-modal-lead">
             Tell us what you need above 100 KG. Our team will call you within 24 hours
-            (<strong>(veggiicart@gmail.com · +91 8099999086)</strong>.
+            (<strong>(Veggiicart@gmail.com · +91 8099999086)</strong>.
         </p>
 
         <form id="vcBulkEnquiryForm" class="vc-bulk-form" novalidate>

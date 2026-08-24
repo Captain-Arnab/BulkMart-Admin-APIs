@@ -2021,7 +2021,7 @@
                     </a>
 
 
-                    <a href="mailto:veggiicartonline@gmail.com"
+                    <a href="mailto:Veggiicart@gmail.com"
                        class="vcta2-contact-card">
 
                         <span>
@@ -2030,7 +2030,7 @@
 
                         <div>
                             <small>Email Us</small>
-                            <strong>veggiicartonline@gmail.com</strong>
+                            <strong>Veggiicart@gmail.com</strong>
                         </div>
 
                     </a>
