@@ -163,6 +163,9 @@ class Customer extends Model
             'is_blocked'           => (int) ($row['is_blocked'] ?? 0) === 1,
             'registration_complete'=> !in_array(($row['business_type'] ?? ''), ['unregistered', ''], true)
                 && ($row['business_name'] ?? '') !== 'Pending registration',
+            'require_kyc_approved' => require_kyc_approved(),
+            'can_place_orders'     => (int) ($row['is_blocked'] ?? 0) !== 1
+                && (($row['kyc_status'] ?? '') === 'approved' || !require_kyc_approved()),
         ];
     }
 

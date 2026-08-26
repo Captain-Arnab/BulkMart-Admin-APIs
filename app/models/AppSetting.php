@@ -30,4 +30,28 @@ class AppSetting extends Model
             $this->execute('INSERT INTO app_settings (setting_key, setting_value) VALUES (?,?)', [$key, $value]);
         }
     }
+
+    public static function parseBool(?string $value): bool
+    {
+        if ($value === null) {
+            return false;
+        }
+        return in_array(strtolower(trim($value)), ['1', 'true', 'yes', 'on'], true);
+    }
+
+    /** Whether customers need approved KYC before placing orders (admin setting overrides config). */
+    public static function requireKycApproved(): bool
+    {
+        static $cached = null;
+        if ($cached !== null) {
+            return $cached;
+        }
+        $v = (new self())->get('require_kyc_approved');
+        if ($v !== null) {
+            $cached = self::parseBool($v);
+            return $cached;
+        }
+        $cached = (bool) (app_config('checkout.require_kyc_approved') ?? false);
+        return $cached;
+    }
 }

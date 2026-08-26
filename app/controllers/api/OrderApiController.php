@@ -78,10 +78,8 @@ class OrderApiController extends ApiController
             }
 
             $customer = $this->requireCustomer();
-            if (($customer['kyc_status'] ?? '') !== 'approved') {
-                if ((bool) (app_config('checkout.require_kyc_approved') ?? false)) {
-                    $this->fail('KYC_REQUIRED', 'Your business verification must be approved before placing orders.', 403);
-                }
+            if (($customer['kyc_status'] ?? '') !== 'approved' && require_kyc_approved()) {
+                $this->fail('KYC_REQUIRED', 'Your business verification must be approved before placing orders.', 403);
             }
 
             $result = $this->checkout->placeCodOrder($this->customerId(), [
@@ -106,10 +104,8 @@ class OrderApiController extends ApiController
         try {
             $body = $this->input();
             $customer = $this->requireCustomer();
-            if (($customer['kyc_status'] ?? '') !== 'approved') {
-                if ((bool) (app_config('checkout.require_kyc_approved') ?? false)) {
-                    $this->fail('KYC_REQUIRED', 'Your business verification must be approved before placing orders.', 403);
-                }
+            if (($customer['kyc_status'] ?? '') !== 'approved' && require_kyc_approved()) {
+                $this->fail('KYC_REQUIRED', 'Your business verification must be approved before placing orders.', 403);
             }
 
             $result = $this->checkout->placeMultiAddressCodOrder($this->customerId(), $body);

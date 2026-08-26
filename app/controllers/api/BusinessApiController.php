@@ -201,6 +201,9 @@ class BusinessApiController extends ApiController
         $docs = $this->customers->documents((int) $customer['id']);
         $this->ok([
             'kyc_status'           => $customer['kyc_status'],
+            'require_kyc_approved' => require_kyc_approved(),
+            'can_place_orders'     => (int) ($customer['is_blocked'] ?? 0) !== 1
+                && (($customer['kyc_status'] ?? '') === 'approved' || !require_kyc_approved()),
             'kyc_rejection_reason' => $customer['kyc_rejection_reason'],
             'customer'             => array_merge($this->customers->publicProfile($customer), [
                 'created_at' => $customer['created_at'] ?? null,

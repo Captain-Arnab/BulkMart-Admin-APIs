@@ -69,6 +69,12 @@ function app_config(string $key, mixed $default = null): mixed
     return $cursor;
 }
 
+/** Whether customers need admin-approved KYC before placing orders. */
+function require_kyc_approved(): bool
+{
+    return AppSetting::requireKycApproved();
+}
+
 /**
  * Resolve public base URL (no trailing slash), e.g. /VGS/veggiicart/public
  */

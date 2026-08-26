@@ -43,6 +43,7 @@ class SettingsController extends Controller
         $model->set('support_phone', trim((string) ($_POST['support_phone'] ?? '')));
         $model->set('support_email', trim((string) ($_POST['support_email'] ?? '')));
         $model->set('company_name', trim((string) ($_POST['company_name'] ?? '')));
+        $model->set('require_kyc_approved', !empty($_POST['require_kyc_approved']) ? '1' : '0');
         flash('success', 'App settings saved.');
         redirect('settings');
     }

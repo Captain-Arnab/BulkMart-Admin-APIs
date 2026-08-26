@@ -19,6 +19,13 @@
       <div class="col-12"><label class="form-label">Company name</label><input type="text" name="company_name" class="form-control" value="<?= e($settings['company_name'] ?? '') ?>"></div>
       <div class="col-12"><label class="form-label">Support phone</label><input type="text" name="support_phone" class="form-control" value="<?= e($settings['support_phone'] ?? '') ?>"></div>
       <div class="col-12"><label class="form-label">Support email</label><input type="email" name="support_email" class="form-control" value="<?= e($settings['support_email'] ?? '') ?>"></div>
+      <div class="col-12">
+        <div class="form-check form-switch">
+          <input class="form-check-input" type="checkbox" name="require_kyc_approved" value="1" id="require_kyc_approved" <?= AppSetting::parseBool($settings['require_kyc_approved'] ?? null) ? 'checked' : '' ?>>
+          <label class="form-check-label" for="require_kyc_approved">Require admin approval after registration</label>
+        </div>
+        <div class="form-text">When enabled, new Android/app users must complete business registration and be approved under Customers before they can place orders. When disabled, customers can order without KYC approval.</div>
+      </div>
       <div class="col-12"><button class="btn btn-primary" type="submit">Save settings</button></div>
     </form>
   </div></div></div>
