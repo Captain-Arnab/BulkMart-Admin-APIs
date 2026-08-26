@@ -98,6 +98,48 @@ class Customer extends Model
         return $this->execute('UPDATE customers SET ' . implode(', ', $fields) . ' WHERE id = ?', $params);
     }
 
+    /** Admin update of customer profile fields (does not reset KYC). */
+    public function updateByAdmin(int $id, array $d): bool
+    {
+        return $this->execute(
+            'UPDATE customers SET
+                mobile = ?, email = ?, owner_name = ?, business_name = ?, business_type = ?,
+                gst_number = ?, fssai_number = ?, pan_number = ?
+             WHERE id = ?',
+            [
+                $d['mobile'],
+                $d['email'],
+                $d['owner_name'],
+                $d['business_name'],
+                $d['business_type'],
+                $d['gst_number'],
+                $d['fssai_number'],
+                $d['pan_number'],
+                $id,
+            ]
+        );
+    }
+
+    public function mobileTaken(string $mobile, ?int $exceptId = null): bool
+    {
+        if ($exceptId !== null) {
+            $row = $this->fetchOne('SELECT id FROM customers WHERE mobile = ? AND id != ? LIMIT 1', [$mobile, $exceptId]);
+        } else {
+            $row = $this->fetchOne('SELECT id FROM customers WHERE mobile = ? LIMIT 1', [$mobile]);
+        }
+        return $row !== null;
+    }
+
+    public function emailTaken(string $email, ?int $exceptId = null): bool
+    {
+        if ($exceptId !== null) {
+            $row = $this->fetchOne('SELECT id FROM customers WHERE email = ? AND id != ? LIMIT 1', [$email, $exceptId]);
+        } else {
+            $row = $this->fetchOne('SELECT id FROM customers WHERE email = ? LIMIT 1', [$email]);
+        }
+        return $row !== null;
+    }
+
     public function submitRegistration(int $id, array $d): bool
     {
         return $this->execute(

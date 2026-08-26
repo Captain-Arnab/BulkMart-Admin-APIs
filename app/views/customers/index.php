@@ -38,7 +38,10 @@ $success = $success ?? null; $error = $error ?? null;
             <td><?= e($c['business_type']) ?></td>
             <td><span class="badge <?= e(Customer::KYC_BADGE[$c['kyc_status']] ?? 'bg-secondary') ?>"><?= e(ucfirst($c['kyc_status'])) ?></span></td>
             <td class="small"><?= e(date('d M Y', strtotime($c['created_at']))) ?></td>
-            <td class="text-end"><a class="btn btn-sm btn-outline-primary" href="<?= e(url('customers/'.$c['id'])) ?>">View</a></td>
+            <td class="text-end">
+              <a class="btn btn-sm btn-outline-primary" href="<?= e(url('customers/'.$c['id'])) ?>">View</a>
+              <a class="btn btn-sm btn-outline-secondary" href="<?= e(url('customers/'.$c['id'].'/edit')) ?>">Edit</a>
+            </td>
           </tr>
         <?php endforeach; ?>
         </tbody>

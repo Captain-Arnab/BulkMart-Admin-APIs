@@ -36,9 +36,14 @@ $joined = !empty($customer['created_at']) ? date('d M Y', strtotime((string) $cu
       </ol>
     </nav>
   </div>
-  <a href="<?= e(url('customers')) ?>" class="btn btn-sm btn-outline-secondary vc-cust-back">
-    <i class="bi bi-arrow-left me-1"></i>All customers
-  </a>
+  <div class="d-flex flex-wrap gap-2">
+    <a href="<?= e(url('customers')) ?>" class="btn btn-sm btn-outline-secondary vc-cust-back">
+      <i class="bi bi-arrow-left me-1"></i>All customers
+    </a>
+    <a href="<?= e(url('customers/' . $customer['id'] . '/edit')) ?>" class="btn btn-sm btn-primary">
+      <i class="bi bi-pencil me-1"></i>Edit profile
+    </a>
+  </div>
 </div>
 
 <?php if ($success): ?><div class="alert alert-success vc-fade-in"><?= e($success) ?></div><?php endif; ?>

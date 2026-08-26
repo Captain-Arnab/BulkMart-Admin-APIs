@@ -184,6 +184,8 @@ $router->post('/delivery/{id}/delivered', [DeliveryController::class, 'delivered
 
 $router->get('/customers', [CustomerController::class, 'index'], [require_module('customers')]);
 $router->get('/customers/{id}', [CustomerController::class, 'show'], [require_module('customers')]);
+$router->get('/customers/{id}/edit', [CustomerController::class, 'edit'], [require_module('customers')]);
+$router->post('/customers/{id}/update', [CustomerController::class, 'update'], [require_module('customers')]);
 $router->post('/customers/{id}/approve', [CustomerController::class, 'approve'], [require_module('customers')]);
 $router->post('/customers/{id}/reject', [CustomerController::class, 'reject'], [require_module('customers')]);
 $router->post('/customers/{id}/toggle-block', [CustomerController::class, 'toggleBlock'], [require_module('customers')]);
