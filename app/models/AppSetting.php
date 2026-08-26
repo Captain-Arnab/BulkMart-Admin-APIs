@@ -29,7 +29,18 @@ class AppSetting extends Model
         } else {
             $this->execute('INSERT INTO app_settings (setting_key, setting_value) VALUES (?,?)', [$key, $value]);
         }
+        self::resetCaches();
     }
+
+    public static function resetCaches(): void
+    {
+        self::$requireKycApprovedCache = null;
+        if (function_exists('app_settings_reset_cache')) {
+            app_settings_reset_cache();
+        }
+    }
+
+    private static ?bool $requireKycApprovedCache = null;
 
     public static function parseBool(?string $value): bool
     {
@@ -42,16 +53,15 @@ class AppSetting extends Model
     /** Whether customers need approved KYC before placing orders (admin setting overrides config). */
     public static function requireKycApproved(): bool
     {
-        static $cached = null;
-        if ($cached !== null) {
-            return $cached;
+        if (self::$requireKycApprovedCache !== null) {
+            return self::$requireKycApprovedCache;
         }
         $v = (new self())->get('require_kyc_approved');
         if ($v !== null) {
-            $cached = self::parseBool($v);
-            return $cached;
+            self::$requireKycApprovedCache = self::parseBool($v);
+            return self::$requireKycApprovedCache;
         }
-        $cached = (bool) (app_config('checkout.require_kyc_approved') ?? false);
-        return $cached;
+        self::$requireKycApprovedCache = (bool) (app_config('checkout.require_kyc_approved') ?? false);
+        return self::$requireKycApprovedCache;
     }
 }

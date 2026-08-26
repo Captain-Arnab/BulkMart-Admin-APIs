@@ -4,6 +4,9 @@ class SettingsController extends Controller
 {
     public function index(): void
     {
+        header('Cache-Control: no-store, no-cache, must-revalidate, max-age=0');
+        header('Pragma: no-cache');
+
         $this->view('settings/index', [
             'title'     => 'Settings',
             'settings'  => (new AppSetting())->allKeyed(),
@@ -39,12 +42,27 @@ class SettingsController extends Controller
 
     public function updateApp(): void
     {
-        $model = new AppSetting();
-        $model->set('support_phone', trim((string) ($_POST['support_phone'] ?? '')));
-        $model->set('support_email', trim((string) ($_POST['support_email'] ?? '')));
-        $model->set('company_name', trim((string) ($_POST['company_name'] ?? '')));
-        $model->set('require_kyc_approved', !empty($_POST['require_kyc_approved']) ? '1' : '0');
-        flash('success', 'App settings saved.');
+        if (($_SERVER['REQUEST_METHOD'] ?? 'GET') !== 'POST') {
+            redirect('settings');
+        }
+
+        $posted = array_filter(array_keys($_POST), static fn (string $k): bool => !str_starts_with($k, '_'));
+        if ($posted === []) {
+            flash('error', 'No settings data received. If this keeps happening, set app.base_url in config.local.php and retry.');
+            redirect('settings');
+        }
+
+        try {
+            $model = new AppSetting();
+            $model->set('support_phone', trim((string) ($_POST['support_phone'] ?? '')));
+            $model->set('support_email', trim((string) ($_POST['support_email'] ?? '')));
+            $model->set('company_name', trim((string) ($_POST['company_name'] ?? '')));
+            $requireKyc = trim((string) ($_POST['require_kyc_approved'] ?? '0'));
+            $model->set('require_kyc_approved', in_array(strtolower($requireKyc), ['1', 'true', 'yes', 'on'], true) ? '1' : '0');
+            flash('success', 'App settings saved.');
+        } catch (Throwable $e) {
+            flash('error', APP_DEBUG ? $e->getMessage() : 'Could not save app settings. Please try again.');
+        }
         redirect('settings');
     }
 

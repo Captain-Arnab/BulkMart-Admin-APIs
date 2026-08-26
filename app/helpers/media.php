@@ -50,9 +50,12 @@ function media_preview_html(?string $path): string
     return '<img src="' . $url . '" alt="">';
 }
 
-function app_settings_keyed(): array
+function app_settings_keyed(bool $forceRefresh = false): array
 {
     static $cache = null;
+    if ($forceRefresh) {
+        $cache = null;
+    }
     if ($cache !== null) {
         return $cache;
     }
@@ -65,6 +68,11 @@ function app_settings_keyed(): array
         $cache = [];
     }
     return $cache;
+}
+
+function app_settings_reset_cache(): void
+{
+    app_settings_keyed(true);
 }
 
 function admin_brand_src(string $key, string $fallbackAsset): string

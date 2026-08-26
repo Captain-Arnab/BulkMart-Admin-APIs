@@ -15,11 +15,12 @@
   </div></div></div>
   <div class="col-lg-6"><div class="card"><div class="card-body">
     <h5 class="card-title">App settings</h5>
-    <form method="POST" action="<?= e(url('settings/app')) ?>" class="row g-3">
+    <form method="POST" action="<?= e(url('settings/app')) ?>" class="row g-3" autocomplete="off">
       <div class="col-12"><label class="form-label">Company name</label><input type="text" name="company_name" class="form-control" value="<?= e($settings['company_name'] ?? '') ?>"></div>
       <div class="col-12"><label class="form-label">Support phone</label><input type="text" name="support_phone" class="form-control" value="<?= e($settings['support_phone'] ?? '') ?>"></div>
       <div class="col-12"><label class="form-label">Support email</label><input type="email" name="support_email" class="form-control" value="<?= e($settings['support_email'] ?? '') ?>"></div>
       <div class="col-12">
+        <input type="hidden" name="require_kyc_approved" value="0">
         <div class="form-check form-switch">
           <input class="form-check-input" type="checkbox" name="require_kyc_approved" value="1" id="require_kyc_approved" <?= AppSetting::parseBool($settings['require_kyc_approved'] ?? null) ? 'checked' : '' ?>>
           <label class="form-check-label" for="require_kyc_approved">Require admin approval after registration</label>
