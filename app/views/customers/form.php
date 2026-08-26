@@ -1,7 +1,9 @@
 <?php
 /** @var array $customer */
+/** @var array $documents */
 /** @var array<int,array{key:string,label:string}> $businessTypes */
 $error = $error ?? null;
+$success = $success ?? null;
 $currentType = trim((string) ($customer['business_type'] ?? ''));
 $typeLabels = array_column($businessTypes, 'label');
 $typeInList = $currentType !== '' && in_array($currentType, $typeLabels, true);
@@ -23,11 +25,13 @@ $typeInList = $currentType !== '' && in_array($currentType, $typeLabels, true);
   </a>
 </div>
 
+<?php if ($success): ?><div class="alert alert-success"><?= e($success) ?></div><?php endif; ?>
 <?php if ($error): ?><div class="alert alert-danger"><?= e($error) ?></div><?php endif; ?>
 
 <section class="section">
-  <div class="card">
+  <div class="card mb-3">
     <div class="card-body pt-4">
+      <h5 class="card-title">Profile details</h5>
       <form method="POST" action="<?= e(url('customers/' . $customer['id'] . '/update')) ?>" class="row g-3">
         <div class="col-md-6">
           <label class="form-label">Owner name *</label>
@@ -82,8 +86,84 @@ $typeInList = $currentType !== '' && in_array($currentType, $typeLabels, true);
                  value="<?= e($customer['pan_number'] ?? '') ?>">
         </div>
         <div class="col-12">
-          <button class="btn btn-primary" type="submit"><i class="bi bi-check-lg me-1"></i>Save changes</button>
+          <button class="btn btn-primary" type="submit"><i class="bi bi-check-lg me-1"></i>Save profile</button>
           <a href="<?= e(url('customers/' . $customer['id'])) ?>" class="btn btn-outline-secondary">Cancel</a>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-body pt-4" id="documents">
+      <h5 class="card-title">KYC documents</h5>
+      <p class="text-muted small mb-4">Upload new files, replace existing documents, or remove outdated ones. JPG, PNG, WEBP, or PDF up to 5MB.</p>
+
+      <?php if ($documents): ?>
+        <div class="table-responsive mb-4">
+          <table class="table table-hover align-middle mb-0">
+            <thead>
+              <tr>
+                <th>Document</th>
+                <th>Uploaded</th>
+                <th>Current file</th>
+                <th>Replace</th>
+                <th></th>
+              </tr>
+            </thead>
+            <tbody>
+              <?php foreach ($documents as $doc): ?>
+                <?php
+                  $docType = Customer::DOC_ALIASES[$doc['document_type']] ?? $doc['document_type'];
+                  $docLabel = Customer::DOC_LABELS[$docType] ?? $doc['document_type'];
+                ?>
+                <tr>
+                  <td class="fw-semibold"><?= e($docLabel) ?></td>
+                  <td class="small text-muted"><?= e(date('d M Y, h:i A', strtotime($doc['uploaded_at']))) ?></td>
+                  <td>
+                    <a href="<?= e(media($doc['file_url'])) ?>" target="_blank" rel="noopener" class="btn btn-sm btn-outline-primary">
+                      <i class="bi bi-box-arrow-up-right me-1"></i>View
+                    </a>
+                  </td>
+                  <td style="min-width: 220px;">
+                    <form method="POST" action="<?= e(url('customers/' . $customer['id'] . '/documents/' . $doc['id'] . '/replace')) ?>" enctype="multipart/form-data" class="d-flex gap-2 align-items-center">
+                      <input type="file" name="file" class="form-control form-control-sm" accept=".jpg,.jpeg,.png,.webp,.pdf,image/jpeg,image/png,image/webp,application/pdf" required>
+                      <button class="btn btn-sm btn-primary text-nowrap" type="submit">Replace</button>
+                    </form>
+                  </td>
+                  <td class="text-end">
+                    <form method="POST" action="<?= e(url('customers/' . $customer['id'] . '/documents/' . $doc['id'] . '/delete')) ?>"
+                          data-vc-confirm="Delete this document?"
+                          data-vc-confirm-danger
+                          data-vc-confirm-title="Delete document">
+                      <button class="btn btn-sm btn-outline-danger" type="submit"><i class="bi bi-trash"></i></button>
+                    </form>
+                  </td>
+                </tr>
+              <?php endforeach; ?>
+            </tbody>
+          </table>
+        </div>
+      <?php else: ?>
+        <div class="alert alert-light border mb-4">No documents uploaded yet.</div>
+      <?php endif; ?>
+
+      <h6 class="mb-3">Upload new document</h6>
+      <form method="POST" action="<?= e(url('customers/' . $customer['id'] . '/documents')) ?>" enctype="multipart/form-data" class="row g-3">
+        <div class="col-md-5">
+          <label class="form-label">Document type *</label>
+          <select name="document_type" class="form-select" required>
+            <option value="">Select type</option>
+            <?php foreach (Customer::UPLOADABLE_DOC_TYPES as $typeKey): ?>
+              <option value="<?= e($typeKey) ?>"><?= e(Customer::DOC_LABELS[$typeKey] ?? $typeKey) ?></option>
+            <?php endforeach; ?>
+          </select>
+        </div>
+        <div class="col-md-5">
+          <label class="form-label">File *</label>
+          <input type="file" name="file" class="form-control" accept=".jpg,.jpeg,.png,.webp,.pdf,image/jpeg,image/png,image/webp,application/pdf" required>
+        </div>
+        <div class="col-md-2 d-flex align-items-end">
+          <button class="btn btn-success w-100" type="submit"><i class="bi bi-upload me-1"></i>Upload</button>
         </div>
       </form>
     </div>

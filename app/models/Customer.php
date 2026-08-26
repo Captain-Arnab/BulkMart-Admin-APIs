@@ -29,6 +29,19 @@ class Customer extends Model
         'business_card'      => 'owner_photo',
     ];
 
+    /** Types allowed by the customer_documents table. */
+    public const UPLOADABLE_DOC_TYPES = [
+        'gst_certificate',
+        'fssai_license',
+        'shop_establishment',
+        'trade_license',
+        'pan_card',
+        'aadhaar_card',
+        'business_photo',
+        'owner_photo',
+        'cancelled_cheque',
+    ];
+
     public function paginate(array $filters, int $page = 1, int $perPage = 15): array
     {
         $where = ['1=1'];
@@ -169,6 +182,44 @@ class Customer extends Model
             [$customerId, $type, $fileUrl]
         );
         return (int) $this->db->lastInsertId();
+    }
+
+    public function findDocument(int $docId, int $customerId): ?array
+    {
+        return $this->fetchOne(
+            'SELECT * FROM customer_documents WHERE id = ? AND customer_id = ?',
+            [$docId, $customerId]
+        );
+    }
+
+    public function updateDocumentFile(int $docId, int $customerId, string $fileUrl): bool
+    {
+        return $this->execute(
+            'UPDATE customer_documents SET file_url = ?, uploaded_at = NOW() WHERE id = ? AND customer_id = ?',
+            [$fileUrl, $docId, $customerId]
+        );
+    }
+
+    public function deleteDocument(int $docId, int $customerId): ?string
+    {
+        $doc = $this->findDocument($docId, $customerId);
+        if (!$doc) {
+            return null;
+        }
+        $this->execute('DELETE FROM customer_documents WHERE id = ? AND customer_id = ?', [$docId, $customerId]);
+        return (string) ($doc['file_url'] ?? '');
+    }
+
+    public static function normalizeDocumentType(string $type): string
+    {
+        $type = trim($type);
+        return self::DOC_ALIASES[$type] ?? $type;
+    }
+
+    public static function isUploadableDocumentType(string $type): bool
+    {
+        $type = self::normalizeDocumentType($type);
+        return in_array($type, self::UPLOADABLE_DOC_TYPES, true);
     }
 
     /** After rejection — reset to pending for re-review. */

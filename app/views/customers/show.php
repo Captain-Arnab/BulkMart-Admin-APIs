@@ -165,6 +165,7 @@ $joined = !empty($customer['created_at']) ? date('d M Y', strtotime((string) $cu
         <div class="vc-cust-card-head">
           <h3><i class="bi bi-files"></i> Documents</h3>
           <span class="vc-cust-count"><?= count($documents) ?></span>
+          <a href="<?= e(url('customers/' . $customer['id'] . '/edit')) ?>#documents" class="btn btn-sm btn-outline-primary ms-auto">Manage</a>
         </div>
         <?php if (!$documents): ?>
           <div class="vc-cust-empty">

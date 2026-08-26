@@ -48,8 +48,10 @@ class CustomerController extends Controller
         $this->view('customers/form', [
             'title'          => 'Edit Customer',
             'customer'       => $customer,
+            'documents'      => $model->documents((int) $id),
             'businessTypes'  => BusinessApiController::BUSINESS_TYPES,
             'error'          => flash('error'),
+            'success'        => flash('success'),
         ]);
     }
 
@@ -131,6 +133,70 @@ class CustomerController extends Controller
         redirect('customers/' . (int) $id);
     }
 
+    public function uploadDocument(string $id): void
+    {
+        $customerId = (int) $id;
+        $model = new Customer();
+        if (!$model->find($customerId)) {
+            flash('error', 'Customer not found.');
+            redirect('customers');
+        }
+        try {
+            $type = Customer::normalizeDocumentType(trim((string) ($_POST['document_type'] ?? '')));
+            if (!Customer::isUploadableDocumentType($type)) {
+                throw new InvalidArgumentException('Select a valid document type.');
+            }
+            if (empty($_FILES['file']['name'])) {
+                throw new InvalidArgumentException('Choose a document file to upload.');
+            }
+            $path = $this->storeKycDocument($_FILES['file'], $customerId);
+            $model->addDocument($customerId, $type, $path);
+            flash('success', 'Document uploaded.');
+        } catch (Throwable $e) {
+            flash('error', $e->getMessage());
+        }
+        redirect('customers/' . $customerId . '/edit');
+    }
+
+    public function replaceDocument(string $id, string $docId): void
+    {
+        $customerId = (int) $id;
+        $documentId = (int) $docId;
+        $model = new Customer();
+        $doc = $model->findDocument($documentId, $customerId);
+        if (!$doc) {
+            flash('error', 'Document not found.');
+            redirect('customers/' . $customerId . '/edit');
+        }
+        try {
+            if (empty($_FILES['file']['name'])) {
+                throw new InvalidArgumentException('Choose a replacement file.');
+            }
+            $path = $this->storeKycDocument($_FILES['file'], $customerId);
+            $model->updateDocumentFile($documentId, $customerId, $path);
+            $this->unlinkDocumentFile((string) ($doc['file_url'] ?? ''));
+            flash('success', 'Document replaced.');
+        } catch (Throwable $e) {
+            flash('error', $e->getMessage());
+        }
+        redirect('customers/' . $customerId . '/edit');
+    }
+
+    public function deleteDocument(string $id, string $docId): void
+    {
+        $customerId = (int) $id;
+        $documentId = (int) $docId;
+        $model = new Customer();
+        $oldPath = $model->deleteDocument($documentId, $customerId);
+        if ($oldPath === null) {
+            flash('error', 'Document not found.');
+        } else {
+            $this->unlinkDocumentFile($oldPath);
+            flash('success', 'Document deleted.');
+        }
+        redirect('customers/' . $customerId . '/edit');
+    }
+
     /** @return array<string,?string> */
     private function validatedProfile(int $customerId): array
     {
@@ -179,5 +245,48 @@ class CustomerController extends Controller
             'fssai_number'   => $fssai !== '' ? $fssai : null,
             'pan_number'     => $pan !== '' ? $pan : null,
         ];
+    }
+
+    private function storeKycDocument(array $file, int $customerId): string
+    {
+        if (($file['error'] ?? UPLOAD_ERR_NO_FILE) !== UPLOAD_ERR_OK) {
+            throw new RuntimeException('Document upload failed.');
+        }
+        if (($file['size'] ?? 0) > 5 * 1024 * 1024) {
+            throw new RuntimeException('Document must be 5MB or smaller.');
+        }
+        $finfo = new finfo(FILEINFO_MIME_TYPE);
+        $mime = $finfo->file($file['tmp_name']);
+        $map = [
+            'image/jpeg'      => 'jpg',
+            'image/png'       => 'png',
+            'image/webp'      => 'webp',
+            'application/pdf' => 'pdf',
+        ];
+        if (!isset($map[$mime])) {
+            throw new RuntimeException('Only JPG, PNG, WEBP, or PDF files are allowed.');
+        }
+        $subdir = 'kyc/' . $customerId;
+        $dir = PUBLIC_PATH . '/uploads/' . $subdir;
+        if (!is_dir($dir) && !mkdir($dir, 0775, true) && !is_dir($dir)) {
+            throw new RuntimeException('Unable to create upload directory.');
+        }
+        $name = date('YmdHis') . '_' . bin2hex(random_bytes(4)) . '.' . $map[$mime];
+        $dest = $dir . '/' . $name;
+        if (!move_uploaded_file($file['tmp_name'], $dest)) {
+            throw new RuntimeException('Failed to save uploaded document.');
+        }
+        return 'uploads/' . $subdir . '/' . $name;
+    }
+
+    private function unlinkDocumentFile(string $path): void
+    {
+        if ($path === '' || preg_match('#^https?://#i', $path)) {
+            return;
+        }
+        $full = PUBLIC_PATH . '/' . ltrim($path, '/');
+        if (is_file($full)) {
+            @unlink($full);
+        }
     }
 }
