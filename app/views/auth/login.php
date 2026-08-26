@@ -104,7 +104,7 @@ $showSeedHints = defined('APP_DEBUG') && APP_DEBUG;
           </button>
         </form>
 
-        <?php if ($showSeedHints): ?>
+        <!-- <?php if ($showSeedHints): ?>
           <details class="vc-login-seed">
             <summary><i class="bi bi-key me-1" aria-hidden="true"></i> TEST-ONLY accounts (APP_DEBUG)</summary>
             <div class="vc-login-seed-body">
@@ -114,7 +114,7 @@ $showSeedHints = defined('APP_DEBUG') && APP_DEBUG;
               <div class="mt-2"><strong>Sub-Admin (TEST)</strong><br>subadmin@veggiicart.com / SubAdmin@123</div>
             </div>
           </details>
-        <?php endif; ?>
+        <?php endif; ?> -->
       </div>
 
       <p class="vc-login-secure">
