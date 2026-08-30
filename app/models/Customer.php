@@ -89,7 +89,7 @@ class Customer extends Model
             "INSERT INTO customers
               (mobile, business_name, owner_name, business_type, kyc_status)
              VALUES (?,?,?,?, 'pending')",
-            [$mobile, 'Pending registration', 'Pending', 'unregistered']
+            [$mobile, '', '', 'unregistered']
         );
         return (int) $this->db->lastInsertId();
     }
@@ -153,14 +153,14 @@ class Customer extends Model
         return $row !== null;
     }
 
-    public function submitRegistration(int $id, array $d): bool
+    public function submitRegistration(int $id, array $d, string $kycStatus = 'pending'): bool
     {
         return $this->execute(
             "UPDATE customers SET
                 business_name = ?, owner_name = ?, business_type = ?,
                 gst_number = ?, fssai_number = ?, pan_number = ?,
                 email = COALESCE(?, email),
-                kyc_status = 'pending', kyc_rejection_reason = NULL
+                kyc_status = ?, kyc_rejection_reason = NULL
              WHERE id = ?",
             [
                 $d['business_name'],
@@ -170,6 +170,7 @@ class Customer extends Model
                 $d['fssai_number'] ?? null,
                 $d['pan_number'] ?? null,
                 $d['email'] ?? null,
+                $kycStatus,
                 $id,
             ]
         );
@@ -255,10 +256,9 @@ class Customer extends Model
             'updated_at'           => $row['updated_at'] ?? null,
             'is_blocked'           => (int) ($row['is_blocked'] ?? 0) === 1,
             'registration_complete'=> !in_array(($row['business_type'] ?? ''), ['unregistered', ''], true)
-                && ($row['business_name'] ?? '') !== 'Pending registration',
-            'require_kyc_approved' => require_kyc_approved(),
+                && trim((string) ($row['business_name'] ?? '')) !== '',
             'can_place_orders'     => (int) ($row['is_blocked'] ?? 0) !== 1
-                && (($row['kyc_status'] ?? '') === 'approved' || !require_kyc_approved()),
+                && ($row['kyc_status'] ?? '') === 'approved',
         ];
     }
 

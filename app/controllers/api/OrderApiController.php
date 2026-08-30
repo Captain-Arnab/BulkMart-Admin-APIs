@@ -78,7 +78,7 @@ class OrderApiController extends ApiController
             }
 
             $customer = $this->requireCustomer();
-            if (($customer['kyc_status'] ?? '') !== 'approved' && require_kyc_approved()) {
+            if (($customer['kyc_status'] ?? '') !== 'approved') {
                 $this->fail('KYC_REQUIRED', 'Your business verification must be approved before placing orders.', 403);
             }
 
@@ -104,7 +104,7 @@ class OrderApiController extends ApiController
         try {
             $body = $this->input();
             $customer = $this->requireCustomer();
-            if (($customer['kyc_status'] ?? '') !== 'approved' && require_kyc_approved()) {
+            if (($customer['kyc_status'] ?? '') !== 'approved') {
                 $this->fail('KYC_REQUIRED', 'Your business verification must be approved before placing orders.', 403);
             }
 

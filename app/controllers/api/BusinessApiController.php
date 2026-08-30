@@ -76,6 +76,9 @@ class BusinessApiController extends ApiController
             }
             $normalized = $map[$businessType] ?? $businessType;
 
+            $manualReview = kyc_manual_review_enabled();
+            $kycStatus = $manualReview ? 'pending' : 'approved';
+
             $id = $this->customerId();
             $this->customers->submitRegistration($id, [
                 'business_name' => $businessName,
@@ -85,19 +88,31 @@ class BusinessApiController extends ApiController
                 'fssai_number'  => trim((string) ($body['fssai_number'] ?? '')) ?: null,
                 'pan_number'    => trim((string) ($body['pan_number'] ?? '')) ?: null,
                 'email'         => trim((string) ($body['email'] ?? '')) ?: null,
-            ]);
+            ], $kycStatus);
 
-            NotificationService::notifyCustomer(
-                $id,
-                'Registration received',
-                'Your business registration is under review.',
-                'verification',
-                $id
-            );
+            if ($manualReview) {
+                NotificationService::notifyCustomer(
+                    $id,
+                    'Registration received',
+                    'Your business registration is under review.',
+                    'verification',
+                    $id
+                );
+            } else {
+                NotificationService::notifyCustomer(
+                    $id,
+                    'KYC approved',
+                    'Your business registration has been approved. You can now place wholesale orders on VeggiiCart.',
+                    'verification',
+                    $id
+                );
+            }
 
             $fresh = $this->customers->find($id);
             $this->ok([
-                'message' => 'Registration submitted. KYC is pending review.',
+                'message' => $manualReview
+                    ? 'Registration submitted. KYC is pending review.'
+                    : 'Registration submitted and approved.',
                 'customer' => $this->customers->publicProfile($fresh ?? []),
             ]);
         } catch (Throwable $e) {
@@ -201,9 +216,8 @@ class BusinessApiController extends ApiController
         $docs = $this->customers->documents((int) $customer['id']);
         $this->ok([
             'kyc_status'           => $customer['kyc_status'],
-            'require_kyc_approved' => require_kyc_approved(),
             'can_place_orders'     => (int) ($customer['is_blocked'] ?? 0) !== 1
-                && (($customer['kyc_status'] ?? '') === 'approved' || !require_kyc_approved()),
+                && ($customer['kyc_status'] ?? '') === 'approved',
             'kyc_rejection_reason' => $customer['kyc_rejection_reason'],
             'customer'             => array_merge($this->customers->publicProfile($customer), [
                 'created_at' => $customer['created_at'] ?? null,

@@ -20,12 +20,12 @@
       <div class="col-12"><label class="form-label">Support phone</label><input type="text" name="support_phone" class="form-control" value="<?= e($settings['support_phone'] ?? '') ?>"></div>
       <div class="col-12"><label class="form-label">Support email</label><input type="email" name="support_email" class="form-control" value="<?= e($settings['support_email'] ?? '') ?>"></div>
       <div class="col-12">
-        <input type="hidden" name="require_kyc_approved" value="0">
+        <input type="hidden" name="kyc_manual_review_enabled" value="0">
         <div class="form-check form-switch">
-          <input class="form-check-input" type="checkbox" name="require_kyc_approved" value="1" id="require_kyc_approved" <?= AppSetting::parseBool($settings['require_kyc_approved'] ?? null) ? 'checked' : '' ?>>
-          <label class="form-check-label" for="require_kyc_approved">Require admin approval after registration</label>
+          <input class="form-check-input" type="checkbox" name="kyc_manual_review_enabled" value="1" id="kyc_manual_review_enabled" <?= AppSetting::parseBool($settings['kyc_manual_review_enabled'] ?? null) ? 'checked' : '' ?>>
+          <label class="form-check-label" for="kyc_manual_review_enabled">Require manual KYC review for new registrations</label>
         </div>
-        <div class="form-text">When enabled, new Android/app users must complete business registration and be approved under Customers before they can place orders. When disabled, customers can order without KYC approval.</div>
+        <div class="form-text">When enabled, new registrations go to Pending and a Super Admin/Sub-Admin must approve them under Customers before the customer can place orders. When disabled (default), new registrations are approved automatically.</div>
       </div>
       <div class="col-12"><button class="btn btn-primary" type="submit">Save settings</button></div>
     </form>

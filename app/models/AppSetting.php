@@ -34,13 +34,13 @@ class AppSetting extends Model
 
     public static function resetCaches(): void
     {
-        self::$requireKycApprovedCache = null;
+        self::$manualReviewEnabledCache = null;
         if (function_exists('app_settings_reset_cache')) {
             app_settings_reset_cache();
         }
     }
 
-    private static ?bool $requireKycApprovedCache = null;
+    private static ?bool $manualReviewEnabledCache = null;
 
     public static function parseBool(?string $value): bool
     {
@@ -50,18 +50,18 @@ class AppSetting extends Model
         return in_array(strtolower(trim($value)), ['1', 'true', 'yes', 'on'], true);
     }
 
-    /** Whether customers need approved KYC before placing orders (admin setting overrides config). */
-    public static function requireKycApproved(): bool
+    /** Whether new registrations require manual admin KYC approval (admin setting overrides config). */
+    public static function manualReviewEnabled(): bool
     {
-        if (self::$requireKycApprovedCache !== null) {
-            return self::$requireKycApprovedCache;
+        if (self::$manualReviewEnabledCache !== null) {
+            return self::$manualReviewEnabledCache;
         }
-        $v = (new self())->get('require_kyc_approved');
+        $v = (new self())->get('kyc_manual_review_enabled');
         if ($v !== null) {
-            self::$requireKycApprovedCache = self::parseBool($v);
-            return self::$requireKycApprovedCache;
+            self::$manualReviewEnabledCache = self::parseBool($v);
+            return self::$manualReviewEnabledCache;
         }
-        self::$requireKycApprovedCache = (bool) (app_config('checkout.require_kyc_approved') ?? false);
-        return self::$requireKycApprovedCache;
+        self::$manualReviewEnabledCache = (bool) (app_config('kyc.manual_review_enabled') ?? false);
+        return self::$manualReviewEnabledCache;
     }
 }

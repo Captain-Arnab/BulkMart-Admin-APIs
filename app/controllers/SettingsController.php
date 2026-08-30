@@ -57,8 +57,8 @@ class SettingsController extends Controller
             $model->set('support_phone', trim((string) ($_POST['support_phone'] ?? '')));
             $model->set('support_email', trim((string) ($_POST['support_email'] ?? '')));
             $model->set('company_name', trim((string) ($_POST['company_name'] ?? '')));
-            $requireKyc = trim((string) ($_POST['require_kyc_approved'] ?? '0'));
-            $model->set('require_kyc_approved', in_array(strtolower($requireKyc), ['1', 'true', 'yes', 'on'], true) ? '1' : '0');
+            $manualReview = trim((string) ($_POST['kyc_manual_review_enabled'] ?? '0'));
+            $model->set('kyc_manual_review_enabled', in_array(strtolower($manualReview), ['1', 'true', 'yes', 'on'], true) ? '1' : '0');
             flash('success', 'App settings saved.');
         } catch (Throwable $e) {
             flash('error', APP_DEBUG ? $e->getMessage() : 'Could not save app settings. Please try again.');

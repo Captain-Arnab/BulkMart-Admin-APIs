@@ -282,10 +282,10 @@ $joined = !empty($customer['created_at']) ? date('d M Y', strtotime((string) $cu
         <p class="vc-cust-access-note">
           <?php if ($isBlocked): ?>
             This customer is blocked and cannot place orders.
-          <?php elseif (require_kyc_approved()): ?>
-            Admin approval is required before this customer can place orders. Approve KYC above when verification is complete.
+          <?php elseif (($customer['kyc_status'] ?? '') === 'approved'): ?>
+            This customer's KYC is approved and they can place orders.
           <?php else: ?>
-            Registration approval is currently off — this customer can place COD orders without KYC approval.
+            This customer's KYC is <?= e($customer['kyc_status'] ?? 'pending') ?> — approve KYC above before they can place orders.
           <?php endif; ?>
         </p>
         <form method="POST" action="<?= e(url('customers/' . $customer['id'] . '/toggle-block')) ?>">

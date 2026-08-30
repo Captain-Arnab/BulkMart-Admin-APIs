@@ -69,10 +69,10 @@ function app_config(string $key, mixed $default = null): mixed
     return $cursor;
 }
 
-/** Whether customers need admin-approved KYC before placing orders. */
-function require_kyc_approved(): bool
+/** Whether new business registrations require manual admin KYC approval before use. */
+function kyc_manual_review_enabled(): bool
 {
-    return AppSetting::requireKycApproved();
+    return AppSetting::manualReviewEnabled();
 }
 
 /**

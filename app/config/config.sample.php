@@ -57,6 +57,10 @@ return [
     'checkout' => [
         'delivery_fee'            => 0,
         'delivery_slot_days'      => 7,
-        'require_kyc_approved'    => false,
+    ],
+    'kyc' => [
+        // Off by default: new registrations auto-approve immediately.
+        // When true: new registrations go to Pending and need manual admin approval.
+        'manual_review_enabled' => false,
     ],
 ];
