@@ -3,8 +3,10 @@
 /** @var array $documents */
 /** @var array $addresses */
 /** @var array $orders */
+/** @var array $activity */
 $success = $success ?? null;
 $error = $error ?? null;
+$activity = $activity ?? [];
 
 $owner = trim((string) ($customer['owner_name'] ?? ''));
 $business = trim((string) ($customer['business_name'] ?? ''));
@@ -273,6 +275,73 @@ $joined = !empty($customer['created_at']) ? date('d M Y', strtotime((string) $cu
             <i class="bi bi-x-lg me-1"></i>Reject KYC
           </button>
         </form>
+      </div>
+
+      <div class="vc-cust-card vc-fade-up" style="--delay:130ms">
+        <div class="vc-cust-card-head">
+          <h3><i class="bi bi-key"></i> Reset password</h3>
+        </div>
+        <?php
+          $hasPassword = !empty($customer['password_hash']);
+          $activity = $activity ?? [];
+        ?>
+        <p class="vc-cust-access-note mb-3">
+          <?php if ($hasPassword): ?>
+            This customer already has a login password. Use this form to set a new one (e.g. forgot-password support calls).
+          <?php else: ?>
+            No password set yet — Email &amp; Password login will not work until one is set here or by the customer.
+          <?php endif; ?>
+        </p>
+        <form method="POST" action="<?= e(url('customers/' . $customer['id'] . '/reset-password')) ?>" autocomplete="off">
+          <div class="mb-2">
+            <label class="form-label" for="vcAdminNewPassword">New password</label>
+            <input
+              type="password"
+              class="form-control"
+              id="vcAdminNewPassword"
+              name="password"
+              minlength="6"
+              required
+              placeholder="Min. 6 characters"
+              autocomplete="new-password">
+          </div>
+          <div class="mb-3">
+            <label class="form-label" for="vcAdminConfirmPassword">Confirm password</label>
+            <input
+              type="password"
+              class="form-control"
+              id="vcAdminConfirmPassword"
+              name="password_confirmation"
+              minlength="6"
+              required
+              placeholder="Re-enter password"
+              autocomplete="new-password">
+          </div>
+          <button class="btn btn-outline-primary w-100" type="submit" onclick="return confirm('Reset this customer\'s password? They will be notified.');">
+            <i class="bi bi-arrow-repeat me-1"></i>Reset password
+          </button>
+        </form>
+        <?php
+          $passwordLogs = array_values(array_filter(
+              $activity,
+              static fn ($row) => ($row['action'] ?? '') === 'customer_password_reset'
+          ));
+        ?>
+        <?php if ($passwordLogs): ?>
+          <hr class="my-3">
+          <p class="small text-muted mb-2">Recent password resets</p>
+          <ul class="list-unstyled small mb-0 vc-cust-password-log">
+            <?php foreach (array_slice($passwordLogs, 0, 5) as $log): ?>
+              <li class="mb-1">
+                <i class="bi bi-clock-history me-1"></i>
+                <?= e($log['note'] ?: ('By ' . ($log['admin_name'] ?? 'Admin'))) ?>
+                <?php if (!empty($log['created_at'])): ?>
+                  <span class="text-muted">(<?= e(date('d M Y H:i', strtotime((string) $log['created_at']))) ?>)</span>
+                <?php endif; ?>
+              </li>
+            <?php endforeach; ?>
+          </ul>
+        <?php endif; ?>
       </div>
 
       <div class="vc-cust-card vc-fade-up" style="--delay:160ms">

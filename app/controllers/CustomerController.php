@@ -26,12 +26,20 @@ class CustomerController extends Controller
             flash('error', 'Customer not found.');
             redirect('customers');
         }
+        $activity = [];
+        try {
+            $activity = (new AdminActivityLog())->forEntity('customer', (int) $id, 15);
+        } catch (Throwable $e) {
+            // Table may not exist until migration 015 is applied
+            $activity = [];
+        }
         $this->view('customers/show', [
             'title'     => $customer['business_name'],
             'customer'  => $customer,
             'documents' => $model->documents((int) $id),
             'addresses' => $model->addresses((int) $id),
             'orders'    => $model->orders((int) $id),
+            'activity'  => $activity,
             'success'   => flash('success'),
             'error'     => flash('error'),
         ]);
@@ -131,6 +139,62 @@ class CustomerController extends Controller
         $model->setBlocked((int) $id, $blocked);
         flash('success', $blocked ? 'Customer blocked.' : 'Customer unblocked.');
         redirect('customers/' . (int) $id);
+    }
+
+    public function resetPassword(string $id): void
+    {
+        $customerId = (int) $id;
+        $model = new Customer();
+        $customer = $model->find($customerId);
+        if (!$customer) {
+            flash('error', 'Customer not found.');
+            redirect('customers');
+        }
+
+        $password = (string) ($_POST['password'] ?? '');
+        $confirm = (string) ($_POST['password_confirmation'] ?? $_POST['confirm_password'] ?? '');
+
+        if (strlen($password) < 6) {
+            flash('error', 'New password must be at least 6 characters.');
+            redirect('customers/' . $customerId);
+        }
+        if ($password !== $confirm) {
+            flash('error', 'Password confirmation does not match.');
+            redirect('customers/' . $customerId);
+        }
+
+        // Same hashing path as registration / Profile change-password
+        $model->setPassword($customerId, $password);
+
+        $admin = auth_user();
+        $adminName = $admin
+            ? (string) ($admin['name'] ?? $admin['email'] ?? 'Admin')
+            : 'Admin';
+        $when = date('d M Y, h:i A');
+
+        try {
+            (new AdminActivityLog())->record(
+                'customer_password_reset',
+                'customer',
+                $customerId,
+                "Password reset by {$adminName} on {$when}"
+            );
+        } catch (Throwable $e) {
+            if (defined('APP_DEBUG') && APP_DEBUG) {
+                error_log('admin_activity_log insert failed: ' . $e->getMessage());
+            }
+        }
+
+        NotificationService::notifyCustomer(
+            $customerId,
+            'Password reset by support',
+            'Your password was reset by our support team — contact us if you didn\'t request this.',
+            'verification',
+            $customerId
+        );
+
+        flash('success', 'Customer password updated. Share the new password with the customer securely (it cannot be viewed again).');
+        redirect('customers/' . $customerId);
     }
 
     public function uploadDocument(string $id): void

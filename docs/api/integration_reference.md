@@ -116,6 +116,41 @@ veggiicart/
 | POST | `/business/resubmit` | `resubmit` | JWT |
 | GET | `/business/verification-status` | `verificationStatus` | JWT |
 
+#### `POST /business/register`
+
+Completes business KYC registration for the authenticated customer (JWT from OTP verify). Mobile OTP remains the required signup path; password is **optional**.
+
+**Required body fields:** `business_name`, `owner_name`, `business_type`
+
+**Optional body fields:**
+
+| Field | Notes |
+|-------|--------|
+| `email`, `gst_number`, `fssai_number`, `pan_number` | Stored when non-empty |
+| `shop_address` / `address` / flat address fields | Optional address create (see controller) |
+| `password` | Optional. If set, must be **≥ 6 characters**. Hashed via `Customer::setPassword` (`password_hash(..., PASSWORD_DEFAULT)`) — same as Profile change-password |
+| `password_confirmation` | Required **only when** `password` is provided; must match. Alias: `confirm_password` |
+
+If `password` is omitted (or empty), `customers.password_hash` stays `NULL` (unchanged). Email+Password login then requires setting a password later via Profile.
+
+**Validation (422 `VALIDATION_ERROR` + `error.fields`)** when password is partially/fully provided:
+
+- `password` — under 6 characters
+- `password_confirmation` — does not match `password`
+
+**Example (with optional password):**
+
+```json
+{
+  "business_name": "Fresh Mart",
+  "owner_name": "Arnab",
+  "business_type": "retailer",
+  "email": "shop@example.com",
+  "password": "secret1",
+  "password_confirmation": "secret1"
+}
+```
+
 ### Profile — `ProfileApiController`
 
 | Method | Path | Handler | Auth |

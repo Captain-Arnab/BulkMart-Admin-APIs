@@ -2198,6 +2198,7 @@
             setText('vcReviewBusiness', val('vcSignupBusinessName') || '—');
             setText('vcReviewOwner', val('vcSignupOwnerName') || '—');
             setText('vcReviewEmail', val('vcSignupEmail') || '—');
+            setText('vcReviewPassword', val('vcSignupPassword') ? 'Set (for Email & Password login)' : 'Not set (optional)');
             var shop = val('vcSignupShopAddress');
             var delivery = (sameAddr && sameAddr.checked) ? shop : val('vcSignupDeliveryAddress');
             var addr = [shop, delivery !== shop ? ('Delivery: ' + delivery) : '', val('vcSignupLandmark'), val('vcSignupCity'), val('vcSignupState'), val('vcSignupPincode')]
@@ -2283,6 +2284,18 @@
                     toast('Business name and owner name are required.', 'error');
                     return false;
                 }
+                var pass = val('vcSignupPassword');
+                var passConfirm = val('vcSignupPasswordConfirm');
+                if (pass || passConfirm) {
+                    if (pass.length < 6) {
+                        toast('Password must be at least 6 characters.', 'error');
+                        return false;
+                    }
+                    if (pass !== passConfirm) {
+                        toast('Password confirmation does not match.', 'error');
+                        return false;
+                    }
+                }
                 return true;
             }
             if (n === 3) {
@@ -2352,6 +2365,11 @@
                 pincode: val('vcSignupPincode'),
                 landmark: val('vcSignupLandmark')
             };
+            var regPass = val('vcSignupPassword');
+            if (regPass) {
+                body.password = regPass;
+                body.password_confirmation = val('vcSignupPasswordConfirm');
+            }
 
             if (nextBtn) nextBtn.disabled = true;
             VC.businessRegister(body).then(function (res) {
@@ -2428,6 +2446,25 @@
         if (resendBtn) {
             resendBtn.addEventListener('click', function () { sendOtp(); });
         }
+
+        form.querySelectorAll('.vc-password-toggle[data-target]').forEach(function (btn) {
+            if (btn.getAttribute('data-vc-bound') === '1') return;
+            btn.setAttribute('data-vc-bound', '1');
+            btn.addEventListener('click', function (e) {
+                e.preventDefault();
+                e.stopPropagation();
+                var input = document.getElementById(btn.getAttribute('data-target') || '');
+                if (!input) return;
+                var show = input.type === 'password';
+                input.type = show ? 'text' : 'password';
+                var icon = btn.querySelector('i');
+                if (icon) {
+                    icon.classList.toggle('fa-eye', !show);
+                    icon.classList.toggle('fa-eye-slash', show);
+                }
+                btn.setAttribute('aria-label', show ? 'Hide password' : 'Show password');
+            });
+        });
 
         if (prevBtn) {
             prevBtn.addEventListener('click', function () {

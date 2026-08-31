@@ -127,7 +127,7 @@ $vcDocTypes = [
                         <div class="vc-step-heading">
                             <span>Step 02</span>
                             <h2>Business information</h2>
-                            <p>Tell us about your shop. GST, FSSAI and PAN are optional.</p>
+                            <p>Tell us about your shop. GST, FSSAI, PAN and password are optional.</p>
                         </div>
 
                         <div class="vc-business-types" id="vcSignupBizTypes">
@@ -162,6 +162,54 @@ $vcDocTypes = [
                                 <div class="vc-input-wrap">
                                     <i class="fa-regular fa-envelope"></i>
                                     <input type="email" id="vcSignupEmail" name="email" placeholder="business@email.com" autocomplete="email">
+                                </div>
+                            </div>
+                            <div class="vc-field">
+                                <label for="vcSignupPassword">
+                                    Password
+                                    <span>Optional — lets you log in with Email &amp; Password later</span>
+                                </label>
+                                <div class="vc-input-wrap vc-password-field">
+                                    <i class="fa-solid fa-lock"></i>
+                                    <input
+                                        type="password"
+                                        id="vcSignupPassword"
+                                        name="password"
+                                        minlength="6"
+                                        placeholder="Min. 6 characters"
+                                        autocomplete="new-password">
+                                    <button
+                                        type="button"
+                                        class="vc-password-toggle"
+                                        id="vcSignupPasswordToggle"
+                                        aria-label="Show password"
+                                        data-target="vcSignupPassword">
+                                        <i class="fa-regular fa-eye"></i>
+                                    </button>
+                                </div>
+                            </div>
+                            <div class="vc-field">
+                                <label for="vcSignupPasswordConfirm">
+                                    Confirm Password
+                                    <span>Optional — must match if you set a password</span>
+                                </label>
+                                <div class="vc-input-wrap vc-password-field">
+                                    <i class="fa-solid fa-lock"></i>
+                                    <input
+                                        type="password"
+                                        id="vcSignupPasswordConfirm"
+                                        name="password_confirmation"
+                                        minlength="6"
+                                        placeholder="Re-enter password"
+                                        autocomplete="new-password">
+                                    <button
+                                        type="button"
+                                        class="vc-password-toggle"
+                                        id="vcSignupPasswordConfirmToggle"
+                                        aria-label="Show password"
+                                        data-target="vcSignupPasswordConfirm">
+                                        <i class="fa-regular fa-eye"></i>
+                                    </button>
                                 </div>
                             </div>
                             <div class="vc-field">
@@ -285,6 +333,7 @@ $vcDocTypes = [
                             <p><span>Shop:</span> <strong id="vcReviewBusiness">—</strong></p>
                             <p><span>Owner:</span> <strong id="vcReviewOwner">—</strong></p>
                             <p><span>Email:</span> <strong id="vcReviewEmail">—</strong></p>
+                            <p><span>Password:</span> <strong id="vcReviewPassword">—</strong></p>
                         </div>
                         <div class="vc-review-card">
                             <h3>Address</h3>

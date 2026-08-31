@@ -38514,6 +38514,34 @@ RESPONSIVE
     transition: .25s ease;
 }
 
+.vc-input-wrap.vc-password-field input {
+    padding-right: 48px;
+}
+
+.vc-input-wrap .vc-password-toggle {
+    width: 38px;
+    height: 38px;
+    position: absolute;
+    top: 50%;
+    right: 7px;
+    transform: translateY(-50%);
+    z-index: 2;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border: 0;
+    border-radius: 9px;
+    background: transparent;
+    color: #809083;
+    cursor: pointer;
+    pointer-events: auto;
+}
+
+.vc-input-wrap .vc-password-toggle:hover {
+    background: #eef6eb;
+    color: #347c41;
+}
+
 .vc-field textarea {
     width: 100%;
     min-height: 105px;

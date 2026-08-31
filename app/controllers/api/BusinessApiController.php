@@ -70,6 +70,19 @@ class BusinessApiController extends ApiController
             if ($businessType !== '' && !in_array($businessType, $validKeys, true)) {
                 $fields['business_type'] = 'Invalid business type.';
             }
+
+            // Optional password — only validate when provided (matches Profile change-password rules).
+            $password = (string) ($body['password'] ?? '');
+            $passwordConfirm = (string) ($body['password_confirmation'] ?? $body['confirm_password'] ?? '');
+            if ($password !== '' || $passwordConfirm !== '') {
+                if (strlen($password) < 6) {
+                    $fields['password'] = 'Password must be at least 6 characters.';
+                }
+                if ($password !== $passwordConfirm) {
+                    $fields['password_confirmation'] = 'Password confirmation does not match.';
+                }
+            }
+
             if ($fields !== []) {
                 $this->validationError($fields);
             }
@@ -94,6 +107,11 @@ class BusinessApiController extends ApiController
                 'pan_number'    => trim((string) ($body['pan_number'] ?? '')) ?: null,
                 'email'         => trim((string) ($body['email'] ?? '')) ?: null,
             ], $kycStatus);
+
+            // Same hashing path as ProfileApiController change-password → Customer::setPassword
+            if ($password !== '') {
+                $this->customers->setPassword($id, $password);
+            }
 
             // Optional address payload (Flutter / website parity)
             $addressPayload = $this->extractAddressPayload($body);

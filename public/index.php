@@ -193,6 +193,7 @@ $router->post('/customers/{id}/documents/{docId}/delete', [CustomerController::c
 $router->post('/customers/{id}/approve', [CustomerController::class, 'approve'], [require_module('customers')]);
 $router->post('/customers/{id}/reject', [CustomerController::class, 'reject'], [require_module('customers')]);
 $router->post('/customers/{id}/toggle-block', [CustomerController::class, 'toggleBlock'], [require_module('customers')]);
+$router->post('/customers/{id}/reset-password', [CustomerController::class, 'resetPassword'], [require_module('customers')]);
 
 $router->get('/roles', [RoleController::class, 'index'], [require_module('roles')]);
 $router->get('/roles/create', [RoleController::class, 'create'], [require_module('roles')]);
