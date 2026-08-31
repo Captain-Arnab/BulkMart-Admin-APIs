@@ -148,6 +148,51 @@
         });
     }
 
+    function requestBlob(path, query) {
+        var headers = { Accept: '*/*' };
+        var token = getToken();
+        if (token) {
+            headers.Authorization = 'Bearer ' + token;
+        }
+        var url = API_BASE + path;
+        if (query && typeof query === 'object') {
+            var qs = Object.keys(query)
+                .filter(function (k) { return query[k] !== undefined && query[k] !== null && query[k] !== ''; })
+                .map(function (k) { return encodeURIComponent(k) + '=' + encodeURIComponent(query[k]); })
+                .join('&');
+            if (qs) {
+                url += (path.indexOf('?') >= 0 ? '&' : '?') + qs;
+            }
+        }
+        return fetch(url, { method: 'GET', headers: headers }).then(function (res) {
+            if (res.status === 401) {
+                return refreshAccessToken().then(function (ok) {
+                    if (!ok) {
+                        return { success: false, status: 401, blob: null, filename: '', contentType: '' };
+                    }
+                    headers.Authorization = 'Bearer ' + getToken();
+                    return fetch(url, { method: 'GET', headers: headers }).then(function (retryRes) {
+                        return packBlob(retryRes);
+                    });
+                });
+            }
+            return packBlob(res);
+        });
+    }
+
+    function packBlob(res) {
+        var disposition = res.headers.get('Content-Disposition') || '';
+        var match = /filename="?([^"]+)"?/i.exec(disposition);
+        var filename = match ? match[1] : '';
+        var contentType = res.headers.get('Content-Type') || '';
+        return res.blob().then(function (blob) {
+            if (!res.ok) {
+                return { success: false, status: res.status, blob: blob, filename: filename, contentType: contentType };
+            }
+            return { success: true, status: res.status, blob: blob, filename: filename, contentType: contentType };
+        });
+    }
+
     var api = {
         base: API_BASE,
         getToken: getToken,
@@ -218,6 +263,10 @@
         placeMultiAddressOrder: function (body) { return request('POST', '/orders/multi-address', body); },
         cancelOrder: function (id, reason) { return request('POST', '/orders/' + id + '/cancel', { reason: reason || '' }); },
         reorder: function (id) { return request('POST', '/orders/' + id + '/reorder'); },
+        invoice: function (id) { return request('GET', '/orders/' + id + '/invoice'); },
+        invoiceFile: function (id, format) {
+            return requestBlob('/orders/' + id + '/invoice', { format: format || 'pdf' });
+        },
         deliverySlots: function () { return request('GET', '/delivery-slots'); },
         checkPincode: function (pincode) { return request('GET', '/check-pincode', { pincode: pincode }); },
         serviceablePincodes: function (query) { return request('GET', '/serviceable-pincodes', query || {}); },

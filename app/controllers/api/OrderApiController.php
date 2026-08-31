@@ -314,7 +314,18 @@ class OrderApiController extends ApiController
             ],
         ];
 
-        if (in_array($format, ['html', 'pdf'], true)) {
+        if ($format === 'pdf') {
+            $pdf = (new InvoicePdfService())->build($invoice);
+            $filename = preg_replace('/[^A-Za-z0-9._-]/', '_', (string) $invoice['invoice_number']) . '.pdf';
+            header('Content-Type: application/pdf');
+            header('Content-Disposition: attachment; filename="' . $filename . '"');
+            header('Content-Length: ' . strlen($pdf));
+            header('Cache-Control: private, max-age=0, must-revalidate');
+            echo $pdf;
+            exit;
+        }
+
+        if ($format === 'html') {
             $this->renderInvoiceHtml($invoice);
         }
 
@@ -335,26 +346,46 @@ class OrderApiController extends ApiController
                 . '<td style="text-align:right">₹' . $esc(number_format($item['line_total'], 2)) . '</td>'
                 . '</tr>';
         }
-        $html = '<!DOCTYPE html><html><head><meta charset="utf-8"><title>'
-            . $esc($invoice['invoice_number']) . '</title>
+        $companyPhone = $esc($invoice['company']['phone'] ?? '');
+        $companyEmail = $esc($invoice['company']['email'] ?? '');
+        $html = '<!DOCTYPE html><html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">'
+            . '<title>' . $esc($invoice['invoice_number']) . '</title>
 <style>
-body{font-family:Arial,sans-serif;color:#1E1F22;margin:32px}
-h1{color:#12833B;margin:0 0 8px}
+body{font-family:Arial,Helvetica,sans-serif;color:#1E1F22;margin:0;background:#f4f7f4}
+.wrap{max-width:820px;margin:24px auto;background:#fff;border:1px solid #e6efe7;border-radius:16px;padding:28px;box-shadow:0 10px 30px rgba(11,92,39,.08)}
+.toolbar{display:flex;gap:10px;justify-content:flex-end;margin-bottom:18px}
+.toolbar button,.toolbar a{appearance:none;border:0;border-radius:10px;padding:10px 14px;font-weight:700;cursor:pointer;text-decoration:none;color:#fff;background:#12833B}
+.toolbar .ghost{background:#fff;color:#12833B;border:1px solid #b9dbbf}
+h1{color:#12833B;margin:0 0 8px;font-size:28px}
+.meta{color:#5f6b66;line-height:1.5}
 table{width:100%;border-collapse:collapse;margin-top:24px}
-th,td{border-bottom:1px solid #ddd;padding:8px;text-align:left}
-th{background:#F4FAF6}
-.totals{margin-top:16px;width:280px;margin-left:auto}
-.totals td{border:none;padding:4px 8px}
-</style></head><body>
+th,td{border-bottom:1px solid #e6efe7;padding:10px 8px;text-align:left;font-size:14px}
+th{background:#F4FAF6;color:#0B5C27}
+.totals{margin-top:16px;width:300px;margin-left:auto}
+.totals td{border:none;padding:6px 8px}
+@media print{
+body{background:#fff}
+.wrap{box-shadow:none;border:0;margin:0;max-width:none;border-radius:0}
+.toolbar{display:none !important}
+}
+</style></head><body><div class="wrap">
+<div class="toolbar">
+<button type="button" onclick="window.print()">Print</button>
+</div>
 <h1>' . $esc($invoice['company']['name']) . '</h1>
-<p>Invoice <strong>' . $esc($invoice['invoice_number']) . '</strong><br>
-Order ' . $esc($invoice['order_number']) . ' · ' . $esc($invoice['placed_at']) . '</p>
+<p class="meta">Invoice <strong>' . $esc($invoice['invoice_number']) . '</strong><br>
+Order ' . $esc($invoice['order_number']) . ' · ' . $esc($invoice['placed_at']) . '<br>
+Status: ' . $esc($invoice['status_label'] ?? $invoice['status']) . ' · Payment: ' . $esc(strtoupper((string) $invoice['payment_method'])) . '</p>
 <p><strong>Bill to</strong><br>'
             . $esc($invoice['customer']['business_name']) . '<br>'
             . $esc($invoice['customer']['owner_name']) . ' · ' . $esc($invoice['customer']['mobile']) . '<br>'
-            . $esc($invoice['billing_address']['line1']) . ', '
-            . $esc($invoice['billing_address']['city']) . ' '
-            . $esc($invoice['billing_address']['pincode']) . '</p>
+            . (!empty($invoice['customer']['gst_number']) ? 'GSTIN: ' . $esc($invoice['customer']['gst_number']) . '<br>' : '')
+            . $esc($invoice['billing_address']['line1'])
+            . (!empty($invoice['billing_address']['line2']) ? ', ' . $esc($invoice['billing_address']['line2']) : '')
+            . (!empty($invoice['billing_address']['landmark']) ? ', ' . $esc($invoice['billing_address']['landmark']) : '')
+            . ', ' . $esc($invoice['billing_address']['city'])
+            . (!empty($invoice['billing_address']['state']) ? ', ' . $esc($invoice['billing_address']['state']) : '')
+            . ' ' . $esc($invoice['billing_address']['pincode']) . '</p>
 <table><thead><tr><th>Item</th><th>Unit</th><th>Qty</th><th>Price</th><th>Total</th></tr></thead>
 <tbody>' . $rows . '</tbody></table>
 <table class="totals">
@@ -362,11 +393,16 @@ Order ' . $esc($invoice['order_number']) . ' · ' . $esc($invoice['placed_at']) 
 <tr><td>Discount' . ($invoice['coupon_code'] ? ' (' . $esc($invoice['coupon_code']) . ')' : '') . '</td>
 <td style="text-align:right">₹' . $esc(number_format($invoice['discount_amount'], 2)) . '</td></tr>
 <tr><td>Delivery</td><td style="text-align:right">₹' . $esc(number_format($invoice['delivery_fee'], 2)) . '</td></tr>
-<tr><td><strong>Total (COD)</strong></td><td style="text-align:right"><strong>₹'
+<tr><td><strong>Total</strong></td><td style="text-align:right"><strong>₹'
             . $esc(number_format($invoice['total'], 2)) . '</strong></td></tr>
 </table>
-<p style="margin-top:32px;color:#666;font-size:12px">Print this page or Save as PDF from your browser.</p>
-</body></html>';
+<p class="meta" style="margin-top:28px;font-size:12px">Thank you for ordering with '
+            . $esc($invoice['company']['name']) . '.'
+            . (($companyPhone !== '' || $companyEmail !== '')
+                ? '<br>Support: ' . trim($companyPhone . ($companyPhone && $companyEmail ? ' | ' : '') . $companyEmail)
+                : '')
+            . '</p>
+</div></body></html>';
 
         header('Content-Type: text/html; charset=utf-8');
         header('Content-Disposition: inline; filename="' . $invoice['invoice_number'] . '.html"');

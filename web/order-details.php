@@ -260,11 +260,17 @@
                         <i class="fa-solid fa-file-invoice"></i>
                     </div>
                     <h3>Order Invoice</h3>
-                    <p>Download your invoice for this purchase.</p>
-                    <button type="button" class="vg-invoice-btn" id="vgInvoiceBtn">
-                        <i class="fa-solid fa-download"></i>
-                        Download Invoice
-                    </button>
+                    <p>View or download the PDF invoice for this purchase.</p>
+                    <div class="vg-invoice-actions">
+                        <button type="button" class="vg-invoice-btn ghost" id="vgInvoiceViewBtn">
+                            <i class="fa-regular fa-eye"></i>
+                            View Invoice
+                        </button>
+                        <button type="button" class="vg-invoice-btn" id="vgInvoiceBtn">
+                            <i class="fa-solid fa-download"></i>
+                            Download PDF
+                        </button>
+                    </div>
                 </div>
 
                 <div class="vg-order-action-card" id="vgCancelCard" hidden>

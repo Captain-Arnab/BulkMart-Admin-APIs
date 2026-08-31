@@ -3355,42 +3355,60 @@
         }
 
         var invoiceBtn = document.getElementById('vgInvoiceBtn');
+        var invoiceViewBtn = document.getElementById('vgInvoiceViewBtn');
+
+        function openInvoiceBlob(pack, mode) {
+            if (!pack || !pack.success || !pack.blob) {
+                toast('Unable to load invoice.', 'error');
+                return;
+            }
+            var type = pack.contentType || pack.blob.type || '';
+            if (type.indexOf('application/json') !== -1) {
+                toast('Unable to load invoice.', 'error');
+                return;
+            }
+            var filename = pack.filename || ('invoice-' + (order.order_number || order.id) + (mode === 'pdf' ? '.pdf' : '.html'));
+            var url = URL.createObjectURL(pack.blob);
+            if (mode === 'view') {
+                var win = window.open(url, '_blank');
+                if (!win) {
+                    toast('Please allow pop-ups to view the invoice.', 'error');
+                }
+                setTimeout(function () { URL.revokeObjectURL(url); }, 60000);
+                return;
+            }
+            var a = document.createElement('a');
+            a.href = url;
+            a.download = filename;
+            document.body.appendChild(a);
+            a.click();
+            a.remove();
+            setTimeout(function () { URL.revokeObjectURL(url); }, 2000);
+            toast('Invoice PDF downloaded');
+        }
+
+        if (invoiceViewBtn) {
+            invoiceViewBtn.onclick = function () {
+                invoiceViewBtn.disabled = true;
+                VC.invoiceFile(order.id, 'html').then(function (pack) {
+                    invoiceViewBtn.disabled = false;
+                    openInvoiceBlob(pack, 'view');
+                }).catch(function () {
+                    invoiceViewBtn.disabled = false;
+                    toast('Unable to load invoice.', 'error');
+                });
+            };
+        }
+
         if (invoiceBtn) {
             invoiceBtn.onclick = function () {
-                VC.order(order.id).then(function (res) {
-                    if (!res || !res.success) {
-                        toast('Unable to load invoice data.', 'error');
-                        return;
-                    }
-                    var o = res.data.order;
-                    var lines = [
-                        'VeggiiCart Invoice',
-                        'Order: ' + (o.order_number || ''),
-                        'Date: ' + (o.placed_at || ''),
-                        'Status: ' + (o.status_label || o.status || ''),
-                        'Payment: ' + (o.payment_method || 'COD'),
-                        '',
-                        'Items:'
-                    ];
-                    (o.items || []).forEach(function (it) {
-                        lines.push('- ' + titleCaseName(it.name) + ' x ' + qtyLabel(it.quantity) + ' = ' + money(it.line_total));
-                    });
-                    lines.push('');
-                    lines.push('Subtotal: ' + money(o.subtotal));
-                    lines.push('Delivery: ' + money(o.delivery_fee));
-                    if (Number(o.discount_amount || 0) > 0) {
-                        lines.push('Discount: -' + money(o.discount_amount));
-                    }
-                    lines.push('Total: ' + money(o.total));
-                    var blob = new Blob([lines.join('\n')], { type: 'text/plain;charset=utf-8' });
-                    var url = URL.createObjectURL(blob);
-                    var a = document.createElement('a');
-                    a.href = url;
-                    a.download = 'invoice-' + (o.order_number || order.id) + '.txt';
-                    document.body.appendChild(a);
-                    a.click();
-                    a.remove();
-                    URL.revokeObjectURL(url);
+                invoiceBtn.disabled = true;
+                VC.invoiceFile(order.id, 'pdf').then(function (pack) {
+                    invoiceBtn.disabled = false;
+                    openInvoiceBlob(pack, 'pdf');
+                }).catch(function () {
+                    invoiceBtn.disabled = false;
+                    toast('Unable to download invoice PDF.', 'error');
                 });
             };
         }

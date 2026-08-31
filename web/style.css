@@ -35400,6 +35400,23 @@ RESPONSIVE
     color: #ffffff;
 }
 
+.vg-invoice-actions {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.vg-invoice-btn.ghost {
+    background: #ffffff;
+    color: #2d9140;
+    border: 1px solid #b9dbbf;
+}
+
+.vg-invoice-btn:disabled {
+    opacity: 0.65;
+    cursor: wait;
+}
+
 
 .vg-support-btn {
     border: 1px solid #d7e5d8;
