@@ -238,6 +238,11 @@
         documents: function () { return request('GET', '/business/documents'); },
         resubmit: function () { return request('POST', '/business/resubmit', {}); },
 
+        faqs: function (query) { return request('GET', '/support/faqs', query || {}); },
+        createSupportTicket: function (body) { return request('POST', '/support/tickets', body); },
+        supportTickets: function (query) { return request('GET', '/support/tickets', query || {}); },
+        supportTicket: function (id) { return request('GET', '/support/tickets/' + id); },
+
         submitBulkEnquiry: function (body) { return request('POST', '/bulk-enquiries', body); }
     };
 

@@ -4324,6 +4324,211 @@
         });
     }
 
+    /* ---------- FAQ & Support ---------- */
+
+    function bootFaqs() {
+        var listEl = document.getElementById('vcFaqList');
+        var filtersEl = document.getElementById('vcFaqFilters');
+        var searchEl = document.getElementById('vcFaqSearch');
+        if (!listEl) {
+            return;
+        }
+
+        var allFaqs = [];
+        var activeCategory = 'all';
+        var query = '';
+
+        function render() {
+            var filtered = allFaqs.filter(function (f) {
+                if (activeCategory !== 'all' && String(f.category || '') !== activeCategory) {
+                    return false;
+                }
+                if (!query) {
+                    return true;
+                }
+                var hay = (String(f.question || '') + ' ' + String(f.answer || '') + ' ' + String(f.category || '')).toLowerCase();
+                return hay.indexOf(query) !== -1;
+            });
+
+            if (!filtered.length) {
+                listEl.innerHTML = '<p class="vc-help-empty">No FAQs matched your search.</p>';
+                return;
+            }
+
+            listEl.innerHTML = filtered.map(function (f, idx) {
+                return (
+                    '<article class="vc-faq-item' + (idx === 0 ? ' is-open' : '') + '">' +
+                        '<button type="button" class="vc-faq-q" aria-expanded="' + (idx === 0 ? 'true' : 'false') + '">' +
+                            '<span>' + escapeHtml(f.question || '') + '</span>' +
+                            '<i class="fa-solid fa-chevron-down" aria-hidden="true"></i>' +
+                        '</button>' +
+                        '<div class="vc-faq-a">' +
+                            (f.category ? '<em class="vc-faq-cat">' + escapeHtml(f.category) + '</em>' : '') +
+                            '<p>' + escapeHtml(f.answer || '') + '</p>' +
+                        '</div>' +
+                    '</article>'
+                );
+            }).join('');
+        }
+
+        function renderFilters(categories) {
+            if (!filtersEl) {
+                return;
+            }
+            var cats = ['all'].concat(categories);
+            filtersEl.innerHTML = cats.map(function (c) {
+                var label = c === 'all' ? 'All' : c;
+                return '<button type="button" class="vc-help-chip' + (activeCategory === c ? ' is-active' : '') + '" data-faq-cat="' + escapeHtml(c) + '">' + escapeHtml(label) + '</button>';
+            }).join('');
+        }
+
+        listEl.addEventListener('click', function (e) {
+            var btn = e.target.closest('.vc-faq-q');
+            if (!btn) {
+                return;
+            }
+            var item = btn.closest('.vc-faq-item');
+            if (!item) {
+                return;
+            }
+            var open = item.classList.contains('is-open');
+            listEl.querySelectorAll('.vc-faq-item.is-open').forEach(function (el) {
+                el.classList.remove('is-open');
+                var q = el.querySelector('.vc-faq-q');
+                if (q) q.setAttribute('aria-expanded', 'false');
+            });
+            if (!open) {
+                item.classList.add('is-open');
+                btn.setAttribute('aria-expanded', 'true');
+            }
+        });
+
+        if (filtersEl) {
+            filtersEl.addEventListener('click', function (e) {
+                var chip = e.target.closest('[data-faq-cat]');
+                if (!chip) {
+                    return;
+                }
+                activeCategory = chip.getAttribute('data-faq-cat') || 'all';
+                filtersEl.querySelectorAll('.vc-help-chip').forEach(function (el) {
+                    el.classList.toggle('is-active', el.getAttribute('data-faq-cat') === activeCategory);
+                });
+                render();
+            });
+        }
+
+        if (searchEl) {
+            searchEl.addEventListener('input', function () {
+                query = String(searchEl.value || '').trim().toLowerCase();
+                render();
+            });
+        }
+
+        VC.faqs().then(function (res) {
+            allFaqs = (res && res.success && res.data && res.data.faqs) || [];
+            var categories = [];
+            allFaqs.forEach(function (f) {
+                var c = String(f.category || '').trim();
+                if (c && categories.indexOf(c) === -1) {
+                    categories.push(c);
+                }
+            });
+            renderFilters(categories);
+            render();
+        }).catch(function () {
+            listEl.innerHTML = '<p class="vc-help-empty">Could not load FAQs right now. Please try again later.</p>';
+        });
+    }
+
+    function bootSupport() {
+        var form = document.getElementById('vcSupportTicketForm');
+        var guest = document.getElementById('vcSupportGuestNote');
+        var ticketsEl = document.getElementById('vcSupportTickets');
+        var submitBtn = document.getElementById('vcSupportSubmitBtn');
+
+        function renderTickets(list) {
+            if (!ticketsEl) {
+                return;
+            }
+            if (!list.length) {
+                ticketsEl.innerHTML = '<p class="vc-help-empty">No support tickets yet.</p>';
+                return;
+            }
+            ticketsEl.innerHTML = list.map(function (t) {
+                var status = String(t.status || 'open').replace(/_/g, ' ');
+                return (
+                    '<article class="vc-support-ticket">' +
+                        '<div class="vc-support-ticket-top">' +
+                            '<strong>#' + escapeHtml(t.id) + ' · ' + escapeHtml(t.subject_type || 'Support') + '</strong>' +
+                            '<span class="vc-support-status">' + escapeHtml(status) + '</span>' +
+                        '</div>' +
+                        '<p>' + escapeHtml(t.description || '') + '</p>' +
+                        (t.created_at ? '<small>' + escapeHtml(t.created_at) + '</small>' : '') +
+                    '</article>'
+                );
+            }).join('');
+        }
+
+        if (!VC.isLoggedIn()) {
+            if (guest) guest.hidden = false;
+            if (form) form.hidden = true;
+            if (ticketsEl) {
+                ticketsEl.innerHTML = '<p class="vc-help-empty">Log in to view your support tickets.</p>';
+            }
+            return;
+        }
+
+        if (guest) guest.hidden = true;
+        if (form) form.hidden = false;
+
+        VC.supportTickets({ per_page: 10 }).then(function (res) {
+            var list = (res && res.success && res.data && res.data.tickets) || [];
+            renderTickets(list);
+        }).catch(function () {
+            if (ticketsEl) {
+                ticketsEl.innerHTML = '<p class="vc-help-empty">Could not load tickets.</p>';
+            }
+        });
+
+        if (!form) {
+            return;
+        }
+
+        form.addEventListener('submit', function (e) {
+            e.preventDefault();
+            var fd = new FormData(form);
+            var body = {
+                subject_type: String(fd.get('subject_type') || '').trim(),
+                description: String(fd.get('description') || '').trim(),
+                related_order_id: String(fd.get('related_order_id') || '').trim() || null
+            };
+            if (!body.subject_type || !body.description) {
+                toast('Please fill subject and description.', 'error');
+                return;
+            }
+            if (body.related_order_id) {
+                body.related_order_id = Number(body.related_order_id);
+            } else {
+                delete body.related_order_id;
+            }
+            if (submitBtn) submitBtn.disabled = true;
+            VC.createSupportTicket(body).then(function (res) {
+                if (submitBtn) submitBtn.disabled = false;
+                if (res && res.success) {
+                    toast('Support ticket submitted');
+                    form.reset();
+                    return VC.supportTickets({ per_page: 10 }).then(function (again) {
+                        renderTickets((again && again.success && again.data && again.data.tickets) || []);
+                    });
+                }
+                toast(apiErrorMessage(res, 'Could not submit ticket.'), 'error');
+            }).catch(function () {
+                if (submitBtn) submitBtn.disabled = false;
+                toast('Could not submit ticket.', 'error');
+            });
+        });
+    }
+
     /* ---------- Boot ---------- */
 
     document.addEventListener('DOMContentLoaded', function () {
@@ -4347,5 +4552,7 @@
         if (page === 'notification') bootNotifications();
         if (page === 'bussiness-registration') bootBusiness();
         if (page === 'verification-status') bootVerification();
+        if (page === 'faq') bootFaqs();
+        if (page === 'support') bootSupport();
     });
 })();

@@ -340,8 +340,10 @@
                     </a>
 
 
-                    <a href="#"
-                       class="vc-whatsapp-support">
+                    <a href="https://wa.me/918099999086"
+                       class="vc-whatsapp-support"
+                       target="_blank"
+                       rel="noopener noreferrer">
 
                         <i class="fa-brands fa-whatsapp"></i>
 
@@ -530,7 +532,7 @@
 <script src="https://cdn.jsdelivr.net/npm/swiper@11/swiper-bundle.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 <script>window.VC_LIVE = true;</script>
-<script src="js/vc-api.js?v=loc-dd-1"></script>
-<script src="js/vc-swal.js?v=loc-dd-1"></script>
-<script src="js/vc-app.js?v=loc-dd-1"></script>
-<script src="common.js?v=loc-dd-1"></script>
+<script src="js/vc-api.js?v=help-1"></script>
+<script src="js/vc-swal.js?v=help-1"></script>
+<script src="js/vc-app.js?v=help-1"></script>
+<script src="common.js?v=help-1"></script>
