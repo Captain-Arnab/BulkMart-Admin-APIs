@@ -524,9 +524,9 @@
             mobile.textContent = label;
             mobile.title = address ? addrLine(address) : 'Select delivery location';
         }
-        var btn = document.getElementById('vcHeaderLocation');
-        if (btn) {
-            btn.classList.toggle('has-location', !!address);
+        var wrap = document.getElementById('vcLocationWrap');
+        if (wrap) {
+            wrap.classList.toggle('has-location', !!address);
         }
     }
 
@@ -546,120 +546,218 @@
         });
     }
 
-    function openHeaderLocationPicker() {
+    function locationOptionHtml(a) {
+        return (
+            '<button type="button" class="vc-location-option' + (a.is_default ? ' is-active' : '') + '" data-loc-id="' + a.id + '" role="option" aria-selected="' + (a.is_default ? 'true' : 'false') + '">' +
+                '<i class="fa-solid fa-location-dot" aria-hidden="true"></i>' +
+                '<div>' +
+                    '<strong>' + escapeHtml(a.label || 'Address') + '</strong>' +
+                    '<span>' + escapeHtml(addrLine(a)) + '</span>' +
+                    (a.is_default ? '<em>Default delivery</em>' : '') +
+                '</div>' +
+            '</button>'
+        );
+    }
+
+    function fillLocationLists(list) {
+        var html;
+        if (!list.length) {
+            html = '<p class="vc-location-dropdown-empty">No saved address yet. Add one to set your delivery location.</p>';
+        } else {
+            html = list.map(locationOptionHtml).join('');
+        }
+        var desktopList = document.getElementById('vcLocationDropdownList');
+        var mobileList = document.getElementById('vcMobileLocationList');
+        if (desktopList) {
+            desktopList.innerHTML = html;
+        }
+        if (mobileList) {
+            mobileList.innerHTML = html;
+        }
+    }
+
+    function closeHeaderLocationDropdown() {
+        var wrap = document.getElementById('vcLocationWrap');
+        var dropdown = document.getElementById('vcLocationDropdown');
+        var btn = document.getElementById('vcHeaderLocation');
+        if (wrap) {
+            wrap.classList.remove('is-open');
+        }
+        if (dropdown) {
+            dropdown.hidden = true;
+        }
+        if (btn) {
+            btn.setAttribute('aria-expanded', 'false');
+        }
+        var mobileBtn = document.getElementById('vcMobileLocation');
+        var mobilePanel = document.getElementById('vcMobileLocationPanel');
+        if (mobileBtn) {
+            mobileBtn.setAttribute('aria-expanded', 'false');
+        }
+        if (mobilePanel) {
+            mobilePanel.hidden = true;
+        }
+    }
+
+    function openDesktopLocationDropdown() {
+        var wrap = document.getElementById('vcLocationWrap');
+        var dropdown = document.getElementById('vcLocationDropdown');
+        var btn = document.getElementById('vcHeaderLocation');
+        if (!dropdown || !btn) {
+            return;
+        }
+        wrap && wrap.classList.add('is-open');
+        dropdown.hidden = false;
+        btn.setAttribute('aria-expanded', 'true');
+        loadLocationDropdownContent();
+    }
+
+    function openMobileLocationPanel() {
+        var mobileBtn = document.getElementById('vcMobileLocation');
+        var mobilePanel = document.getElementById('vcMobileLocationPanel');
+        if (!mobilePanel || !mobileBtn) {
+            return;
+        }
+        mobilePanel.hidden = false;
+        mobileBtn.setAttribute('aria-expanded', 'true');
+        loadLocationDropdownContent();
+    }
+
+    function loadLocationDropdownContent() {
+        var desktopList = document.getElementById('vcLocationDropdownList');
+        var mobileList = document.getElementById('vcMobileLocationList');
+        var loading = '<p class="vc-location-dropdown-loading">Loading addresses…</p>';
+        if (desktopList) {
+            desktopList.innerHTML = loading;
+        }
+        if (mobileList) {
+            mobileList.innerHTML = loading;
+        }
+
+        if (!VC.isLoggedIn()) {
+            var guestHtml = '<p class="vc-location-dropdown-empty">Please <a href="' + escapeHtml(loginUrl()) + '">login</a> to choose a delivery address.</p>';
+            if (desktopList) {
+                desktopList.innerHTML = guestHtml;
+            }
+            if (mobileList) {
+                mobileList.innerHTML = guestHtml;
+            }
+            return;
+        }
+
+        VC.addresses().then(function (res) {
+            var list = (res && res.success && res.data && res.data.addresses) || [];
+            fillLocationLists(list);
+            var chosen = list.find(function (a) { return a.is_default; }) || list[0] || null;
+            paintHeaderLocation(chosen);
+        }).catch(function () {
+            var err = '<p class="vc-location-dropdown-empty">Could not load addresses. Please try again.</p>';
+            if (desktopList) {
+                desktopList.innerHTML = err;
+            }
+            if (mobileList) {
+                mobileList.innerHTML = err;
+            }
+        });
+    }
+
+    function selectHeaderLocation(id) {
         if (!VC.isLoggedIn()) {
             window.location.href = loginUrl();
             return;
         }
+        var buttons = document.querySelectorAll('.vc-location-option[data-loc-id="' + id + '"]');
+        buttons.forEach(function (b) { b.disabled = true; });
         VC.addresses().then(function (res) {
             var list = (res && res.success && res.data && res.data.addresses) || [];
-            if (!list.length) {
-                if (typeof Swal === 'undefined') {
-                    window.location.href = 'manage-address.php';
-                    return;
-                }
-                Swal.fire({
-                    icon: 'info',
-                    title: 'Add a delivery address',
-                    html: '<p class="vc-loc-empty">Save an address to set where we deliver your orders.</p>',
-                    confirmButtonText: 'Add address',
-                    confirmButtonColor: '#12833B',
-                    showCancelButton: true,
-                    cancelButtonText: 'Cancel',
-                    buttonsStyling: false,
-                    customClass: {
-                        confirmButton: 'btn btn-primary mx-1',
-                        cancelButton: 'btn btn-outline-secondary mx-1'
-                    }
-                }).then(function (result) {
-                    if (result.isConfirmed) {
-                        window.location.href = 'manage-address.php';
-                    }
-                });
-                return;
+            var chosen = list.find(function (a) { return String(a.id) === String(id); });
+            if (!chosen) {
+                buttons.forEach(function (b) { b.disabled = false; });
+                toast('Address not found.', 'error');
+                return null;
             }
-
-            var html = '<div class="vc-loc-picker" role="listbox" aria-label="Saved addresses">' +
-                list.map(function (a) {
-                    return (
-                        '<button type="button" class="vc-loc-option' + (a.is_default ? ' is-active' : '') + '" data-loc-id="' + a.id + '" role="option" aria-selected="' + (a.is_default ? 'true' : 'false') + '">' +
-                            '<i class="fa-solid fa-location-dot" aria-hidden="true"></i>' +
-                            '<div>' +
-                                '<strong>' + escapeHtml(a.label || 'Address') + '</strong>' +
-                                '<span>' + escapeHtml(addrLine(a)) + '</span>' +
-                                (a.is_default ? '<em class="vc-loc-default">Default delivery</em>' : '') +
-                            '</div>' +
-                        '</button>'
-                    );
-                }).join('') +
-                '</div>' +
-                '<a class="vc-loc-manage" href="manage-address.php"><i class="fa-solid fa-plus"></i> Manage addresses</a>';
-
-            if (typeof Swal === 'undefined') {
-                window.location.href = 'manage-address.php';
-                return;
+            if (chosen.is_default) {
+                paintHeaderLocation(chosen);
+                fillLocationLists(list);
+                closeHeaderLocationDropdown();
+                toast('Delivery location selected');
+                return null;
             }
-
-            Swal.fire({
-                title: 'Deliver to',
-                html: html,
-                showConfirmButton: false,
-                showCloseButton: true,
-                width: 440,
-                buttonsStyling: false,
-                didOpen: function (popup) {
-                    popup.querySelectorAll('[data-loc-id]').forEach(function (btn) {
-                        btn.addEventListener('click', function () {
-                            var id = btn.getAttribute('data-loc-id');
-                            var chosen = list.find(function (a) { return String(a.id) === String(id); });
-                            if (!chosen) {
-                                return;
-                            }
-                            if (chosen.is_default) {
-                                paintHeaderLocation(chosen);
-                                Swal.close();
-                                return;
-                            }
-                            btn.disabled = true;
-                            VC.defaultAddress(id).then(function (setRes) {
-                                if (setRes && setRes.success) {
-                                    paintHeaderLocation(setRes.data && setRes.data.address ? setRes.data.address : chosen);
-                                    toast('Delivery location updated');
-                                    Swal.close();
-                                } else {
-                                    btn.disabled = false;
-                                    toast((setRes && setRes.error && setRes.error.message) || 'Could not update location.', 'error');
-                                }
-                            }).catch(function () {
-                                btn.disabled = false;
-                                toast('Could not update location.', 'error');
-                            });
-                        });
+            return VC.defaultAddress(id).then(function (setRes) {
+                if (setRes && setRes.success) {
+                    var updated = (setRes.data && setRes.data.address) || chosen;
+                    paintHeaderLocation(updated);
+                    return VC.addresses().then(function (again) {
+                        var next = (again && again.success && again.data && again.data.addresses) || [];
+                        fillLocationLists(next);
+                        closeHeaderLocationDropdown();
+                        toast('Delivery location updated');
                     });
                 }
+                buttons.forEach(function (b) { b.disabled = false; });
+                toast((setRes && setRes.error && setRes.error.message) || 'Could not update location.', 'error');
+                return null;
             });
         }).catch(function () {
-            toast('Could not load addresses.', 'error');
+            buttons.forEach(function (b) { b.disabled = false; });
+            toast('Could not update location.', 'error');
         });
     }
 
     function bindHeaderLocation() {
-        var desktop = document.getElementById('vcHeaderLocation') || document.querySelector('.vc-location');
-        var mobile = document.getElementById('vcMobileLocation') || document.querySelector('.vc-mobile-location');
-        if (desktop && !desktop.getAttribute('data-vc-loc-bound')) {
-            desktop.setAttribute('data-vc-loc-bound', '1');
-            desktop.addEventListener('click', function (e) {
-                e.preventDefault();
-                openHeaderLocationPicker();
-            });
+        if (document.documentElement.getAttribute('data-vc-loc-bound') === '1') {
+            return;
         }
-        if (mobile && !mobile.getAttribute('data-vc-loc-bound')) {
-            mobile.setAttribute('data-vc-loc-bound', '1');
-            mobile.addEventListener('click', function (e) {
+        document.documentElement.setAttribute('data-vc-loc-bound', '1');
+
+        document.addEventListener('click', function (e) {
+            var option = e.target.closest('[data-loc-id]');
+            if (option && (option.closest('#vcLocationDropdown') || option.closest('#vcMobileLocationPanel'))) {
                 e.preventDefault();
-                openHeaderLocationPicker();
-            });
-        }
+                e.stopPropagation();
+                selectHeaderLocation(option.getAttribute('data-loc-id'));
+                return;
+            }
+
+            var desktopBtn = e.target.closest('#vcHeaderLocation');
+            if (desktopBtn) {
+                e.preventDefault();
+                e.stopPropagation();
+                var dropdown = document.getElementById('vcLocationDropdown');
+                var isOpen = dropdown && !dropdown.hidden;
+                if (isOpen) {
+                    closeHeaderLocationDropdown();
+                } else {
+                    closeHeaderLocationDropdown();
+                    openDesktopLocationDropdown();
+                }
+                return;
+            }
+
+            var mobileBtn = e.target.closest('#vcMobileLocation');
+            if (mobileBtn) {
+                e.preventDefault();
+                e.stopPropagation();
+                var panel = document.getElementById('vcMobileLocationPanel');
+                var open = panel && !panel.hidden;
+                if (open) {
+                    closeHeaderLocationDropdown();
+                } else {
+                    openMobileLocationPanel();
+                }
+                return;
+            }
+
+            if (!e.target.closest('#vcLocationWrap') && !e.target.closest('#vcMobileLocationPanel') && !e.target.closest('#vcMobileLocation')) {
+                closeHeaderLocationDropdown();
+            }
+        });
+
+        document.addEventListener('keydown', function (e) {
+            if (e.key === 'Escape') {
+                closeHeaderLocationDropdown();
+            }
+        });
     }
 
     function refreshHeaderCounts() {

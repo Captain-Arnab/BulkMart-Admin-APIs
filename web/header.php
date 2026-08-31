@@ -33,7 +33,7 @@ $vcSiteFavicon = function_exists('site_favicon_src') ? site_favicon_src() : 'ima
     <link rel="stylesheet"
           href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.7.2/css/all.min.css">
 
-    <link rel="stylesheet" href="style.css">
+    <link rel="stylesheet" href="style.css?v=loc-dd-1">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/sweetalert2@11/dist/sweetalert2.min.css">
 
 </head>
@@ -134,27 +134,55 @@ $vcSiteFavicon = function_exists('site_favicon_src') ? site_favicon_src() : 'ima
 
 
             <!-- DELIVERY LOCATION -->
-            <button class="vc-location"
-                    type="button"
-                    id="vcHeaderLocation"
-                    aria-haspopup="dialog"
-                    aria-label="Choose delivery location">
+            <div class="vc-location-wrap" id="vcLocationWrap">
 
-                <span class="vc-location-icon">
-                    <i class="fa-solid fa-location-dot"></i>
-                </span>
+                <button class="vc-location"
+                        type="button"
+                        id="vcHeaderLocation"
+                        aria-haspopup="listbox"
+                        aria-expanded="false"
+                        aria-controls="vcLocationDropdown"
+                        aria-label="Choose delivery location">
 
-                <span class="vc-location-text">
+                    <span class="vc-location-icon">
+                        <i class="fa-solid fa-location-dot"></i>
+                    </span>
 
-                    <small>Deliver to</small>
+                    <span class="vc-location-text">
 
-                    <strong id="vcHeaderLocationLabel">Select Location</strong>
+                        <small>Deliver to</small>
 
-                </span>
+                        <strong id="vcHeaderLocationLabel">Select Location</strong>
 
-                <i class="fa-solid fa-chevron-down vc-location-arrow"></i>
+                    </span>
 
-            </button>
+                    <i class="fa-solid fa-chevron-down vc-location-arrow"></i>
+
+                </button>
+
+                <div class="vc-location-dropdown"
+                     id="vcLocationDropdown"
+                     role="listbox"
+                     aria-label="Saved delivery addresses"
+                     hidden>
+
+                    <div class="vc-location-dropdown-head">
+                        <strong>Select delivery location</strong>
+                        <a href="manage-address.php">Manage</a>
+                    </div>
+
+                    <div class="vc-location-dropdown-list" id="vcLocationDropdownList">
+                        <p class="vc-location-dropdown-loading">Loading addresses…</p>
+                    </div>
+
+                    <a class="vc-location-dropdown-add" href="manage-address.php">
+                        <i class="fa-solid fa-plus"></i>
+                        Add new address
+                    </a>
+
+                </div>
+
+            </div>
 
 
 
@@ -538,7 +566,8 @@ $vcSiteFavicon = function_exists('site_favicon_src') ? site_favicon_src() : 'ima
     <button type="button"
             class="vc-mobile-location"
             id="vcMobileLocation"
-            aria-haspopup="dialog"
+            aria-haspopup="listbox"
+            aria-expanded="false"
             aria-label="Choose delivery location">
 
         <i class="fa-solid fa-location-dot"></i>
@@ -555,7 +584,24 @@ $vcSiteFavicon = function_exists('site_favicon_src') ? site_favicon_src() : 'ima
 
         </div>
 
+        <i class="fa-solid fa-chevron-down vc-mobile-location-arrow" aria-hidden="true"></i>
+
     </button>
+
+    <div class="vc-mobile-location-panel"
+         id="vcMobileLocationPanel"
+         hidden>
+
+        <div class="vc-location-dropdown-list" id="vcMobileLocationList">
+            <p class="vc-location-dropdown-loading">Loading addresses…</p>
+        </div>
+
+        <a class="vc-location-dropdown-add" href="manage-address.php">
+            <i class="fa-solid fa-plus"></i>
+            Add new address
+        </a>
+
+    </div>
 
 
 
