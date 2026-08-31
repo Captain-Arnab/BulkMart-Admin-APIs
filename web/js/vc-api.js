@@ -206,8 +206,18 @@
         put: function (path, body) { return request('PUT', path, body); },
         del: function (path, body) { return request('DELETE', path, body); },
 
-        sendOtp: function (mobile) { return request('POST', '/auth/send-otp', { mobile: mobile }); },
-        verifyOtp: function (mobile, otp) { return request('POST', '/auth/verify-otp', { mobile: mobile, otp: otp }); },
+        sendOtp: function (mobile, opts) {
+            opts = opts || {};
+            var body = { mobile: mobile };
+            if (opts.purpose) body.purpose = opts.purpose;
+            return request('POST', '/auth/send-otp', body);
+        },
+        verifyOtp: function (mobile, otp, opts) {
+            opts = opts || {};
+            var body = { mobile: mobile, otp: otp };
+            if (opts.purpose) body.purpose = opts.purpose;
+            return request('POST', '/auth/verify-otp', body);
+        },
         emailLogin: function (email, password) { return request('POST', '/auth/email-login', { email: email, password: password }); },
         logout: function () {
             var refresh = getRefresh();

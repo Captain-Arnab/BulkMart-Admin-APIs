@@ -2219,9 +2219,16 @@
                 toast('Enter a valid mobile number.', 'error');
                 return Promise.resolve(false);
             }
-            return VC.sendOtp(mobile).then(function (res) {
+            return VC.sendOtp(mobile, { purpose: 'register' }).then(function (res) {
                 if (!res || !res.success) {
-                    toast((res && res.error && res.error.message) || 'Could not send OTP.', 'error');
+                    var code = res && res.error && res.error.code;
+                    var msg = (res && res.error && res.error.message) || 'Could not send OTP.';
+                    if (code === 'MOBILE_ALREADY_REGISTERED') {
+                        toast(msg, 'error');
+                        setTimeout(function () { window.location.href = 'login.php'; }, 1800);
+                        return false;
+                    }
+                    toast(msg, 'error');
                     return false;
                 }
                 otpSent = true;
@@ -2243,9 +2250,16 @@
                 toast('Enter the OTP.', 'error');
                 return Promise.resolve(false);
             }
-            return VC.verifyOtp(mobile, otp).then(function (res) {
+            return VC.verifyOtp(mobile, otp, { purpose: 'register' }).then(function (res) {
                 if (!res || !res.success) {
-                    toast((res && res.error && res.error.message) || 'Invalid OTP.', 'error');
+                    var code = res && res.error && res.error.code;
+                    var msg = (res && res.error && res.error.message) || 'Invalid OTP.';
+                    if (code === 'MOBILE_ALREADY_REGISTERED') {
+                        toast(msg, 'error');
+                        setTimeout(function () { window.location.href = 'login.php'; }, 1800);
+                        return false;
+                    }
+                    toast(msg, 'error');
                     return false;
                 }
                 VC.setSession(res.data);

@@ -28,6 +28,19 @@ class AuthApiController extends ApiController
             if (str_contains($mobile, '@') || filter_var($mobile, FILTER_VALIDATE_EMAIL)) {
                 $this->validationError(['mobile' => 'Use the Email & Password tab for email login. Mobile login requires a phone number.']);
             }
+
+            $purpose = strtolower(trim((string) ($body['purpose'] ?? 'login')));
+            if ($purpose === 'register') {
+                $existing = $this->customers->findByMobile(OtpService::normalizeMobile($mobile));
+                if ($existing && Customer::isRegistrationComplete($existing)) {
+                    $this->fail(
+                        'MOBILE_ALREADY_REGISTERED',
+                        'This mobile number is already registered with a business. Please login instead.',
+                        422
+                    );
+                }
+            }
+
             $result = $this->otp->sendLoginOtp($mobile);
             $data = [
                 'mobile'     => OtpService::normalizeMobile($mobile),
@@ -86,7 +99,16 @@ class AuthApiController extends ApiController
                 $this->fail('INVALID_OTP', 'Invalid or expired OTP.', 401);
             }
 
+            $purpose = strtolower(trim((string) ($body['purpose'] ?? 'login')));
             $customer = $this->customers->findByMobile($mobile);
+            if ($purpose === 'register' && $customer && Customer::isRegistrationComplete($customer)) {
+                $this->fail(
+                    'MOBILE_ALREADY_REGISTERED',
+                    'This mobile number is already registered with a business. Please login instead.',
+                    422
+                );
+            }
+
             $isNew = false;
             if (!$customer) {
                 $id = $this->customers->createFromMobile($mobile);

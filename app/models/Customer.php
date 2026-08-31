@@ -282,11 +282,17 @@ class Customer extends Model
             'created_at'           => $row['created_at'] ?? null,
             'updated_at'           => $row['updated_at'] ?? null,
             'is_blocked'           => (int) ($row['is_blocked'] ?? 0) === 1,
-            'registration_complete'=> !in_array(($row['business_type'] ?? ''), ['unregistered', ''], true)
-                && trim((string) ($row['business_name'] ?? '')) !== '',
+            'registration_complete'=> self::isRegistrationComplete($row),
             'can_place_orders'     => (int) ($row['is_blocked'] ?? 0) !== 1
                 && ($row['kyc_status'] ?? '') === 'approved',
         ];
+    }
+
+    /** True when the customer has finished business registration (not an OTP stub). */
+    public static function isRegistrationComplete(array $row): bool
+    {
+        return !in_array(($row['business_type'] ?? ''), ['unregistered', ''], true)
+            && trim((string) ($row['business_name'] ?? '')) !== '';
     }
 
     public function documents(int $customerId): array

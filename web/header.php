@@ -33,7 +33,7 @@ $vcSiteFavicon = function_exists('site_favicon_src') ? site_favicon_src() : 'ima
     <link rel="stylesheet"
           href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.7.2/css/all.min.css">
 
-    <link rel="stylesheet" href="style.css?v=reg-back-1">
+    <link rel="stylesheet" href="style.css?v=reg-mobile-1">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/sweetalert2@11/dist/sweetalert2.min.css">
 
 </head>

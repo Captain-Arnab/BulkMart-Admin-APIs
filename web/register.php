@@ -100,7 +100,7 @@ $vcDocTypes = [
                         <div class="vc-step-heading">
                             <span>Step 01</span>
                             <h2>Verify your mobile number</h2>
-                            <p>We will send a one-time password. No account password is required to register.</p>
+                            <p>We will send a one-time password. Each mobile number can register only one business.</p>
                         </div>
 
                         <div class="vc-field">

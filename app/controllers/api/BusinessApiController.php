@@ -87,6 +87,16 @@ class BusinessApiController extends ApiController
                 $this->validationError($fields);
             }
 
+            $id = $this->customerId();
+            $existing = $this->customers->find($id);
+            if ($existing && Customer::isRegistrationComplete($existing)) {
+                $this->fail(
+                    'ALREADY_REGISTERED',
+                    'This account is already registered. One mobile number can only be used for one business. Please login.',
+                    422
+                );
+            }
+
             // Normalize to label for storage consistency with admin seeds
             $map = [];
             foreach (self::BUSINESS_TYPES as $t) {
@@ -97,7 +107,6 @@ class BusinessApiController extends ApiController
             $manualReview = kyc_manual_review_enabled();
             $kycStatus = $manualReview ? 'pending' : 'approved';
 
-            $id = $this->customerId();
             $this->customers->submitRegistration($id, [
                 'business_name' => $businessName,
                 'owner_name'    => $ownerName,
