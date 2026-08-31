@@ -76,6 +76,7 @@ $router->get('/api/v1/business/verification-status', [BusinessApiController::cla
 $router->get('/api/v1/profile', [ProfileApiController::class, 'show'], $apiAuth);
 $router->put('/api/v1/profile', [ProfileApiController::class, 'update'], $apiAuth);
 $router->post('/api/v1/profile', [ProfileApiController::class, 'update'], $apiAuth); // clients without PUT
+$router->post('/api/v1/profile/change-password', [ProfileApiController::class, 'changePassword'], $apiAuth);
 $router->post('/api/v1/profile/avatar', [ProfileApiController::class, 'uploadAvatar'], $apiAuth);
 $router->delete('/api/v1/profile/avatar', [ProfileApiController::class, 'removeAvatar'], $apiAuth);
 

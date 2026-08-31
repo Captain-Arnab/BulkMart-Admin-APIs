@@ -74,12 +74,49 @@ class Customer extends Model
 
     public function findByMobile(string $mobile): ?array
     {
-        return $this->fetchOne('SELECT * FROM customers WHERE mobile = ?', [$mobile]);
+        try {
+            $mobile = OtpService::normalizeMobile($mobile);
+        } catch (InvalidArgumentException $e) {
+            $mobile = preg_replace('/\D+/', '', $mobile) ?? $mobile;
+        }
+        return $this->fetchOne('SELECT * FROM customers WHERE mobile = ? LIMIT 1', [$mobile]);
     }
 
     public function findByEmail(string $email): ?array
     {
-        return $this->fetchOne('SELECT * FROM customers WHERE email = ?', [$email]);
+        $email = strtolower(trim($email));
+        if ($email === '') {
+            return null;
+        }
+        return $this->fetchOne(
+            'SELECT * FROM customers WHERE email IS NOT NULL AND LOWER(TRIM(email)) = ? LIMIT 1',
+            [$email]
+        );
+    }
+
+    public function setPassword(int $id, string $password): bool
+    {
+        return $this->execute(
+            'UPDATE customers SET password_hash = ? WHERE id = ?',
+            [password_hash($password, PASSWORD_DEFAULT), $id]
+        );
+    }
+
+    public function emailTaken(string $email, ?int $exceptId = null): bool
+    {
+        $email = strtolower(trim($email));
+        if ($exceptId !== null) {
+            $row = $this->fetchOne(
+                'SELECT id FROM customers WHERE LOWER(TRIM(email)) = ? AND id != ? LIMIT 1',
+                [$email, $exceptId]
+            );
+        } else {
+            $row = $this->fetchOne(
+                'SELECT id FROM customers WHERE LOWER(TRIM(email)) = ? LIMIT 1',
+                [$email]
+            );
+        }
+        return $row !== null;
     }
 
     /** Create a stub customer after first OTP verify (registration completes later). */
@@ -139,16 +176,6 @@ class Customer extends Model
             $row = $this->fetchOne('SELECT id FROM customers WHERE mobile = ? AND id != ? LIMIT 1', [$mobile, $exceptId]);
         } else {
             $row = $this->fetchOne('SELECT id FROM customers WHERE mobile = ? LIMIT 1', [$mobile]);
-        }
-        return $row !== null;
-    }
-
-    public function emailTaken(string $email, ?int $exceptId = null): bool
-    {
-        if ($exceptId !== null) {
-            $row = $this->fetchOne('SELECT id FROM customers WHERE email = ? AND id != ? LIMIT 1', [$email, $exceptId]);
-        } else {
-            $row = $this->fetchOne('SELECT id FROM customers WHERE email = ? LIMIT 1', [$email]);
         }
         return $row !== null;
     }

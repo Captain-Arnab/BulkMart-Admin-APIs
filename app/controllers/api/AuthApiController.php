@@ -17,9 +17,16 @@ class AuthApiController extends ApiController
     {
         try {
             $body = $this->input();
+            // Strict: OTP login accepts mobile only — never email/password.
+            if (isset($body['password']) && trim((string) $body['password']) !== '') {
+                $this->fail('INVALID_LOGIN_METHOD', 'Mobile login uses OTP only. Do not send a password.', 422);
+            }
             $mobile = trim((string) ($body['mobile'] ?? ''));
             if ($mobile === '') {
                 $this->validationError(['mobile' => 'Mobile number is required.']);
+            }
+            if (str_contains($mobile, '@') || filter_var($mobile, FILTER_VALIDATE_EMAIL)) {
+                $this->validationError(['mobile' => 'Use the Email & Password tab for email login. Mobile login requires a phone number.']);
             }
             $result = $this->otp->sendLoginOtp($mobile);
             $data = [
@@ -56,11 +63,16 @@ class AuthApiController extends ApiController
     {
         try {
             $body = $this->input();
+            if (isset($body['password']) && trim((string) $body['password']) !== '') {
+                $this->fail('INVALID_LOGIN_METHOD', 'Mobile login uses OTP only. Do not send a password.', 422);
+            }
             $mobile = trim((string) ($body['mobile'] ?? ''));
             $otp = trim((string) ($body['otp'] ?? ''));
             $fields = [];
             if ($mobile === '') {
                 $fields['mobile'] = 'Mobile number is required.';
+            } elseif (str_contains($mobile, '@') || filter_var($mobile, FILTER_VALIDATE_EMAIL)) {
+                $fields['mobile'] = 'Use the Email & Password tab for email login.';
             }
             if ($otp === '' || !preg_match('/^\d{4,8}$/', $otp)) {
                 $fields['otp'] = 'Enter a valid OTP.';
@@ -96,16 +108,39 @@ class AuthApiController extends ApiController
         }
     }
 
-    /** Email + password login (optional for customers who set a password). */
+    /** Email + password login only — never mobile, never OTP. */
     public function emailLogin(): never
     {
         try {
             $body = $this->input();
-            $email = trim((string) ($body['email'] ?? ''));
+            // Reject any attempt to use this endpoint as mobile+password login.
+            if (isset($body['mobile']) && trim((string) $body['mobile']) !== '') {
+                $this->fail(
+                    'INVALID_LOGIN_METHOD',
+                    'Mobile number + password is not supported. Use Mobile & OTP, or Email & Password.',
+                    422
+                );
+            }
+            if (isset($body['otp']) && trim((string) $body['otp']) !== '') {
+                $this->fail('INVALID_LOGIN_METHOD', 'Email login uses password only — OTP is not accepted here.', 422);
+            }
+
+            $email = strtolower(trim((string) ($body['email'] ?? $body['username'] ?? $body['identifier'] ?? '')));
             $password = (string) ($body['password'] ?? '');
             $fields = [];
+
+            // Block mobile-as-identifier on the email endpoint (the old generic form path).
+            $digits = preg_replace('/\D+/', '', $email) ?? '';
+            if ($email !== '' && !str_contains($email, '@') && preg_match('/^[6-9]\d{9}$/', $digits)) {
+                $this->fail(
+                    'INVALID_LOGIN_METHOD',
+                    'Mobile number + password is not supported. Switch to the Mobile & OTP tab.',
+                    422
+                );
+            }
+
             if ($email === '' || !filter_var($email, FILTER_VALIDATE_EMAIL)) {
-                $fields['email'] = 'Valid email is required.';
+                $fields['email'] = 'Enter a valid email address.';
             }
             if ($password === '') {
                 $fields['password'] = 'Password is required.';
@@ -115,7 +150,17 @@ class AuthApiController extends ApiController
             }
 
             $customer = $this->customers->findByEmail($email);
-            if (!$customer || empty($customer['password_hash']) || !password_verify($password, $customer['password_hash'])) {
+            if (!$customer) {
+                $this->fail('INVALID_CREDENTIALS', 'Invalid email or password.', 401);
+            }
+            if (empty($customer['password_hash'])) {
+                $this->fail(
+                    'PASSWORD_NOT_SET',
+                    'No password set for this account — log in with Mobile + OTP, or set a password from your Profile.',
+                    401
+                );
+            }
+            if (!password_verify($password, (string) $customer['password_hash'])) {
                 $this->fail('INVALID_CREDENTIALS', 'Invalid email or password.', 401);
             }
             if ((int) ($customer['is_blocked'] ?? 0) === 1) {

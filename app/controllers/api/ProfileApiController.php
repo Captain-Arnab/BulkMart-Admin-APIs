@@ -31,11 +31,58 @@ class ProfileApiController extends ApiController
             if (isset($allowed['email']) && $allowed['email'] === '') {
                 $allowed['email'] = null;
             }
+            if (isset($allowed['email']) && $allowed['email'] !== null) {
+                $allowed['email'] = strtolower((string) $allowed['email']);
+                if ($this->customers->emailTaken($allowed['email'], $this->customerId())) {
+                    $this->validationError(['email' => 'This email is already linked to another account.']);
+                }
+            }
 
             $id = $this->customerId();
             $this->customers->updateProfile($id, $allowed);
+
+            $password = (string) ($body['password'] ?? '');
+            if ($password !== '') {
+                if (strlen($password) < 6) {
+                    $this->validationError(['password' => 'Password must be at least 6 characters.']);
+                }
+                $this->customers->setPassword($id, $password);
+            }
+
             $fresh = $this->customers->find($id);
             $this->ok($this->customers->publicProfile($fresh ?? []));
+        } catch (Throwable $e) {
+            $this->handleException($e);
+        }
+    }
+
+    public function changePassword(): never
+    {
+        try {
+            $body = $this->input();
+            $current = (string) ($body['current_password'] ?? '');
+            $password = (string) ($body['password'] ?? $body['new_password'] ?? '');
+            $confirm = (string) ($body['password_confirmation'] ?? $body['confirm_password'] ?? $password);
+            $fields = [];
+            if ($password === '' || strlen($password) < 6) {
+                $fields['password'] = 'New password must be at least 6 characters.';
+            }
+            if ($password !== $confirm) {
+                $fields['password_confirmation'] = 'Password confirmation does not match.';
+            }
+            if ($fields !== []) {
+                $this->validationError($fields);
+            }
+
+            $customer = $this->requireCustomer();
+            if (!empty($customer['password_hash'])) {
+                if ($current === '' || !password_verify($current, (string) $customer['password_hash'])) {
+                    $this->validationError(['current_password' => 'Current password is incorrect.']);
+                }
+            }
+
+            $this->customers->setPassword((int) $customer['id'], $password);
+            $this->ok(['message' => 'Password updated successfully.']);
         } catch (Throwable $e) {
             $this->handleException($e);
         }

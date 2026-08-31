@@ -1,4 +1,16 @@
-<?php include('header.php'); ?>
+<?php
+// New customers start on the OTP + 5-step flow at register.php.
+// This page remains for authenticated users completing / updating business KYC.
+include('header.php');
+?>
+
+<script>
+document.addEventListener('DOMContentLoaded', function () {
+    if (window.VC && typeof VC.isLoggedIn === 'function' && !VC.isLoggedIn()) {
+        window.location.replace('register.php');
+    }
+});
+</script>
 
 <!-- =========================================
      VEGIICART BUSINESS REGISTRATION

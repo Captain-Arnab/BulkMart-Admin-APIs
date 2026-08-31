@@ -532,7 +532,7 @@
 <script src="https://cdn.jsdelivr.net/npm/swiper@11/swiper-bundle.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 <script>window.VC_LIVE = true;</script>
-<script src="js/vc-api.js?v=invoice-1"></script>
-<script src="js/vc-swal.js?v=invoice-1"></script>
-<script src="js/vc-app.js?v=invoice-1"></script>
-<script src="common.js?v=invoice-1"></script>
+<script src="js/vc-api.js?v=login-eye-1"></script>
+<script src="js/vc-swal.js?v=login-eye-1"></script>
+<script src="js/vc-app.js?v=login-eye-1"></script>
+<script src="common.js?v=login-eye-1"></script>

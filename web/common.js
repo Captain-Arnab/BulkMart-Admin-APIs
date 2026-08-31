@@ -1178,6 +1178,12 @@ document.addEventListener("DOMContentLoaded", function () {
 
 document.addEventListener("DOMContentLoaded", function () {
 
+    // Live site: vc-app.js owns the login password eye toggle.
+    // Binding here too would double-toggle (show then immediately hide).
+    if (window.VC_LIVE) {
+        return;
+    }
+
     const passwordInput =
         document.getElementById("vcLoginPassword");
 
@@ -1186,6 +1192,10 @@ document.addEventListener("DOMContentLoaded", function () {
 
 
     if (!passwordInput || !passwordToggle) {
+        return;
+    }
+
+    if (passwordToggle.getAttribute("data-vc-bound") === "1") {
         return;
     }
 

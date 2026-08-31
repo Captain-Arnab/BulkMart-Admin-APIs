@@ -3,12 +3,17 @@
 class BusinessApiController extends ApiController
 {
     public const BUSINESS_TYPES = [
-        ['key' => 'retailer', 'label' => 'Retailer'],
-        ['key' => 'kirana', 'label' => 'Kirana'],
+        ['key' => 'retailer', 'label' => 'Retail Shop'],
+        ['key' => 'kirana', 'label' => 'Kirana Store'],
+        ['key' => 'supermarket', 'label' => 'Supermarket'],
         ['key' => 'hotel', 'label' => 'Hotel'],
         ['key' => 'restaurant', 'label' => 'Restaurant'],
-        ['key' => 'wholesaler', 'label' => 'Wholesaler'],
-        ['key' => 'caterer', 'label' => 'Caterer'],
+        ['key' => 'caterer', 'label' => 'Catering Service'],
+        ['key' => 'hostel', 'label' => 'Hostel'],
+        ['key' => 'hospital', 'label' => 'Hospital'],
+        ['key' => 'corporate_pantry', 'label' => 'Corporate Pantry'],
+        ['key' => 'juice_shop', 'label' => 'Juice Shop'],
+        ['key' => 'wholesaler', 'label' => 'Vendor/Reseller'],
         ['key' => 'other', 'label' => 'Other'],
     ];
 
@@ -16,7 +21,7 @@ class BusinessApiController extends ApiController
     private const BUSINESS_TYPE_ALIASES = [
         'retail shop'        => 'retailer',
         'retailer'           => 'retailer',
-        'supermarket'        => 'retailer',
+        'supermarket'        => 'supermarket',
         'kirana store'       => 'kirana',
         'kirana'             => 'kirana',
         'hotel'              => 'hotel',
@@ -25,10 +30,10 @@ class BusinessApiController extends ApiController
         'caterer'            => 'caterer',
         'vendor/reseller'    => 'wholesaler',
         'wholesaler'         => 'wholesaler',
-        'hostel'             => 'other',
-        'hospital'           => 'other',
-        'corporate pantry'   => 'other',
-        'juice shop'         => 'other',
+        'hostel'             => 'hostel',
+        'hospital'           => 'hospital',
+        'corporate pantry'   => 'corporate_pantry',
+        'juice shop'         => 'juice_shop',
         'other'              => 'other',
     ];
 
@@ -90,6 +95,14 @@ class BusinessApiController extends ApiController
                 'email'         => trim((string) ($body['email'] ?? '')) ?: null,
             ], $kycStatus);
 
+            // Optional address payload (Flutter / website parity)
+            $addressPayload = $this->extractAddressPayload($body);
+            $savedAddress = null;
+            if ($addressPayload !== null) {
+                $addressId = (new Address())->create($id, $addressPayload);
+                $savedAddress = (new Address())->findForCustomer($addressId, $id);
+            }
+
             if ($manualReview) {
                 NotificationService::notifyCustomer(
                     $id,
@@ -114,10 +127,78 @@ class BusinessApiController extends ApiController
                     ? 'Registration submitted. KYC is pending review.'
                     : 'Registration submitted and approved.',
                 'customer' => $this->customers->publicProfile($fresh ?? []),
+                'address'  => $savedAddress ? [
+                    'id'         => (int) ($savedAddress['id'] ?? 0),
+                    'label'      => $savedAddress['label'] ?? null,
+                    'line1'      => $savedAddress['line1'] ?? null,
+                    'line2'      => $savedAddress['line2'] ?? null,
+                    'city'       => $savedAddress['city'] ?? null,
+                    'state'      => $savedAddress['state'] ?? null,
+                    'pincode'    => $savedAddress['pincode'] ?? null,
+                    'landmark'   => $savedAddress['landmark'] ?? null,
+                    'is_default' => (int) ($savedAddress['is_default'] ?? 0) === 1,
+                ] : null,
+                'kyc_status' => $kycStatus,
             ]);
         } catch (Throwable $e) {
             $this->handleException($e);
         }
+    }
+
+    /**
+     * Accept nested address object or flat shop_address / delivery_address fields.
+     * @param array<string,mixed> $body
+     * @return array<string,mixed>|null
+     */
+    private function extractAddressPayload(array $body): ?array
+    {
+        $nested = $body['shop_address'] ?? $body['address'] ?? null;
+        if (is_array($nested)) {
+            $line1 = trim((string) ($nested['line1'] ?? $nested['address'] ?? ''));
+            $city = trim((string) ($nested['city'] ?? ''));
+            $state = trim((string) ($nested['state'] ?? ''));
+            $pincode = trim((string) ($nested['pincode'] ?? ''));
+            if ($line1 === '' || $city === '' || $state === '' || $pincode === '') {
+                return null;
+            }
+            return [
+                'label'      => trim((string) ($nested['label'] ?? 'Shop')) ?: 'Shop',
+                'line1'      => $line1,
+                'line2'      => trim((string) ($nested['line2'] ?? '')) ?: null,
+                'city'       => $city,
+                'state'      => $state,
+                'pincode'    => $pincode,
+                'landmark'   => trim((string) ($nested['landmark'] ?? '')) ?: null,
+                'geo_lat'    => isset($nested['geo_lat']) && $nested['geo_lat'] !== '' ? (float) $nested['geo_lat'] : null,
+                'geo_lng'    => isset($nested['geo_lng']) && $nested['geo_lng'] !== '' ? (float) $nested['geo_lng'] : null,
+                'is_default' => true,
+            ];
+        }
+
+        $line1 = trim((string) ($body['shop_address'] ?? $body['line1'] ?? ''));
+        if ($line1 === '' || is_array($body['shop_address'] ?? null)) {
+            $line1 = trim((string) ($body['delivery_address'] ?? ''));
+        }
+        $city = trim((string) ($body['city'] ?? ''));
+        $state = trim((string) ($body['state'] ?? ''));
+        $pincode = trim((string) ($body['pincode'] ?? ''));
+        if ($line1 === '' || $city === '' || $state === '' || $pincode === '') {
+            return null;
+        }
+        return [
+            'label'      => 'Shop',
+            'line1'      => $line1,
+            'line2'      => trim((string) ($body['delivery_address'] ?? '')) !== $line1
+                ? (trim((string) ($body['delivery_address'] ?? '')) ?: null)
+                : null,
+            'city'       => $city,
+            'state'      => $state,
+            'pincode'    => $pincode,
+            'landmark'   => trim((string) ($body['landmark'] ?? '')) ?: null,
+            'geo_lat'    => isset($body['geo_lat']) && $body['geo_lat'] !== '' ? (float) $body['geo_lat'] : null,
+            'geo_lng'    => isset($body['geo_lng']) && $body['geo_lng'] !== '' ? (float) $body['geo_lng'] : null,
+            'is_default' => true,
+        ];
     }
 
     public function uploadDocument(): never

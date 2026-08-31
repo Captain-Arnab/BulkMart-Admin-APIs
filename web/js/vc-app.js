@@ -1891,7 +1891,7 @@
     }
 
     function bootLogin() {
-        var form = document.querySelector('.vc-login-form');
+        var form = document.getElementById('vcLoginForm') || document.querySelector('.vc-login-form');
         if (!form) {
             return;
         }
@@ -1899,122 +1899,587 @@
             window.location.href = 'account-dashboard.php';
             return;
         }
-        var otpWrap = document.createElement('div');
-        otpWrap.className = 'vc-login-field';
-        otpWrap.style.display = 'none';
-        otpWrap.innerHTML =
-            '<label for="vcLoginOtp">OTP <span>*</span></label>' +
-            '<div class="vc-login-input"><i class="fa-solid fa-key"></i>' +
-            '<input type="text" id="vcLoginOtp" inputmode="numeric" maxlength="8" placeholder="Enter OTP"></div>' +
-            '<small id="vcOtpHint"></small>';
-        var passField = form.querySelector('.vc-login-password-wrap');
-        if (passField && passField.closest('.vc-login-field')) {
-            passField.closest('.vc-login-field').after(otpWrap);
-        } else {
-            form.appendChild(otpWrap);
+
+        var modeInput = document.getElementById('vcLoginMode');
+        var emailField = document.getElementById('vcLoginEmailField');
+        var mobileField = document.getElementById('vcLoginMobileField');
+        var passwordField = document.getElementById('vcLoginPasswordField');
+        var otpField = document.getElementById('vcLoginOtpField');
+        var emailOptions = document.getElementById('vcLoginEmailOptions');
+        var intro = document.getElementById('vcLoginIntro');
+        var submitText = document.getElementById('vcLoginSubmitText');
+        var resendBtn = document.getElementById('vcLoginResendOtp');
+        var otpHint = document.getElementById('vcOtpHint');
+        var emailInput = document.getElementById('vcLoginEmail');
+        var mobileInput = document.getElementById('vcLoginMobile');
+        var passwordInput = document.getElementById('vcLoginPassword');
+        var otpInput = document.getElementById('vcLoginOtp');
+        var otpSent = false;
+
+        function currentMode() {
+            return (modeInput && modeInput.value === 'mobile') ? 'mobile' : 'email';
+        }
+
+        function setDisabled(el, disabled) {
+            if (!el) return;
+            el.disabled = !!disabled;
+            if (disabled) {
+                el.removeAttribute('required');
+            }
+        }
+
+        function setMode(mode) {
+            mode = mode === 'mobile' ? 'mobile' : 'email';
+            if (modeInput) {
+                modeInput.value = mode;
+            }
+            document.querySelectorAll('[data-login-mode]').forEach(function (btn) {
+                var active = btn.getAttribute('data-login-mode') === mode;
+                btn.classList.toggle('is-active', active);
+                btn.setAttribute('aria-selected', active ? 'true' : 'false');
+            });
+
+            if (emailField) emailField.hidden = mode !== 'email';
+            if (mobileField) mobileField.hidden = mode !== 'mobile';
+            if (passwordField) passwordField.hidden = mode !== 'email';
+            if (emailOptions) emailOptions.hidden = mode !== 'email';
+
+            // Strict field isolation: inactive mode inputs are disabled so they
+            // cannot be autofilled/submitted, and cannot create mobile+password paths.
+            setDisabled(emailInput, mode !== 'email');
+            setDisabled(passwordInput, mode !== 'email');
+            setDisabled(mobileInput, mode !== 'mobile');
+            setDisabled(otpInput, mode !== 'mobile');
+
+            if (mode === 'email') {
+                otpSent = false;
+                if (otpField) otpField.hidden = true;
+                if (resendBtn) resendBtn.hidden = true;
+                if (otpHint) otpHint.textContent = '';
+                if (otpInput) otpInput.value = '';
+                if (mobileInput) mobileInput.value = '';
+            } else {
+                if (passwordInput) passwordInput.value = '';
+                if (emailInput) emailInput.value = '';
+                if (otpField) otpField.hidden = !otpSent;
+                if (resendBtn) resendBtn.hidden = !otpSent;
+                setDisabled(otpInput, !otpSent);
+            }
+
+            if (intro) {
+                intro.textContent = mode === 'mobile'
+                    ? 'Enter your registered mobile number. We will send an OTP — no password needed.'
+                    : 'Enter your registered email and password to continue. No OTP needed.';
+            }
+            if (submitText) {
+                if (mode === 'mobile') {
+                    submitText.textContent = otpSent ? 'Verify OTP & Login' : 'Send OTP';
+                } else {
+                    submitText.textContent = 'Login to My Account';
+                }
+            }
+        }
+
+        document.querySelectorAll('[data-login-mode]').forEach(function (btn) {
+            btn.addEventListener('click', function () {
+                otpSent = false;
+                setMode(btn.getAttribute('data-login-mode'));
+            });
+        });
+        setMode(currentMode());
+
+        function sendMobileOtp() {
+            var mobile = (mobileInput && mobileInput.value || '').trim();
+            if (!mobile) {
+                toast('Enter your mobile number.', 'error');
+                return Promise.resolve(false);
+            }
+            if (mobile.indexOf('@') !== -1) {
+                toast('Use the Email & Password tab for email login.', 'error');
+                return Promise.resolve(false);
+            }
+            return VC.sendOtp(mobile).then(function (res) {
+                if (!res || !res.success) {
+                    toast(apiErrorMessage(res, 'Could not send OTP.'), 'error');
+                    return false;
+                }
+                otpSent = true;
+                setMode('mobile');
+                if (otpField) otpField.hidden = false;
+                if (resendBtn) resendBtn.hidden = false;
+                setDisabled(otpInput, false);
+                var msg = 'OTP sent to your mobile.';
+                if (res.data && res.data.dev_otp) {
+                    msg += ' DEV OTP: ' + res.data.dev_otp;
+                }
+                if (otpHint) otpHint.textContent = msg;
+                toast(msg);
+                if (otpInput) otpInput.focus();
+                return true;
+            });
+        }
+
+        if (resendBtn) {
+            resendBtn.addEventListener('click', function () {
+                sendMobileOtp();
+            });
+        }
+
+        var toggle = document.getElementById('vcPasswordToggle');
+        if (toggle && !toggle.getAttribute('data-vc-bound')) {
+            toggle.setAttribute('data-vc-bound', '1');
+            toggle.addEventListener('click', function (e) {
+                e.preventDefault();
+                e.stopPropagation();
+                if (!passwordInput || passwordInput.disabled) {
+                    return;
+                }
+                var show = passwordInput.type === 'password';
+                passwordInput.type = show ? 'text' : 'password';
+                var icon = toggle.querySelector('i');
+                if (icon) {
+                    icon.classList.toggle('fa-eye', !show);
+                    icon.classList.toggle('fa-eye-slash', show);
+                } else {
+                    toggle.innerHTML = show
+                        ? '<i class="fa-regular fa-eye-slash"></i>'
+                        : '<i class="fa-regular fa-eye"></i>';
+                }
+                toggle.setAttribute('aria-label', show ? 'Hide password' : 'Show password');
+            });
         }
 
         form.addEventListener('submit', function (e) {
             e.preventDefault();
-            var user = (document.getElementById('vcLoginUser') || {}).value || '';
-            user = user.trim();
-            var pass = (document.getElementById('vcLoginPassword') || {}).value || '';
-            var otp = (document.getElementById('vcLoginOtp') || {}).value || '';
             var next = qs('next') || 'account-dashboard.php';
-            var isMobile = /^[0-9+\-\s]{8,15}$/.test(user) && user.indexOf('@') === -1;
+            var mode = currentMode();
 
-            if (isMobile) {
-                if (!otp) {
-                    VC.sendOtp(user).then(function (res) {
-                        if (!res || !res.success) {
-                            toast((res && res.error && res.error.message) || 'Could not send OTP.', 'error');
-                            return;
-                        }
-                        otpWrap.style.display = '';
-                        var hint = document.getElementById('vcOtpHint');
-                        var msg = 'OTP sent to your mobile.';
-                        if (res.data && res.data.dev_otp) {
-                            msg += ' DEV OTP: ' + res.data.dev_otp;
-                        }
-                        if (hint) hint.textContent = msg;
-                        toast(msg);
-                    });
+            // Mobile mode → OTP endpoints ONLY (never password / email-login)
+            if (mode === 'mobile') {
+                var mobile = (mobileInput && mobileInput.value || '').trim();
+                var otp = (otpInput && otpInput.value || '').trim();
+                if (!mobile) {
+                    toast('Enter your mobile number.', 'error');
                     return;
                 }
-                VC.verifyOtp(user, otp).then(function (res) {
+                if (mobile.indexOf('@') !== -1) {
+                    toast('Use the Email & Password tab for email login.', 'error');
+                    return;
+                }
+                if (!otpSent || !otp) {
+                    sendMobileOtp();
+                    return;
+                }
+                VC.verifyOtp(mobile, otp).then(function (res) {
                     if (res && res.success) {
                         applyAuthSuccess(res.data, next);
                     } else {
-                        toast((res && res.error && res.error.message) || 'Invalid OTP.', 'error');
+                        toast(apiErrorMessage(res, 'Invalid OTP.'), 'error');
                     }
                 });
                 return;
             }
 
-            VC.emailLogin(user, pass).then(function (res) {
+            // Email mode → /auth/email-login ONLY (never OTP / mobile)
+            var email = (emailInput && emailInput.value || '').trim();
+            var pass = (passwordInput && passwordInput.value || '');
+            if (!email) {
+                toast('Enter your email address.', 'error');
+                return;
+            }
+            if (email.indexOf('@') === -1) {
+                toast('Enter a valid email address. For phone login, use the Mobile & OTP tab.', 'error');
+                return;
+            }
+            if (!pass) {
+                toast('Enter your password.', 'error');
+                return;
+            }
+            VC.emailLogin(email, pass).then(function (res) {
                 if (res && res.success) {
                     applyAuthSuccess(res.data, next);
-                } else {
-                    toast((res && res.error && res.error.message) || 'Invalid email or password. Mobile numbers use OTP login.', 'error');
+                    return;
                 }
+                var code = res && res.error && res.error.code;
+                var msg = apiErrorMessage(res, 'Invalid email or password.');
+                if (code === 'PASSWORD_NOT_SET') {
+                    toast(msg, 'error');
+                    return;
+                }
+                if (code === 'INVALID_LOGIN_METHOD') {
+                    toast(msg, 'error');
+                    return;
+                }
+                toast(msg, 'error');
             });
         });
     }
 
     function bootRegister() {
-        var form = document.querySelector('.vc-signup-form');
+        var form = document.getElementById('vcSignupRegistrationForm');
         if (!form) {
+            // Legacy simplified signup form fallback removed — redirect if old markup appears
+            var legacy = document.querySelector('.vc-signup-form');
+            if (legacy && !document.getElementById('vcSignupRegistrationForm')) {
+                return;
+            }
             return;
         }
-        var otpField = document.createElement('div');
-        otpField.className = 'vc-signup-field';
-        otpField.style.display = 'none';
-        otpField.innerHTML =
-            '<label for="vcSignupOtp">OTP sent to your mobile <span>*</span></label>' +
-            '<div class="vc-signup-input"><i class="fa-solid fa-key"></i>' +
-            '<input type="text" id="vcSignupOtp" inputmode="numeric" maxlength="8" placeholder="Enter OTP"></div>' +
-            '<small id="vcSignupOtpHint"></small>';
-        form.appendChild(otpField);
+
+        var step = 1;
+        var total = 5;
+        var otpSent = false;
+        var otpVerified = VC.isLoggedIn();
+        var pinOk = false;
+
+        var nextBtn = document.getElementById('vcSignupNext');
+        var prevBtn = document.getElementById('vcSignupPrev');
+        var nextText = document.getElementById('vcSignupNextText');
+        var stepText = document.getElementById('vcSignupStepText');
+        var pctText = document.getElementById('vcSignupProgressPct');
+        var bar = document.getElementById('vcSignupProgressBar');
+        var otpWrap = document.getElementById('vcSignupOtpWrap');
+        var otpHint = document.getElementById('vcSignupOtpHint');
+        var resendBtn = document.getElementById('vcSignupResendOtp');
+        var sameAddr = document.getElementById('vcSignupSameAddress');
+        var deliveryWrap = document.getElementById('vcSignupDeliveryWrap');
+        var pinHint = document.getElementById('vcSignupPinHint');
+
+        var docNameMap = {
+            gst_certificate: 'gst_certificate',
+            fssai_document: 'fssai_license',
+            shop_registration: 'shop_establishment',
+            msme_certificate: 'msme_certificate',
+            trade_licence: 'trade_license',
+            pan_card: 'pan_card',
+            aadhaar_card: 'aadhaar_card',
+            shop_photo: 'business_photo',
+            business_card: 'owner_photo'
+        };
+
+        function val(id) {
+            return String((document.getElementById(id) || {}).value || '').trim();
+        }
+
+        function setHint(el, msg, ok) {
+            if (!el) return;
+            el.textContent = msg || '';
+            el.style.color = ok ? '#1a7f37' : (msg ? '#b42318' : '');
+        }
+
+        function showStep(n) {
+            step = n;
+            form.querySelectorAll('[data-signup-step]').forEach(function (el) {
+                el.classList.toggle('active', Number(el.getAttribute('data-signup-step')) === step);
+            });
+            document.querySelectorAll('#vcSignupStepBar .vc-signup-step').forEach(function (btn) {
+                var s = Number(btn.getAttribute('data-goto-step'));
+                btn.classList.toggle('is-active', s === step);
+                btn.classList.toggle('is-done', s < step);
+            });
+            var pct = Math.round((step / total) * 100);
+            if (stepText) stepText.textContent = String(step);
+            if (pctText) pctText.textContent = pct + '%';
+            if (bar) bar.style.width = pct + '%';
+            if (prevBtn) prevBtn.hidden = step === 1;
+            if (nextText) {
+                if (step === 1) nextText.textContent = otpVerified ? 'Continue' : (otpSent ? 'Verify OTP' : 'Send OTP');
+                else if (step === 5) nextText.textContent = 'Submit Application';
+                else nextText.textContent = 'Continue';
+            }
+            if (step === 5) buildReview();
+            window.scrollTo({ top: Math.max(0, form.getBoundingClientRect().top + window.scrollY - 80), behavior: 'smooth' });
+        }
+
+        function buildReview() {
+            setText('vcReviewMobile', val('vcSignupPhone') || ((VC.getCustomer() || {}).mobile || '—'));
+            var type = (form.querySelector('input[name="business_type"]:checked') || {}).value || '—';
+            setText('vcReviewType', type);
+            setText('vcReviewBusiness', val('vcSignupBusinessName') || '—');
+            setText('vcReviewOwner', val('vcSignupOwnerName') || '—');
+            setText('vcReviewEmail', val('vcSignupEmail') || '—');
+            var shop = val('vcSignupShopAddress');
+            var delivery = (sameAddr && sameAddr.checked) ? shop : val('vcSignupDeliveryAddress');
+            var addr = [shop, delivery !== shop ? ('Delivery: ' + delivery) : '', val('vcSignupLandmark'), val('vcSignupCity'), val('vcSignupState'), val('vcSignupPincode')]
+                .filter(Boolean).join(', ');
+            setText('vcReviewAddress', addr || '—');
+            var docs = [];
+            form.querySelectorAll('.vc-upload-card input[type="file"]').forEach(function (input) {
+                if (input.files && input.files[0]) {
+                    docs.push((input.closest('.vc-upload-card').querySelector('strong') || {}).textContent || input.name);
+                }
+            });
+            setText('vcReviewDocs', docs.length ? docs.join(', ') : 'None selected (optional)');
+        }
+
+        function sendOtp() {
+            var mobile = val('vcSignupPhone');
+            if (!/^\d{10}$/.test(mobile.replace(/\D/g, '')) && !/^[0-9+\-\s]{8,15}$/.test(mobile)) {
+                toast('Enter a valid mobile number.', 'error');
+                return Promise.resolve(false);
+            }
+            return VC.sendOtp(mobile).then(function (res) {
+                if (!res || !res.success) {
+                    toast((res && res.error && res.error.message) || 'Could not send OTP.', 'error');
+                    return false;
+                }
+                otpSent = true;
+                if (otpWrap) otpWrap.hidden = false;
+                if (resendBtn) resendBtn.hidden = false;
+                var msg = 'OTP sent to your mobile.';
+                if (res.data && res.data.dev_otp) msg += ' DEV OTP: ' + res.data.dev_otp;
+                if (otpHint) otpHint.textContent = msg;
+                toast(msg);
+                showStep(1);
+                return true;
+            });
+        }
+
+        function verifyOtp() {
+            var mobile = val('vcSignupPhone');
+            var otp = val('vcSignupOtp');
+            if (!otp) {
+                toast('Enter the OTP.', 'error');
+                return Promise.resolve(false);
+            }
+            return VC.verifyOtp(mobile, otp).then(function (res) {
+                if (!res || !res.success) {
+                    toast((res && res.error && res.error.message) || 'Invalid OTP.', 'error');
+                    return false;
+                }
+                VC.setSession(res.data);
+                otpVerified = true;
+                toast('Mobile verified');
+                showStep(2);
+                return true;
+            });
+        }
+
+        function validateStep(n) {
+            if (n === 1) {
+                if (otpVerified) return true;
+                if (!otpSent) {
+                    sendOtp();
+                    return false;
+                }
+                verifyOtp();
+                return false;
+            }
+            if (n === 2) {
+                if (!otpVerified && !VC.isLoggedIn()) {
+                    toast('Please verify your mobile first.', 'error');
+                    showStep(1);
+                    return false;
+                }
+                var type = form.querySelector('input[name="business_type"]:checked');
+                var err = document.getElementById('vcSignupBizTypeError');
+                if (!type) {
+                    if (err) err.hidden = false;
+                    toast('Select a business type.', 'error');
+                    return false;
+                }
+                if (err) err.hidden = true;
+                if (!val('vcSignupBusinessName') || !val('vcSignupOwnerName')) {
+                    toast('Business name and owner name are required.', 'error');
+                    return false;
+                }
+                return true;
+            }
+            if (n === 3) {
+                if (!val('vcSignupShopAddress') || !val('vcSignupCity') || !val('vcSignupState') || !val('vcSignupPincode')) {
+                    toast('Please complete the required address fields.', 'error');
+                    return false;
+                }
+                if (!(sameAddr && sameAddr.checked) && !val('vcSignupDeliveryAddress')) {
+                    toast('Enter delivery address or choose Same as shop address.', 'error');
+                    return false;
+                }
+                if (!/^\d{6}$/.test(val('vcSignupPincode'))) {
+                    toast('Enter a valid 6-digit pincode.', 'error');
+                    return false;
+                }
+                if (!pinOk) {
+                    return VC.checkPincode(val('vcSignupPincode')).then(function (res) {
+                        if (res && res.success && res.data && res.data.serviceable) {
+                            pinOk = true;
+                            if (res.data.city) document.getElementById('vcSignupCity').value = res.data.city;
+                            if (res.data.state) document.getElementById('vcSignupState').value = res.data.state;
+                            setHint(pinHint, '✓ We deliver here', true);
+                            showStep(4);
+                            return false;
+                        }
+                        setHint(pinHint, '✗ Not serviceable in this area yet', false);
+                        toast("We currently deliver only within Hyderabad — this pincode isn't serviceable yet", 'error');
+                        return false;
+                    });
+                }
+                return true;
+            }
+            if (n === 5) {
+                var terms = document.getElementById('vcSignupTerms');
+                if (!terms || !terms.checked) {
+                    toast('Please accept Terms & Privacy Policy.', 'error');
+                    return false;
+                }
+                return true;
+            }
+            return true;
+        }
+
+        function submitRegistration() {
+            if (!VC.isLoggedIn()) {
+                toast('Please verify mobile OTP first.', 'error');
+                showStep(1);
+                return;
+            }
+            if (!validateStep(5)) return;
+
+            var type = (form.querySelector('input[name="business_type"]:checked') || {}).value || '';
+            var shop = val('vcSignupShopAddress');
+            var delivery = (sameAddr && sameAddr.checked) ? shop : val('vcSignupDeliveryAddress');
+            var body = {
+                business_type: type,
+                business_name: val('vcSignupBusinessName'),
+                owner_name: val('vcSignupOwnerName'),
+                email: val('vcSignupEmail'),
+                gst_number: val('vcSignupGST'),
+                fssai_number: val('vcSignupFSSAI'),
+                pan_number: val('vcSignupPAN'),
+                shop_address: shop,
+                delivery_address: delivery,
+                city: val('vcSignupCity'),
+                state: val('vcSignupState'),
+                pincode: val('vcSignupPincode'),
+                landmark: val('vcSignupLandmark')
+            };
+
+            if (nextBtn) nextBtn.disabled = true;
+            VC.businessRegister(body).then(function (res) {
+                if (!res || !res.success) {
+                    if (nextBtn) nextBtn.disabled = false;
+                    toast(apiErrorMessage(res, 'Could not submit registration.'), 'error');
+                    return null;
+                }
+                if (res.data && res.data.customer) {
+                    VC.setSession({ customer: res.data.customer });
+                }
+                var uploads = form.querySelectorAll('.vc-upload-card input[type="file"]');
+                var chain = Promise.resolve();
+                uploads.forEach(function (input) {
+                    if (!input.files || !input.files[0]) return;
+                    var docType = docNameMap[input.name] || input.name;
+                    chain = chain.then(function () {
+                        return VC.uploadDocument(docType, input.files[0]).then(function (up) {
+                            if (!up || !up.success) {
+                                toast((up && up.error && up.error.message) || ('Could not upload ' + input.name), 'error');
+                            }
+                        });
+                    });
+                });
+                return chain.then(function () {
+                    var kyc = (res.data && (res.data.kyc_status || (res.data.customer && res.data.customer.kyc_status))) || 'pending';
+                    toast(kyc === 'approved' ? 'Registration approved. Welcome!' : 'Application submitted for review.');
+                    window.location.href = 'verification-status.php';
+                });
+            }).catch(function () {
+                if (nextBtn) nextBtn.disabled = false;
+                toast('Could not submit registration.', 'error');
+            });
+        }
+
+        if (sameAddr) {
+            sameAddr.addEventListener('change', function () {
+                if (deliveryWrap) deliveryWrap.hidden = !!sameAddr.checked;
+            });
+            if (deliveryWrap) deliveryWrap.hidden = !!sameAddr.checked;
+        }
+
+        var pinInput = document.getElementById('vcSignupPincode');
+        if (pinInput) {
+            pinInput.addEventListener('blur', function () {
+                var pin = val('vcSignupPincode');
+                pinOk = false;
+                if (!/^\d{6}$/.test(pin)) {
+                    setHint(pinHint, pin ? 'Enter a valid 6-digit pincode.' : '', false);
+                    return;
+                }
+                VC.checkPincode(pin).then(function (res) {
+                    if (res && res.success && res.data && res.data.serviceable) {
+                        pinOk = true;
+                        if (res.data.city) document.getElementById('vcSignupCity').value = res.data.city;
+                        if (res.data.state) document.getElementById('vcSignupState').value = res.data.state;
+                        setHint(pinHint, '✓ We deliver here', true);
+                    } else {
+                        setHint(pinHint, '✗ Not serviceable in this area yet', false);
+                    }
+                });
+            });
+        }
+
+        form.querySelectorAll('.vc-upload-card input[type="file"]').forEach(function (input) {
+            input.addEventListener('change', function () {
+                var nameEl = input.closest('.vc-upload-card') && input.closest('.vc-upload-card').querySelector('.vc-file-name');
+                if (nameEl) {
+                    nameEl.textContent = (input.files && input.files[0]) ? input.files[0].name : 'No file selected';
+                }
+            });
+        });
+
+        if (resendBtn) {
+            resendBtn.addEventListener('click', function () { sendOtp(); });
+        }
+
+        if (prevBtn) {
+            prevBtn.addEventListener('click', function () {
+                if (step > 1) showStep(step - 1);
+            });
+        }
+
+        if (nextBtn) {
+            nextBtn.addEventListener('click', function () {
+                if (step === 5) {
+                    submitRegistration();
+                    return;
+                }
+                var ok = validateStep(step);
+                if (ok === true) {
+                    showStep(step + 1);
+                } else if (ok && typeof ok.then === 'function') {
+                    ok.then(function () { /* step advanced inside promise when needed */ });
+                }
+            });
+        }
 
         form.addEventListener('submit', function (e) {
             e.preventDefault();
-            var name = (document.getElementById('vcSignupName') || {}).value || '';
-            var email = (document.getElementById('vcSignupEmail') || {}).value || '';
-            var phone = (document.getElementById('vcSignupPhone') || {}).value || '';
-            var otp = (document.getElementById('vcSignupOtp') || {}).value || '';
-            if (!phone.trim()) {
-                toast('Mobile number is required.', 'error');
-                return;
-            }
-            if (!otp) {
-                VC.sendOtp(phone.trim()).then(function (res) {
-                    if (!res || !res.success) {
-                        toast((res && res.error && res.error.message) || 'Could not send OTP.', 'error');
-                        return;
-                    }
-                    otpField.style.display = '';
-                    var hint = document.getElementById('vcSignupOtpHint');
-                    var msg = 'OTP sent. Enter it to create your account.';
-                    if (res.data && res.data.dev_otp) {
-                        msg += ' DEV OTP: ' + res.data.dev_otp;
-                    }
-                    if (hint) hint.textContent = msg;
-                    toast(msg);
-                });
-                return;
-            }
-            VC.verifyOtp(phone.trim(), otp).then(function (res) {
-                if (!res || !res.success) {
-                    toast((res && res.error && res.error.message) || 'Invalid OTP.', 'error');
-                    return;
-                }
-                VC.setSession(res.data);
-                return VC.updateProfile({ owner_name: name.trim(), email: email.trim() }).then(function () {
-                    toast('Account created');
-                    window.location.href = 'bussiness-registration.php';
-                });
-            });
+            if (step === 5) submitRegistration();
+            else if (nextBtn) nextBtn.click();
         });
+
+        if (VC.isLoggedIn()) {
+            otpVerified = true;
+            var cust = VC.getCustomer() || {};
+            if (cust.registration_complete) {
+                window.location.href = 'account-dashboard.php';
+                return;
+            }
+            if (cust.mobile && document.getElementById('vcSignupPhone')) {
+                document.getElementById('vcSignupPhone').value = cust.mobile;
+            }
+            if (cust.email && document.getElementById('vcSignupEmail')) {
+                document.getElementById('vcSignupEmail').value = cust.email;
+            }
+            if (cust.owner_name && document.getElementById('vcSignupOwnerName')) {
+                document.getElementById('vcSignupOwnerName').value = cust.owner_name;
+            }
+            if (cust.business_name && document.getElementById('vcSignupBusinessName')) {
+                document.getElementById('vcSignupBusinessName').value = cust.business_name;
+            }
+            if (otpWrap) otpWrap.hidden = true;
+            showStep(2);
+        } else {
+            showStep(1);
+        }
     }
 
     function bootForgot() {
@@ -4114,6 +4579,11 @@
             e.preventDefault();
             e.stopImmediatePropagation();
             var type = (document.querySelector('input[name="business_type"]:checked') || {}).value || '';
+            var shop = (document.getElementById('vcShopAddress') || {}).value || '';
+            var same = document.getElementById('vcSameAddress');
+            var delivery = (same && same.checked)
+                ? shop
+                : ((document.getElementById('vcDeliveryAddress') || {}).value || '');
             var body = {
                 business_type: type,
                 business_name: (document.getElementById('vcBusinessName') || {}).value || '',
@@ -4121,15 +4591,24 @@
                 email: (document.getElementById('vcEmail') || {}).value || '',
                 gst_number: (document.getElementById('vcGST') || {}).value || '',
                 fssai_number: (document.getElementById('vcFSSAI') || {}).value || '',
-                pan_number: (document.getElementById('vcPAN') || {}).value || ''
+                pan_number: (document.getElementById('vcPAN') || {}).value || '',
+                shop_address: String(shop).trim(),
+                delivery_address: String(delivery).trim(),
+                city: (document.getElementById('vcCity') || {}).value || '',
+                state: (document.getElementById('vcState') || {}).value || '',
+                pincode: (document.getElementById('vcPincode') || {}).value || '',
+                landmark: (document.getElementById('vcLandmark') || {}).value || ''
             };
-                VC.businessRegister(body).then(function (res) {
-                    if (!res || !res.success) {
-                        toast(apiErrorMessage(res, 'Could not submit registration.'), 'error');
-                        return;
-                    }
-                    var cust = (res.data && res.data.customer) || VC.getCustomer() || {};
-                    setText('vcRegAppId', formatBizId(cust));
+            VC.businessRegister(body).then(function (res) {
+                if (!res || !res.success) {
+                    toast(apiErrorMessage(res, 'Could not submit registration.'), 'error');
+                    return;
+                }
+                var cust = (res.data && res.data.customer) || VC.getCustomer() || {};
+                if (res.data && res.data.customer) {
+                    VC.setSession({ customer: res.data.customer });
+                }
+                setText('vcRegAppId', formatBizId(cust));
                 var uploads = document.querySelectorAll('.vc-upload-card input[type="file"]');
                 var chain = Promise.resolve();
                 var nameMap = {
@@ -4547,6 +5026,48 @@
         });
     }
 
+    function bootChangePassword() {
+        if (!requireAuth()) {
+            return;
+        }
+        var form = document.getElementById('vcChangePasswordForm');
+        if (!form) {
+            return;
+        }
+        var btn = document.getElementById('vcChangePasswordBtn');
+        form.addEventListener('submit', function (e) {
+            e.preventDefault();
+            var current = ((document.getElementById('vcCurrentPassword') || {}).value || '');
+            var password = ((document.getElementById('vcNewPassword') || {}).value || '');
+            var confirm = ((document.getElementById('vcConfirmPassword') || {}).value || '');
+            if (!password || password.length < 6) {
+                toast('New password must be at least 6 characters.', 'error');
+                return;
+            }
+            if (password !== confirm) {
+                toast('Password confirmation does not match.', 'error');
+                return;
+            }
+            if (btn) btn.disabled = true;
+            VC.changePassword({
+                current_password: current,
+                password: password,
+                password_confirmation: confirm
+            }).then(function (res) {
+                if (btn) btn.disabled = false;
+                if (res && res.success) {
+                    toast('Password updated. You can now login with Email & Password.');
+                    form.reset();
+                    return;
+                }
+                toast(apiErrorMessage(res, 'Could not update password.'), 'error');
+            }).catch(function () {
+                if (btn) btn.disabled = false;
+                toast('Could not update password.', 'error');
+            });
+        });
+    }
+
     /* ---------- Boot ---------- */
 
     document.addEventListener('DOMContentLoaded', function () {
@@ -4572,5 +5093,6 @@
         if (page === 'verification-status') bootVerification();
         if (page === 'faq') bootFaqs();
         if (page === 'support') bootSupport();
+        if (page === 'change-password') bootChangePassword();
     });
 })();

@@ -244,6 +244,7 @@
 
         profile: function () { return request('GET', '/profile'); },
         updateProfile: function (body) { return request('PUT', '/profile', body); },
+        changePassword: function (body) { return request('POST', '/profile/change-password', body); },
         uploadAvatar: function (file) {
             var fd = new FormData();
             fd.append('avatar', file);
