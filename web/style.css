@@ -49130,6 +49130,22 @@ RESPONSIVE
 }
 .vc-signup-actions .vc-login-submit { flex: 1; }
 .vc-signup-actions .vc-login-register { width: auto; min-width: 120px; margin: 0; }
+/* display:flex on .vc-login-register overrides native [hidden] — force hide */
+.vc-signup-actions .vc-login-register[hidden],
+#vcSignupPrev[hidden] {
+    display: none !important;
+}
+.vc-signup-login-divider {
+    margin: 22px 0 14px;
+}
+.vc-signup-login-link {
+    width: 100%;
+    margin: 0;
+    color: #31753d;
+}
+.vc-signup-login-link:hover {
+    color: #245c2e;
+}
 .vc-signup-wizard-page .vc-form-step { display: none; }
 .vc-signup-wizard-page .vc-form-step.active { display: block; }
 .vc-signup-wizard-page .vc-field-error { color: #b42318; font-size: 12px; margin: 8px 0 0; }

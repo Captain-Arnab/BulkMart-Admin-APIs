@@ -365,10 +365,14 @@ $vcDocTypes = [
                         </button>
                     </div>
 
-                    <p class="vc-signup-intro" style="margin-top:18px;text-align:center">
-                        Already registered?
-                        <a href="login.php">Login here</a>
-                    </p>
+                    <div class="vc-login-divider vc-signup-login-divider">
+                        <span>Already registered?</span>
+                    </div>
+
+                    <a href="login.php" class="vc-login-register vc-signup-login-link">
+                        <i class="fa-solid fa-right-to-bracket"></i>
+                        Login here
+                    </a>
                 </form>
             </div>
         </div>

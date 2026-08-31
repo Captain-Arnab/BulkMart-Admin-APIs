@@ -2468,7 +2468,12 @@
 
         if (prevBtn) {
             prevBtn.addEventListener('click', function () {
-                if (step > 1) showStep(step - 1);
+                if (step > 1) {
+                    showStep(step - 1);
+                    return;
+                }
+                // Step 1: leave wizard (Back was visible but did nothing before)
+                window.location.href = 'index.php';
             });
         }
 
