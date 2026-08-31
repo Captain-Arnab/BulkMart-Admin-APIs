@@ -185,7 +185,11 @@ class Order extends Model
     public function items(int $orderId): array
     {
         return $this->fetchAll(
-            'SELECT * FROM order_items WHERE order_id = ? ORDER BY id ASC',
+            "SELECT oi.*, p.image_url AS product_image_url
+             FROM order_items oi
+             LEFT JOIN products p ON p.id = oi.product_id
+             WHERE oi.order_id = ?
+             ORDER BY oi.id ASC",
             [$orderId]
         );
     }

@@ -444,7 +444,7 @@ Status: ' . $esc($invoice['status_label'] ?? $invoice['status']) . ' · Payment:
                 'pincode'  => $order['pincode'] ?? null,
                 'landmark' => $order['landmark'] ?? null,
             ],
-            'items' => array_map(static function (array $i) {
+            'items' => array_map(function (array $i) {
                 return [
                     'id'          => (int) $i['id'],
                     'product_id'  => $i['product_id'] !== null && $i['product_id'] !== '' ? (int) $i['product_id'] : null,
@@ -453,6 +453,7 @@ Status: ' . $esc($invoice['status_label'] ?? $invoice['status']) . ' · Payment:
                     'quantity'    => (float) $i['quantity'],
                     'unit_price'  => (float) $i['unit_price_snapshot'],
                     'line_total'  => (float) $i['line_total'],
+                    'image_url'   => $this->absoluteMedia($i['product_image_url'] ?? null),
                 ];
             }, $items),
             'tracking' => array_map(static function (array $l) {
