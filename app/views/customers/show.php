@@ -292,7 +292,13 @@ $joined = !empty($customer['created_at']) ? date('d M Y', strtotime((string) $cu
             No password set yet — Email &amp; Password login will not work until one is set here or by the customer.
           <?php endif; ?>
         </p>
-        <form method="POST" action="<?= e(url('customers/' . $customer['id'] . '/reset-password')) ?>" autocomplete="off">
+        <form
+          method="POST"
+          action="<?= e(url('customers/' . $customer['id'] . '/reset-password')) ?>"
+          autocomplete="off"
+          data-vc-confirm="Reset this customer's password? They will be notified."
+          data-vc-confirm-title="Reset password"
+          data-vc-confirm-yes="Yes, reset">
           <div class="mb-2">
             <label class="form-label" for="vcAdminNewPassword">New password</label>
             <input
@@ -317,7 +323,7 @@ $joined = !empty($customer['created_at']) ? date('d M Y', strtotime((string) $cu
               placeholder="Re-enter password"
               autocomplete="new-password">
           </div>
-          <button class="btn btn-outline-primary w-100" type="submit" onclick="return confirm('Reset this customer\'s password? They will be notified.');">
+          <button class="btn btn-outline-primary w-100" type="submit">
             <i class="bi bi-arrow-repeat me-1"></i>Reset password
           </button>
         </form>
