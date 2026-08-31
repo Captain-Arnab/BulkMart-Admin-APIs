@@ -80,7 +80,7 @@
                         My Addresses
                     </a>
 
-                    <a href="profile.php">
+                    <a href="my-profile.php">
                         <i class="fa-regular fa-user"></i>
                         Profile Details
                     </a>

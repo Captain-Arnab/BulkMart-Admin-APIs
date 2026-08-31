@@ -135,7 +135,10 @@ $vcSiteFavicon = function_exists('site_favicon_src') ? site_favicon_src() : 'ima
 
             <!-- DELIVERY LOCATION -->
             <button class="vc-location"
-                    type="button">
+                    type="button"
+                    id="vcHeaderLocation"
+                    aria-haspopup="dialog"
+                    aria-label="Choose delivery location">
 
                 <span class="vc-location-icon">
                     <i class="fa-solid fa-location-dot"></i>
@@ -145,7 +148,7 @@ $vcSiteFavicon = function_exists('site_favicon_src') ? site_favicon_src() : 'ima
 
                     <small>Deliver to</small>
 
-                    <strong>Select Location</strong>
+                    <strong id="vcHeaderLocationLabel">Select Location</strong>
 
                 </span>
 
@@ -532,7 +535,11 @@ $vcSiteFavicon = function_exists('site_favicon_src') ? site_favicon_src() : 'ima
 
 
 
-    <div class="vc-mobile-location">
+    <button type="button"
+            class="vc-mobile-location"
+            id="vcMobileLocation"
+            aria-haspopup="dialog"
+            aria-label="Choose delivery location">
 
         <i class="fa-solid fa-location-dot"></i>
 
@@ -542,13 +549,13 @@ $vcSiteFavicon = function_exists('site_favicon_src') ? site_favicon_src() : 'ima
                 Delivery Location
             </small>
 
-            <strong>
+            <strong id="vcMobileLocationLabel">
                 Select Location
             </strong>
 
         </div>
 
-    </div>
+    </button>
 
 
 

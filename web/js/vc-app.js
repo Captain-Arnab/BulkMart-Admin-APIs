@@ -500,6 +500,168 @@
 
     /* ---------- Header ---------- */
 
+    function locationShortLabel(a) {
+        if (!a) {
+            return 'Select Location';
+        }
+        var primary = String(a.label || a.city || a.landmark || a.line1 || '').trim();
+        var secondary = String(a.pincode || a.city || '').trim();
+        if (primary && secondary && primary.toLowerCase() !== secondary.toLowerCase()) {
+            return primary + ' · ' + secondary;
+        }
+        return primary || secondary || 'Select Location';
+    }
+
+    function paintHeaderLocation(address) {
+        var label = locationShortLabel(address);
+        var desktop = document.getElementById('vcHeaderLocationLabel');
+        var mobile = document.getElementById('vcMobileLocationLabel');
+        if (desktop) {
+            desktop.textContent = label;
+            desktop.title = address ? addrLine(address) : 'Select delivery location';
+        }
+        if (mobile) {
+            mobile.textContent = label;
+            mobile.title = address ? addrLine(address) : 'Select delivery location';
+        }
+        var btn = document.getElementById('vcHeaderLocation');
+        if (btn) {
+            btn.classList.toggle('has-location', !!address);
+        }
+    }
+
+    function refreshHeaderLocation() {
+        if (!VC.isLoggedIn()) {
+            paintHeaderLocation(null);
+            return Promise.resolve(null);
+        }
+        return VC.addresses().then(function (res) {
+            var list = (res && res.success && res.data && res.data.addresses) || [];
+            var chosen = list.find(function (a) { return a.is_default; }) || list[0] || null;
+            paintHeaderLocation(chosen);
+            return chosen;
+        }).catch(function () {
+            paintHeaderLocation(null);
+            return null;
+        });
+    }
+
+    function openHeaderLocationPicker() {
+        if (!VC.isLoggedIn()) {
+            window.location.href = loginUrl();
+            return;
+        }
+        VC.addresses().then(function (res) {
+            var list = (res && res.success && res.data && res.data.addresses) || [];
+            if (!list.length) {
+                if (typeof Swal === 'undefined') {
+                    window.location.href = 'manage-address.php';
+                    return;
+                }
+                Swal.fire({
+                    icon: 'info',
+                    title: 'Add a delivery address',
+                    html: '<p class="vc-loc-empty">Save an address to set where we deliver your orders.</p>',
+                    confirmButtonText: 'Add address',
+                    confirmButtonColor: '#12833B',
+                    showCancelButton: true,
+                    cancelButtonText: 'Cancel',
+                    buttonsStyling: false,
+                    customClass: {
+                        confirmButton: 'btn btn-primary mx-1',
+                        cancelButton: 'btn btn-outline-secondary mx-1'
+                    }
+                }).then(function (result) {
+                    if (result.isConfirmed) {
+                        window.location.href = 'manage-address.php';
+                    }
+                });
+                return;
+            }
+
+            var html = '<div class="vc-loc-picker" role="listbox" aria-label="Saved addresses">' +
+                list.map(function (a) {
+                    return (
+                        '<button type="button" class="vc-loc-option' + (a.is_default ? ' is-active' : '') + '" data-loc-id="' + a.id + '" role="option" aria-selected="' + (a.is_default ? 'true' : 'false') + '">' +
+                            '<i class="fa-solid fa-location-dot" aria-hidden="true"></i>' +
+                            '<div>' +
+                                '<strong>' + escapeHtml(a.label || 'Address') + '</strong>' +
+                                '<span>' + escapeHtml(addrLine(a)) + '</span>' +
+                                (a.is_default ? '<em class="vc-loc-default">Default delivery</em>' : '') +
+                            '</div>' +
+                        '</button>'
+                    );
+                }).join('') +
+                '</div>' +
+                '<a class="vc-loc-manage" href="manage-address.php"><i class="fa-solid fa-plus"></i> Manage addresses</a>';
+
+            if (typeof Swal === 'undefined') {
+                window.location.href = 'manage-address.php';
+                return;
+            }
+
+            Swal.fire({
+                title: 'Deliver to',
+                html: html,
+                showConfirmButton: false,
+                showCloseButton: true,
+                width: 440,
+                buttonsStyling: false,
+                didOpen: function (popup) {
+                    popup.querySelectorAll('[data-loc-id]').forEach(function (btn) {
+                        btn.addEventListener('click', function () {
+                            var id = btn.getAttribute('data-loc-id');
+                            var chosen = list.find(function (a) { return String(a.id) === String(id); });
+                            if (!chosen) {
+                                return;
+                            }
+                            if (chosen.is_default) {
+                                paintHeaderLocation(chosen);
+                                Swal.close();
+                                return;
+                            }
+                            btn.disabled = true;
+                            VC.defaultAddress(id).then(function (setRes) {
+                                if (setRes && setRes.success) {
+                                    paintHeaderLocation(setRes.data && setRes.data.address ? setRes.data.address : chosen);
+                                    toast('Delivery location updated');
+                                    Swal.close();
+                                } else {
+                                    btn.disabled = false;
+                                    toast((setRes && setRes.error && setRes.error.message) || 'Could not update location.', 'error');
+                                }
+                            }).catch(function () {
+                                btn.disabled = false;
+                                toast('Could not update location.', 'error');
+                            });
+                        });
+                    });
+                }
+            });
+        }).catch(function () {
+            toast('Could not load addresses.', 'error');
+        });
+    }
+
+    function bindHeaderLocation() {
+        var desktop = document.getElementById('vcHeaderLocation') || document.querySelector('.vc-location');
+        var mobile = document.getElementById('vcMobileLocation') || document.querySelector('.vc-mobile-location');
+        if (desktop && !desktop.getAttribute('data-vc-loc-bound')) {
+            desktop.setAttribute('data-vc-loc-bound', '1');
+            desktop.addEventListener('click', function (e) {
+                e.preventDefault();
+                openHeaderLocationPicker();
+            });
+        }
+        if (mobile && !mobile.getAttribute('data-vc-loc-bound')) {
+            mobile.setAttribute('data-vc-loc-bound', '1');
+            mobile.addEventListener('click', function (e) {
+                e.preventDefault();
+                openHeaderLocationPicker();
+            });
+        }
+    }
+
     function refreshHeaderCounts() {
         var cartEl = document.querySelector('.vc-action[href="cart.php"] .vc-count, #vcHeaderCartCount');
         var wishEl = document.querySelector('.vc-action[href="wishlist.php"] .vc-count, #vcHeaderWishlistCount');
@@ -579,6 +741,8 @@
             }
         });
 
+        bindHeaderLocation();
+        refreshHeaderLocation();
         refreshHeaderCounts();
         bindProductActions(document);
     }
@@ -3578,6 +3742,7 @@
                     var def = list.find(function (a) { return a.is_default; }) || list[0];
                     defaultEl.textContent = def ? (def.label || 'Address') : 'None';
                 }
+                refreshHeaderLocation();
                 if (!grid) {
                     return;
                 }

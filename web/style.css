@@ -386,6 +386,16 @@ input {
 
     color: var(--vc-black);
 
+    display: block;
+
+    max-width: 120px;
+
+    white-space: nowrap;
+
+    overflow: hidden;
+
+    text-overflow: ellipsis;
+
 }
 
 
@@ -1295,6 +1305,16 @@ input {
 
     padding: 15px;
 
+    border: 0;
+
+    width: calc(100% - 32px);
+
+    text-align: left;
+
+    font: inherit;
+
+    cursor: pointer;
+
     border-radius: 15px;
 
     background:
@@ -1360,6 +1380,16 @@ input {
     color: var(--vc-green-dark);
 
     font-size: 13px;
+
+    display: block;
+
+    max-width: 200px;
+
+    white-space: nowrap;
+
+    overflow: hidden;
+
+    text-overflow: ellipsis;
 
 }
 
@@ -46639,6 +46669,74 @@ RESPONSIVE
     font-family: "Inter", sans-serif;
     border-radius: 12px;
 }
+
+/* Header delivery location picker (SweetAlert) */
+.vc-loc-picker {
+    text-align: left;
+    max-height: 320px;
+    overflow-y: auto;
+    margin: 0 -0.25rem;
+}
+.vc-loc-option {
+    display: flex;
+    gap: 12px;
+    align-items: flex-start;
+    width: 100%;
+    padding: 12px 14px;
+    margin: 0 0 8px;
+    border: 1px solid #e6efe7;
+    border-radius: 12px;
+    background: #f7fbf8;
+    cursor: pointer;
+    text-align: left;
+    font: inherit;
+    color: inherit;
+    transition: border-color .2s ease, background .2s ease;
+}
+.vc-loc-option:hover,
+.vc-loc-option.is-active {
+    border-color: #12833B;
+    background: #eef8f0;
+}
+.vc-loc-option i {
+    color: #12833B;
+    margin-top: 2px;
+}
+.vc-loc-option strong {
+    display: block;
+    color: #0B5C27;
+    font-size: 14px;
+    margin-bottom: 2px;
+}
+.vc-loc-option span {
+    display: block;
+    color: #5f6b66;
+    font-size: 12px;
+    line-height: 1.4;
+}
+.vc-loc-option .vc-loc-default {
+    display: inline-block;
+    margin-top: 6px;
+    font-size: 11px;
+    font-weight: 700;
+    font-style: normal;
+    color: #12833B;
+}
+.vc-loc-empty {
+    padding: 8px 4px 12px;
+    color: #5f6b66;
+    font-size: 14px;
+}
+.vc-loc-manage {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    margin-top: 4px;
+    color: #12833B;
+    font-weight: 600;
+    text-decoration: none;
+}
+
 .vc-live-empty {
     padding: 24px 8px;
     color: #5b6470;
