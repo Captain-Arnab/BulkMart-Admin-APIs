@@ -150,6 +150,7 @@ $router->get('/', [DashboardController::class, 'index'], [require_module('dashbo
 $router->get('/dashboard', [DashboardController::class, 'index'], [require_module('dashboard')]);
 
 $router->get('/products', [ProductController::class, 'index'], [require_module('products')]);
+$router->get('/products/export', [ProductController::class, 'export'], [require_module('products')]);
 $router->get('/products/add', [ProductController::class, 'add'], [require_module('products')]);
 $router->post('/products', [ProductController::class, 'store'], [require_module('products')]);
 $router->get('/products/bulk-upload', [ProductController::class, 'bulkUpload'], [require_module('products')]);

@@ -12,6 +12,25 @@ class Product extends Model
     }
 
     /**
+     * @return list<array<string, mixed>>
+     */
+    public function exportRows(
+        ?string $q = null,
+        ?int $categoryId = null,
+        bool $lowStockOnly = false,
+        int $lowStockThreshold = 20
+    ): array {
+        return $this->paginateWithCategory(
+            $q,
+            $categoryId,
+            1,
+            100000,
+            $lowStockOnly,
+            $lowStockThreshold
+        )['rows'];
+    }
+
+    /**
      * @return array{rows: array, total: int, page: int, per_page: int, pages: int}
      */
     public function paginateWithCategory(

@@ -29,6 +29,46 @@ class ProductController extends Controller
         ]);
     }
 
+    public function export(): void
+    {
+        $q = trim((string) ($_GET['q'] ?? ''));
+        $categoryId = (int) ($_GET['category_id'] ?? 0) ?: null;
+        $lowStock = !empty($_GET['low_stock']);
+        $rows = (new Product())->exportRows(
+            $q !== '' ? $q : null,
+            $categoryId,
+            $lowStock,
+            AnalyticsService::LOW_STOCK_THRESHOLD
+        );
+        $headers = [
+            'ID', 'Name', 'Category', 'Unit', 'MOQ', 'Price', 'Stock',
+            'Item Code', 'Batch No', 'Description', 'Grade', 'Origin',
+            'In Stock', 'Active', 'Benefits', 'Storage Tips',
+        ];
+        $data = [];
+        foreach ($rows as $p) {
+            $data[] = [
+                $p['id'] ?? '',
+                $p['name'] ?? '',
+                $p['category_name'] ?? '',
+                $p['unit'] ?? '',
+                $p['moq'] ?? '',
+                $p['price'] ?? '',
+                $p['stock'] ?? '',
+                $p['item_code'] ?? '',
+                $p['batch_no'] ?? '',
+                $p['description'] ?? '',
+                $p['grade'] ?? '',
+                $p['origin'] ?? '',
+                !empty($p['in_stock']) ? '1' : '0',
+                !empty($p['is_active']) ? '1' : '0',
+                $p['benefits'] ?? '',
+                $p['storage_tips'] ?? '',
+            ];
+        }
+        SpreadsheetWriter::downloadXlsx('veggiicart_products_' . date('Y-m-d') . '.xlsx', $headers, $data);
+    }
+
     public function add(): void
     {
         $this->view('products/form', [

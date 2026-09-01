@@ -14,6 +14,12 @@ $listQuery = array_filter([
     'low_stock' => !empty($lowStock) ? '1' : null,
 ], static fn ($v) => $v !== null && $v !== '');
 $listQs = $listQuery !== [] ? ('?' . http_build_query($listQuery)) : '';
+$exportQs = http_build_query(array_filter([
+    'q' => $q !== '' ? $q : null,
+    'category_id' => $categoryId ?: null,
+    'low_stock' => !empty($lowStock) ? '1' : null,
+], static fn ($v) => $v !== null && $v !== ''));
+$exportUrl = url('products/export' . ($exportQs !== '' ? '?' . $exportQs : ''));
 ?>
 <div class="pagetitle d-flex flex-wrap justify-content-between align-items-center gap-2">
   <div>
@@ -27,6 +33,9 @@ $listQs = $listQuery !== [] ? ('?' . http_build_query($listQuery)) : '';
   </div>
   <div class="d-flex flex-wrap gap-2 align-items-center">
     <span class="text-muted small"><?= (int) $result['total'] ?> products · 20 / page</span>
+    <a class="btn btn-outline-success btn-sm" href="<?= e($exportUrl) ?>">
+      <i class="bi bi-file-earmark-excel"></i> Export Excel
+    </a>
     <a href="<?= e(url('products/bulk-upload')) ?>" class="btn btn-outline-primary btn-sm">Bulk Upload</a>
     <a href="<?= e(url('products/bulk-stock')) ?>" class="btn btn-outline-primary btn-sm">Bulk Stock</a>
     <a href="<?= e(url('products/add')) ?>" class="btn btn-primary btn-sm"><i class="bi bi-plus-lg me-1"></i>Add Product</a>
