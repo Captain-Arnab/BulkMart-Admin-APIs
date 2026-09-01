@@ -1757,8 +1757,14 @@
             rememberView(p.id);
             var title = document.querySelector('.vc-product-info h1, .vc-product-title, .vc-product-page h1');
             if (title) title.textContent = titleCaseName(p.name);
-            var cat = document.querySelector('.vc-product-breadcrumb span, .vc-product-category');
-            if (cat) cat.textContent = p.category_name || '';
+            var catBadge = document.querySelector('.vc-product-info .vc-product-category');
+            if (catBadge) {
+                catBadge.textContent = p.category_name || '';
+            }
+            var crumbName = document.querySelector('.vc-product-breadcrumb > span');
+            if (crumbName) {
+                crumbName.textContent = titleCaseName(p.name);
+            }
             var price = document.querySelector('.vc-product-price strong');
             if (price) {
                 price.textContent = money(p.price);
@@ -1766,6 +1772,25 @@
             var unitLabel = document.querySelector('.vc-product-price small, .vc-product-unit');
             if (unitLabel && p.unit) {
                 unitLabel.textContent = '/ ' + p.unit;
+            }
+            var shortDesc = document.getElementById('vcProductShortDesc');
+            if (shortDesc) {
+                var blurb = String(p.description || '').trim();
+                if (blurb) {
+                    var first = blurb.split(/\n+/)[0].trim();
+                    if (first.length > 220) {
+                        first = first.slice(0, 217).replace(/\s+\S*$/, '') + '…';
+                    }
+                    shortDesc.textContent = first;
+                } else {
+                    shortDesc.textContent = 'Fresh quality produce from VeggiiCart, ready for your kitchen.';
+                }
+            }
+            var stockBox = document.querySelector('.vc-product-stock span');
+            if (stockBox) {
+                stockBox.innerHTML = p.in_stock
+                    ? '<i class="fa-solid fa-circle-check"></i> In Stock'
+                    : '<i class="fa-solid fa-circle-xmark"></i> Out of Stock';
             }
             renderProductGallery(p);
             fillProductContentTabs(p);

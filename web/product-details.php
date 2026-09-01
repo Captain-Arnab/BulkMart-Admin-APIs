@@ -20,21 +20,20 @@
 
 
         <!-- =========================================
-             MAIN PRODUCT AREA (stacked: banner image → info)
+             MAIN PRODUCT AREA
         ========================================== -->
         <div class="vc-product-main">
 
 
             <!-- =====================================
-                 PRODUCT GALLERY (full-width banner)
+                 PRODUCT GALLERY
             ====================================== -->
             <div class="vc-product-gallery">
 
 
-                <!-- MAIN IMAGE -->
                 <div class="vc-product-main-image">
 
-                    <span class="vc-product-discount">
+                    <span class="vc-product-discount" hidden>
                         20% OFF
                     </span>
 
@@ -62,7 +61,6 @@
                 </div>
 
 
-                <!-- THUMBNAILS (below banner when multiple images) -->
                 <div class="vc-product-thumbnails" id="vcProductThumbs"></div>
 
             </div>
@@ -70,7 +68,7 @@
 
 
             <!-- =====================================
-                 PRODUCT INFORMATION (full width below)
+                 PRODUCT INFORMATION
             ====================================== -->
             <div class="vc-product-info">
 
@@ -100,7 +98,7 @@
                         4.8
                     </span>
 
-                    <a href="#vcReviews">
+                    <a href="#reviews">
                         124 Reviews
                     </a>
 
@@ -114,22 +112,18 @@
                         ₹60
                     </strong>
 
-                    <del>
-                        ₹75
-                    </del>
+                    <small class="vc-product-unit"></small>
 
-                    <span>
-                        Save ₹15
-                    </span>
+                    <del id="vcProductMrp" hidden></del>
+
+                    <span id="vcProductSave" hidden></span>
 
                 </div>
 
 
-                <!-- DESCRIPTION -->
-                <p class="vc-product-short-description">
-                    Naturally fresh, juicy and carefully selected red tomatoes
-                    sourced for everyday cooking. Perfect for salads, curries,
-                    soups, sauces and healthy homemade meals.
+                <!-- SHORT DESCRIPTION -->
+                <p class="vc-product-short-description" id="vcProductShortDesc">
+                    Loading product details…
                 </p>
 
 

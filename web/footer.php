@@ -534,5 +534,5 @@
 <script>window.VC_LIVE = true;</script>
 <script src="js/vc-api.js?v=reg-mobile-1"></script>
 <script src="js/vc-swal.js?v=reg-mobile-1"></script>
-<script src="js/vc-app.js?v=reg-mobile-1"></script>
+<script src="js/vc-app.js?v=pdp-clean-1"></script>
 <script src="common.js?v=product-tabs-1"></script>

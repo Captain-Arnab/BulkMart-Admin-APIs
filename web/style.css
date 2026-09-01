@@ -21575,14 +21575,15 @@ input {
 
 
 /* ==========================================
-   MAIN PRODUCT — stacked (banner → info)
+   MAIN PRODUCT — clean split (gallery | info)
 ========================================== */
 
 .vc-product-main {
     display: grid;
-    grid-template-columns: minmax(0, 1fr);
-    gap: 18px;
-    padding: 16px;
+    grid-template-columns: minmax(280px, 0.95fr) minmax(320px, 1.05fr);
+    gap: 36px;
+    align-items: start;
+    padding: 24px;
     border: 1px solid #e2ebe0;
     border-radius: 24px;
     background: #fff;
@@ -21591,14 +21592,16 @@ input {
 
 
 /* ==========================================
-   GALLERY — compact landscape banner
+   GALLERY — clear product photo
 ========================================== */
 
 .vc-product-gallery {
     min-width: 0;
     display: grid;
     grid-template-columns: minmax(0, 1fr);
-    gap: 10px;
+    gap: 12px;
+    position: sticky;
+    top: 88px;
 }
 
 .vc-product-thumbnails {
@@ -21612,8 +21615,8 @@ input {
 }
 
 .vc-product-thumb {
-    width: 64px;
-    height: 64px;
+    width: 68px;
+    height: 68px;
     flex: 0 0 auto;
     padding: 4px;
     border: 2px solid transparent;
@@ -21639,11 +21642,11 @@ input {
 .vc-product-main-image {
     position: relative;
     width: 100%;
-    height: clamp(168px, 26vw, 280px);
+    aspect-ratio: 1 / 1;
     min-height: 0;
     overflow: hidden;
-    border-radius: 18px;
-    background: #f2f6ef;
+    border-radius: 20px;
+    background: linear-gradient(145deg, #f4f8f1 0%, #e8f0e4 100%);
 }
 
 .vc-product-main-image > img {
@@ -21651,13 +21654,15 @@ input {
     height: 100%;
     min-height: 0;
     display: block;
-    object-fit: cover;
+    object-fit: contain;
     object-position: center;
-    transition: transform .5s ease;
+    padding: 14px;
+    box-sizing: border-box;
+    transition: transform .45s ease;
 }
 
 .vc-product-main-image:hover > img {
-    transform: scale(1.02);
+    transform: scale(1.03);
 }
 
 .vc-product-discount {
@@ -21678,24 +21683,25 @@ input {
     top: 12px;
     right: 12px;
     z-index: 2;
-    width: 40px;
-    height: 40px;
+    width: 42px;
+    height: 42px;
     border: 0;
     border-radius: 50%;
-    background: rgba(255,255,255,.95);
+    background: rgba(255,255,255,.96);
     color: #315c37;
     font-size: 16px;
     cursor: pointer;
-    box-shadow: 0 8px 24px rgba(0,0,0,.10);
+    box-shadow: 0 8px 20px rgba(0,0,0,.10);
 }
 
 
 /* ==========================================
-   PRODUCT INFO — balanced full-width block
+   PRODUCT INFO — single clean column
 ========================================== */
 
 .vc-product-info {
-    padding: 2px 8px 6px;
+    display: block;
+    padding: 4px 2px 0;
     max-width: none;
 }
 
@@ -21713,9 +21719,9 @@ input {
 }
 
 .vc-product-info h1 {
-    margin: 0 0 8px;
+    margin: 0 0 10px;
     color: #173a20;
-    font-size: clamp(26px, 2.6vw, 34px);
+    font-size: clamp(26px, 2.8vw, 36px);
     line-height: 1.2;
     font-weight: 800;
 }
@@ -21754,9 +21760,9 @@ input {
 
 .vc-product-price {
     display: flex;
-    align-items: center;
+    align-items: baseline;
     flex-wrap: wrap;
-    gap: 12px;
+    gap: 10px;
     margin-bottom: 12px;
 }
 
@@ -21766,9 +21772,15 @@ input {
     font-weight: 850;
 }
 
+.vc-product-price .vc-product-unit {
+    color: #7a8a7c;
+    font-size: 14px;
+    font-weight: 600;
+}
+
 .vc-product-price del {
     color: #99a49a;
-    font-size: 18px;
+    font-size: 16px;
 }
 
 .vc-product-price span {
@@ -21782,7 +21794,6 @@ input {
 
 .vc-product-short-description {
     margin: 0 0 14px;
-    max-width: 62ch;
     color: #657267;
     font-size: 14px;
     line-height: 1.7;
@@ -22121,10 +22132,10 @@ body.vc-modal-open {
 
 .vc-product-purchase {
     display: grid;
-    grid-template-columns: 150px minmax(0, 1fr);
+    grid-template-columns: 140px minmax(0, 1fr);
     gap: 12px;
-    margin-top: 22px;
-    max-width: 480px;
+    margin-top: 18px;
+    max-width: none;
 }
 
 .vc-product-qty {
@@ -22183,7 +22194,7 @@ body.vc-modal-open {
 
 .vc-buy-now-btn {
     width: 100%;
-    max-width: 480px;
+    max-width: none;
     min-height: 52px;
     display: flex;
     align-items: center;
@@ -22205,69 +22216,13 @@ body.vc-modal-open {
 }
 
 
-/* Desktop: identity left, buy actions right — fills width without empty “dhepka” gap */
-@media (min-width: 900px) {
-    .vc-product-info {
-        display: grid;
-        grid-template-columns: minmax(0, 1.15fr) minmax(300px, 0.85fr);
-        column-gap: 40px;
-        row-gap: 0;
-        align-items: start;
-        padding: 4px 10px 8px;
-        grid-auto-flow: dense;
-    }
-
-    .vc-product-info > .vc-product-category,
-    .vc-product-info > h1,
-    .vc-product-info > .vc-product-rating,
-    .vc-product-info > .vc-product-price,
-    .vc-product-info > .vc-product-short-description,
-    .vc-product-info > .vc-product-stock {
-        grid-column: 1;
-    }
-
-    .vc-product-info > .vc-product-option,
-    .vc-product-info > .vc-product-purchase,
-    .vc-product-info > .vc-buy-now-btn,
-    .vc-product-info > .vc-product-benefits,
-    .vc-product-info > .vc-delivery-check {
-        grid-column: 2;
-    }
-
-    .vc-product-info > .vc-product-option {
-        margin-top: 0;
-        padding-top: 0;
-        border-top: 0;
-    }
-
-    .vc-product-info > .vc-product-purchase,
-    .vc-product-info > .vc-buy-now-btn {
-        max-width: none;
-    }
-
-    .vc-product-info > .vc-product-benefits {
-        grid-template-columns: 1fr;
-        max-width: none;
-        margin-top: 14px;
-    }
-
-    .vc-product-info > .vc-delivery-check {
-        max-width: none;
-        margin-top: 14px;
-    }
-
-    .vc-product-short-description {
-        max-width: none;
-    }
-}
-
 /* BENEFITS */
 
 .vc-product-benefits {
     display: grid;
     grid-template-columns: repeat(3, minmax(0, 1fr));
-    gap: 12px;
-    margin-top: 20px;
+    gap: 10px;
+    margin-top: 18px;
 }
 
 .vc-product-benefit {
@@ -22724,12 +22679,17 @@ body.vc-modal-open {
 @media (max-width: 1100px) {
 
     .vc-product-main {
-        gap: 22px;
+        gap: 28px;
+        padding: 20px;
+    }
+
+    .vc-product-gallery {
+        position: static;
     }
 
     .vc-product-thumb {
-        width: 70px;
-        height: 70px;
+        width: 64px;
+        height: 64px;
     }
 
     .vc-product-benefits {
@@ -22742,23 +22702,27 @@ body.vc-modal-open {
 
 }
 
-@media (max-width: 850px) {
+@media (max-width: 900px) {
 
     .vc-product-main {
         grid-template-columns: 1fr;
-        gap: 18px;
+        gap: 20px;
     }
 
     .vc-product-gallery {
-        grid-template-columns: 1fr;
+        position: static;
+        max-width: 420px;
+        margin: 0 auto;
+        width: 100%;
+    }
+
+    .vc-product-main-image {
+        aspect-ratio: 1 / 1;
     }
 
     .vc-product-thumbnails {
         flex-direction: row;
-    }
-
-    .vc-product-main-image {
-        height: clamp(160px, 38vw, 220px);
+        justify-content: center;
     }
 
     .vc-product-description-layout {
@@ -22783,50 +22747,48 @@ body.vc-modal-open {
     }
 
     .vc-product-main {
-        padding: 12px;
+        padding: 14px;
         border-radius: 18px;
         gap: 16px;
     }
 
+    .vc-product-gallery {
+        max-width: none;
+    }
+
     .vc-product-main-image {
-        height: clamp(150px, 42vw, 200px);
-        border-radius: 14px;
+        aspect-ratio: 1 / 1;
+        border-radius: 16px;
     }
 
     .vc-product-main-image > img {
+        padding: 8px;
         min-height: 0;
     }
 
     .vc-product-thumb {
-        width: 62px;
-        height: 62px;
+        width: 58px;
+        height: 58px;
     }
 
     .vc-product-info {
-        max-width: none;
-        padding: 2px 2px 6px;
+        padding: 0;
     }
 
     .vc-product-info h1 {
-        font-size: 26px;
+        font-size: 24px;
     }
 
     .vc-product-price strong {
-        font-size: 29px;
+        font-size: 28px;
     }
 
     .vc-product-purchase {
         grid-template-columns: 115px minmax(0,1fr);
-        max-width: none;
-    }
-
-    .vc-buy-now-btn {
-        max-width: none;
     }
 
     .vc-product-benefits {
         grid-template-columns: 1fr;
-        max-width: none;
     }
 
     .vc-delivery-check {
@@ -22864,7 +22826,7 @@ body.vc-modal-open {
 @media (max-width: 390px) {
 
     .vc-product-main-image {
-        height: 150px;
+        aspect-ratio: 1 / 1;
     }
 
     .vc-product-main-image > img {
@@ -47538,8 +47500,8 @@ RESPONSIVE
 .vc-product-main-image img {
     width: 100%;
     height: 100%;
-    object-fit: cover;
-    background: #f3f7f1;
+    object-fit: contain;
+    background: transparent;
 }
 .vc-product-main-image iframe.vc-main-pdf {
     position: absolute;
