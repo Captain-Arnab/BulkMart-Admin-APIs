@@ -21581,43 +21581,43 @@ input {
 .vc-product-main {
     display: grid;
     grid-template-columns: minmax(0, 1fr);
-    gap: 28px;
-    padding: 24px;
+    gap: 18px;
+    padding: 16px;
     border: 1px solid #e2ebe0;
-    border-radius: 28px;
+    border-radius: 24px;
     background: #fff;
-    box-shadow: 0 20px 55px rgba(39, 76, 41, .07);
+    box-shadow: 0 16px 40px rgba(39, 76, 41, .06);
 }
 
 
 /* ==========================================
-   GALLERY — full-width landscape banner
+   GALLERY — compact landscape banner
 ========================================== */
 
 .vc-product-gallery {
     min-width: 0;
     display: grid;
     grid-template-columns: minmax(0, 1fr);
-    gap: 14px;
+    gap: 10px;
 }
 
 .vc-product-thumbnails {
     display: flex;
     flex-direction: row;
     flex-wrap: nowrap;
-    gap: 10px;
+    gap: 8px;
     overflow-x: auto;
     padding-bottom: 2px;
     scrollbar-width: thin;
 }
 
 .vc-product-thumb {
-    width: 78px;
-    height: 78px;
+    width: 64px;
+    height: 64px;
     flex: 0 0 auto;
-    padding: 5px;
+    padding: 4px;
     border: 2px solid transparent;
-    border-radius: 15px;
+    border-radius: 12px;
     background: #f4f7f2;
     cursor: pointer;
     overflow: hidden;
@@ -21633,16 +21633,16 @@ input {
     width: 100%;
     height: 100%;
     object-fit: cover;
-    border-radius: 10px;
+    border-radius: 8px;
 }
 
 .vc-product-main-image {
     position: relative;
     width: 100%;
-    aspect-ratio: 16 / 9;
+    height: clamp(168px, 26vw, 280px);
     min-height: 0;
     overflow: hidden;
-    border-radius: 22px;
+    border-radius: 18px;
     background: #f2f6ef;
 }
 
@@ -21652,69 +21652,70 @@ input {
     min-height: 0;
     display: block;
     object-fit: cover;
+    object-position: center;
     transition: transform .5s ease;
 }
 
 .vc-product-main-image:hover > img {
-    transform: scale(1.03);
+    transform: scale(1.02);
 }
 
 .vc-product-discount {
     position: absolute;
-    top: 18px;
-    left: 18px;
+    top: 14px;
+    left: 14px;
     z-index: 2;
-    padding: 8px 13px;
+    padding: 7px 12px;
     border-radius: 50px;
     background: #e84f4f;
     color: #fff;
-    font-size: 12px;
+    font-size: 11px;
     font-weight: 800;
 }
 
 .vc-product-wishlist {
     position: absolute;
-    top: 16px;
-    right: 16px;
+    top: 12px;
+    right: 12px;
     z-index: 2;
-    width: 45px;
-    height: 45px;
+    width: 40px;
+    height: 40px;
     border: 0;
     border-radius: 50%;
     background: rgba(255,255,255,.95);
     color: #315c37;
-    font-size: 17px;
+    font-size: 16px;
     cursor: pointer;
     box-shadow: 0 8px 24px rgba(0,0,0,.10);
 }
 
 
 /* ==========================================
-   PRODUCT INFO — full width below banner
+   PRODUCT INFO — balanced full-width block
 ========================================== */
 
 .vc-product-info {
-    padding: 4px 4px 8px;
-    max-width: 920px;
+    padding: 2px 8px 6px;
+    max-width: none;
 }
 
 .vc-product-category {
     display: inline-flex;
-    padding: 7px 13px;
-    margin-bottom: 13px;
+    padding: 6px 12px;
+    margin-bottom: 10px;
     border-radius: 50px;
     background: #eaf5e7;
     color: #2d783d;
-    font-size: 12px;
+    font-size: 11px;
     font-weight: 750;
     text-transform: uppercase;
     letter-spacing: .5px;
 }
 
 .vc-product-info h1 {
-    margin: 0 0 12px;
+    margin: 0 0 8px;
     color: #173a20;
-    font-size: clamp(30px, 3vw, 42px);
+    font-size: clamp(26px, 2.6vw, 34px);
     line-height: 1.2;
     font-weight: 800;
 }
@@ -21727,7 +21728,7 @@ input {
     align-items: center;
     flex-wrap: wrap;
     gap: 8px;
-    margin-bottom: 18px;
+    margin-bottom: 12px;
 }
 
 .vc-stars {
@@ -21756,12 +21757,12 @@ input {
     align-items: center;
     flex-wrap: wrap;
     gap: 12px;
-    margin-bottom: 17px;
+    margin-bottom: 12px;
 }
 
 .vc-product-price strong {
     color: #247136;
-    font-size: 34px;
+    font-size: 30px;
     font-weight: 850;
 }
 
@@ -21780,10 +21781,11 @@ input {
 }
 
 .vc-product-short-description {
-    margin: 0 0 18px;
+    margin: 0 0 14px;
+    max-width: 62ch;
     color: #657267;
     font-size: 14px;
-    line-height: 1.8;
+    line-height: 1.7;
 }
 
 
@@ -22122,7 +22124,7 @@ body.vc-modal-open {
     grid-template-columns: 150px minmax(0, 1fr);
     gap: 12px;
     margin-top: 22px;
-    max-width: 560px;
+    max-width: 480px;
 }
 
 .vc-product-qty {
@@ -22181,7 +22183,7 @@ body.vc-modal-open {
 
 .vc-buy-now-btn {
     width: 100%;
-    max-width: 560px;
+    max-width: 480px;
     min-height: 52px;
     display: flex;
     align-items: center;
@@ -22203,14 +22205,69 @@ body.vc-modal-open {
 }
 
 
+/* Desktop: identity left, buy actions right — fills width without empty “dhepka” gap */
+@media (min-width: 900px) {
+    .vc-product-info {
+        display: grid;
+        grid-template-columns: minmax(0, 1.15fr) minmax(300px, 0.85fr);
+        column-gap: 40px;
+        row-gap: 0;
+        align-items: start;
+        padding: 4px 10px 8px;
+        grid-auto-flow: dense;
+    }
+
+    .vc-product-info > .vc-product-category,
+    .vc-product-info > h1,
+    .vc-product-info > .vc-product-rating,
+    .vc-product-info > .vc-product-price,
+    .vc-product-info > .vc-product-short-description,
+    .vc-product-info > .vc-product-stock {
+        grid-column: 1;
+    }
+
+    .vc-product-info > .vc-product-option,
+    .vc-product-info > .vc-product-purchase,
+    .vc-product-info > .vc-buy-now-btn,
+    .vc-product-info > .vc-product-benefits,
+    .vc-product-info > .vc-delivery-check {
+        grid-column: 2;
+    }
+
+    .vc-product-info > .vc-product-option {
+        margin-top: 0;
+        padding-top: 0;
+        border-top: 0;
+    }
+
+    .vc-product-info > .vc-product-purchase,
+    .vc-product-info > .vc-buy-now-btn {
+        max-width: none;
+    }
+
+    .vc-product-info > .vc-product-benefits {
+        grid-template-columns: 1fr;
+        max-width: none;
+        margin-top: 14px;
+    }
+
+    .vc-product-info > .vc-delivery-check {
+        max-width: none;
+        margin-top: 14px;
+    }
+
+    .vc-product-short-description {
+        max-width: none;
+    }
+}
+
 /* BENEFITS */
 
 .vc-product-benefits {
     display: grid;
     grid-template-columns: repeat(3, minmax(0, 1fr));
     gap: 12px;
-    margin-top: 24px;
-    max-width: 920px;
+    margin-top: 20px;
 }
 
 .vc-product-benefit {
@@ -22260,7 +22317,7 @@ body.vc-modal-open {
     border: 1px dashed #cbdcc7;
     border-radius: 14px;
     background: #fbfdf9;
-    max-width: 920px;
+    max-width: none;
 }
 
 .vc-delivery-check-title {
@@ -22701,7 +22758,7 @@ body.vc-modal-open {
     }
 
     .vc-product-main-image {
-        aspect-ratio: 16 / 10;
+        height: clamp(160px, 38vw, 220px);
     }
 
     .vc-product-description-layout {
@@ -22732,8 +22789,8 @@ body.vc-modal-open {
     }
 
     .vc-product-main-image {
-        aspect-ratio: 4 / 3;
-        border-radius: 16px;
+        height: clamp(150px, 42vw, 200px);
+        border-radius: 14px;
     }
 
     .vc-product-main-image > img {
@@ -22807,7 +22864,7 @@ body.vc-modal-open {
 @media (max-width: 390px) {
 
     .vc-product-main-image {
-        aspect-ratio: 1 / 1;
+        height: 150px;
     }
 
     .vc-product-main-image > img {
