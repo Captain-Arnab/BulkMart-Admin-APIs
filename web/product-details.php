@@ -231,20 +231,18 @@
 
                     </button>
 
+                    <a
+                        href="checkout.php"
+                        class="vc-buy-now-btn"
+                        id="vcBuyNowBtn">
+
+                        Buy Now
+
+                        <i class="fa-solid fa-arrow-right"></i>
+
+                    </a>
+
                 </div>
-
-
-
-                <!-- BUY NOW -->
-                <a
-                    href="checkout.php"
-                    class="vc-buy-now-btn">
-
-                    Buy Now
-
-                    <i class="fa-solid fa-arrow-right"></i>
-
-                </a>
 
 
 

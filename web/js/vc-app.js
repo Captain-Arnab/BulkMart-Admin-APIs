@@ -1626,7 +1626,8 @@
                 });
             }
             if (legacyBox) {
-                legacyBox.hidden = true;
+                // Keep qty in the action row; KG chips still set the value
+                legacyBox.hidden = false;
             }
             if (purchase) {
                 purchase.classList.add('vc-purchase-tiers-only');

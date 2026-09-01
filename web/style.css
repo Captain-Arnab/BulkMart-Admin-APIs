@@ -29,12 +29,38 @@
     --vc-shadow:
         0 10px 35px rgba(13, 70, 32, .09);
 
+    /* Site-wide typography (matches homepage / Why Choose section) */
+    --vc-font: "Inter", system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    --vc-text-xs: 12px;
+    --vc-text-sm: 14px;
+    --vc-text-md: 15px;
+    --vc-text-lg: clamp(18px, 2vw, 22px);
+    --vc-text-xl: clamp(26px, 3vw, 36px);
+    --vc-text-display: clamp(32px, 4vw, 48px);
+    --vc-leading-tight: 1.15;
+    --vc-leading-body: 1.65;
+    --vc-tracking-label: 0.06em;
+
+}
+
+
+html {
+    font-family: var(--vc-font);
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    text-rendering: optimizeLegibility;
 }
 
 
 body {
 
-    font-family: "Inter", sans-serif;
+    font-family: var(--vc-font);
+
+    font-size: var(--vc-text-sm);
+
+    line-height: var(--vc-leading-body);
+
+    font-weight: 400;
 
     color: var(--vc-text);
 
@@ -54,8 +80,18 @@ a {
 
 
 button,
-input {
+input,
+select,
+textarea {
     font-family: inherit;
+}
+
+
+h1, h2, h3, h4, h5, h6 {
+    font-family: var(--vc-font);
+    color: var(--vc-text);
+    line-height: var(--vc-leading-tight);
+    font-weight: 800;
 }
 
 
@@ -20003,7 +20039,7 @@ input {
         radial-gradient(circle at top left, rgba(54, 150, 74, 0.10), transparent 28%),
         radial-gradient(circle at bottom right, rgba(139, 195, 74, 0.12), transparent 28%),
         #f7faf6;
-    font-family: "Poppins", sans-serif;
+    font-family: "Inter", sans-serif;
 }
 
 .vc-cart-container {
@@ -20744,7 +20780,7 @@ input {
         radial-gradient(circle at 5% 5%, rgba(78, 157, 65, .10), transparent 24%),
         radial-gradient(circle at 95% 95%, rgba(147, 196, 78, .12), transparent 25%),
         #f7faf6;
-    font-family: "Poppins", sans-serif;
+    font-family: "Inter", sans-serif;
 }
 
 .vc-checkout-container {
@@ -21533,7 +21569,7 @@ input {
         radial-gradient(circle at 0 0, rgba(76, 160, 68, .09), transparent 23%),
         radial-gradient(circle at 100% 100%, rgba(155, 205, 80, .10), transparent 25%),
         #f8faf7;
-    font-family: "Poppins", sans-serif;
+    font-family: "Inter", sans-serif;
 }
 
 .vc-product-container {
@@ -21575,7 +21611,7 @@ input {
 
 
 /* ==========================================
-   MAIN PRODUCT — clean split (gallery | info)
+   MAIN PRODUCT ? clean split (gallery | info)
 ========================================== */
 
 .vc-product-main {
@@ -21592,7 +21628,7 @@ input {
 
 
 /* ==========================================
-   GALLERY — clear product photo
+   GALLERY ? clear product photo
 ========================================== */
 
 .vc-product-gallery {
@@ -21696,7 +21732,7 @@ input {
 
 
 /* ==========================================
-   PRODUCT INFO — single clean column
+   PRODUCT INFO ? single clean column
 ========================================== */
 
 .vc-product-info {
@@ -21929,7 +21965,8 @@ input {
 }
 
 .vc-product-purchase.vc-purchase-tiers-only {
-    grid-template-columns: 1fr;
+    /* keep same 3-across row; qty stays visible and syncs with KG tiers */
+    grid-template-columns: unset;
 }
 
 body.vc-modal-open {
@@ -22128,24 +22165,33 @@ body.vc-modal-open {
 }
 
 
-/* PURCHASE */
+/* PURCHASE ? always Qty + Add to Cart + Buy Now in ONE row */
 
 .vc-product-purchase {
-    display: grid;
-    grid-template-columns: 140px minmax(0, 1fr);
-    gap: 12px;
+    display: flex !important;
+    flex-direction: row !important;
+    flex-wrap: nowrap !important;
+    align-items: stretch;
+    gap: 10px;
     margin-top: 18px;
     max-width: none;
+    width: 100%;
 }
 
 .vc-product-qty {
-    height: 54px;
+    flex: 0 0 112px;
+    width: 112px;
+    height: 50px;
     display: grid;
-    grid-template-columns: 40px 1fr 40px;
+    grid-template-columns: 34px 1fr 34px;
     overflow: hidden;
     border: 1px solid #d9e4d7;
     border-radius: 12px;
     background: #fff;
+}
+
+.vc-product-qty[hidden] {
+    display: none !important;
 }
 
 .vc-product-qty button {
@@ -22157,6 +22203,7 @@ body.vc-modal-open {
 
 .vc-product-qty input {
     width: 100%;
+    min-width: 0;
     border: 0;
     outline: none;
     text-align: center;
@@ -22171,44 +22218,53 @@ body.vc-modal-open {
 }
 
 .vc-add-cart-btn {
-    min-height: 54px;
+    flex: 1 1 0;
+    min-width: 0;
+    min-height: 50px;
     display: flex;
     align-items: center;
     justify-content: center;
-    gap: 10px;
+    gap: 8px;
+    padding: 0 12px;
     border: 0;
     border-radius: 12px;
     background: linear-gradient(135deg,#2b793b,#3d924a);
     color: #fff;
     font-family: inherit;
-    font-size: 15px;
+    font-size: 13.5px;
     font-weight: 800;
     cursor: pointer;
-    box-shadow: 0 10px 25px rgba(42,124,58,.20);
+    box-shadow: 0 8px 20px rgba(42,124,58,.18);
     transition: .25s ease;
+    white-space: nowrap;
 }
 
 .vc-add-cart-btn:hover {
-    transform: translateY(-2px);
+    transform: translateY(-1px);
 }
 
 .vc-buy-now-btn {
-    width: 100%;
-    max-width: none;
-    min-height: 52px;
-    display: flex;
+    flex: 1 1 0;
+    min-width: 0;
+    width: auto !important;
+    max-width: none !important;
+    min-height: 50px;
+    display: flex !important;
     align-items: center;
     justify-content: center;
-    gap: 10px;
-    margin-top: 10px;
-    border: 1px solid #327c40;
+    gap: 8px;
+    margin-top: 0 !important;
+    padding: 0 12px;
+    border: 1.5px solid #327c40;
     border-radius: 12px;
     color: #2b7338;
     background: #fff;
-    font-size: 14px;
+    font-size: 13.5px;
     font-weight: 800;
     text-decoration: none;
     transition: .25s ease;
+    white-space: nowrap;
+    box-sizing: border-box;
 }
 
 .vc-buy-now-btn:hover {
@@ -22784,7 +22840,19 @@ body.vc-modal-open {
     }
 
     .vc-product-purchase {
-        grid-template-columns: 115px minmax(0,1fr);
+        flex-wrap: nowrap !important;
+        gap: 8px;
+    }
+
+    .vc-product-qty {
+        flex-basis: 96px;
+        width: 96px;
+    }
+
+    .vc-add-cart-btn,
+    .vc-buy-now-btn {
+        font-size: 12.5px;
+        padding: 0 8px;
     }
 
     .vc-product-benefits {
@@ -22834,11 +22902,27 @@ body.vc-modal-open {
     }
 
     .vc-product-purchase {
-        grid-template-columns: 1fr;
+        flex-wrap: nowrap !important;
+        gap: 6px;
     }
 
     .vc-product-qty {
-        width: 135px;
+        flex: 0 0 88px;
+        width: 88px;
+        grid-column: auto;
+    }
+
+    .vc-product-purchase.vc-purchase-tiers-only {
+        flex-wrap: nowrap !important;
+    }
+
+    .vc-add-cart-btn span {
+        display: none;
+    }
+
+    .vc-add-cart-btn::after {
+        content: "Cart";
+        font-weight: 800;
     }
 
     .vc-related-grid {
@@ -22862,7 +22946,7 @@ body.vc-modal-open {
         radial-gradient(circle at 0 0, rgba(76, 158, 68, .10), transparent 25%),
         radial-gradient(circle at 100% 100%, rgba(159, 204, 84, .12), transparent 25%),
         #f7faf6;
-    font-family: "Poppins", sans-serif;
+    font-family: "Inter", sans-serif;
 }
 
 .vc-shop-container {
@@ -23847,7 +23931,7 @@ body.vc-modal-open {
         radial-gradient(circle at 0 0, rgba(69, 151, 65, .10), transparent 26%),
         radial-gradient(circle at 100% 100%, rgba(151, 201, 78, .12), transparent 26%),
         #f7faf6;
-    font-family: "Poppins", sans-serif;
+    font-family: "Inter", sans-serif;
 }
 
 .vc-wishlist-container {
@@ -24394,7 +24478,7 @@ body.vc-modal-open {
         radial-gradient(circle at 5% 5%, rgba(75, 155, 68, .11), transparent 25%),
         radial-gradient(circle at 95% 95%, rgba(156, 204, 79, .12), transparent 27%),
         #f7faf6;
-    font-family: "Poppins", sans-serif;
+    font-family: "Inter", sans-serif;
 }
 
 .vc-login-container {
@@ -24789,7 +24873,7 @@ body.vc-modal-open {
 }
 
 .vc-remember-me input:checked + .vc-checkmark::after {
-    content: "✓";
+    content: "?";
     position: absolute;
     inset: 0;
     display: flex;
@@ -25029,7 +25113,7 @@ body.vc-modal-open {
         radial-gradient(circle at 5% 5%, rgba(75, 155, 68, .11), transparent 25%),
         radial-gradient(circle at 95% 95%, rgba(156, 204, 79, .12), transparent 27%),
         #f7faf6;
-    font-family: "Poppins", sans-serif;
+    font-family: "Inter", sans-serif;
 }
 
 .vc-signup-container {
@@ -25350,7 +25434,7 @@ body.vc-modal-open {
 }
 
 .vc-signup-terms input:checked + .vc-signup-checkmark::after {
-    content: "✓";
+    content: "?";
     position: absolute;
     inset: 0;
     display: flex;
@@ -25564,7 +25648,7 @@ body.vc-modal-open {
         radial-gradient(circle at 0 0, rgba(71, 151, 65, .09), transparent 24%),
         radial-gradient(circle at 100% 100%, rgba(150, 201, 75, .11), transparent 27%),
         #f7faf6;
-    font-family: "Poppins", sans-serif;
+    font-family: "Inter", sans-serif;
 }
 
 .vc-category-container {
@@ -26327,7 +26411,7 @@ body.vc-modal-open {
         radial-gradient(circle at top left, rgba(67, 150, 66, .10), transparent 25%),
         radial-gradient(circle at bottom right, rgba(157, 205, 79, .11), transparent 27%),
         #f7faf6;
-    font-family: "Poppins", sans-serif;
+    font-family: "Inter", sans-serif;
 }
 
 .vc-search-container {
@@ -27118,7 +27202,7 @@ body.vc-modal-open {
         radial-gradient(circle at 0 0, rgba(67, 151, 65, .10), transparent 25%),
         radial-gradient(circle at 100% 100%, rgba(156, 202, 80, .12), transparent 27%),
         #f7faf6;
-    font-family: "Poppins", sans-serif;
+    font-family: "Inter", sans-serif;
 }
 
 .vc-category-main-container {
@@ -27585,7 +27669,7 @@ body.vc-modal-open {
         radial-gradient(circle at 100% 20%, rgba(255, 193, 7, .10), transparent 25%),
         #f7faf7;
     padding: 45px 20px 70px;
-    font-family: "Poppins", sans-serif;
+    font-family: "Inter", sans-serif;
     color: #1d2a1f;
 }
 
@@ -28562,7 +28646,7 @@ RESPONSIVE
         radial-gradient(circle at top left, rgba(60, 180, 75, 0.08), transparent 34%),
         #f6f9f5;
     padding: 55px 18px 75px;
-    font-family: "Poppins", sans-serif;
+    font-family: "Inter", sans-serif;
     color: #17231b;
 }
 
@@ -29513,7 +29597,7 @@ RESPONSIVE
     background:
         radial-gradient(circle at 5% 5%, rgba(37, 161, 74, .08), transparent 30%),
         #f5f9f5;
-    font-family: "Poppins", sans-serif;
+    font-family: "Inter", sans-serif;
     color: #17251b;
 }
 
@@ -35836,7 +35920,7 @@ RESPONSIVE
 }
 
 .vc-offers-page {
-    font-family: "Poppins", sans-serif;
+    font-family: "Inter", sans-serif;
     color: #17261c;
     background: #ffffff;
 }
@@ -37038,7 +37122,7 @@ RESPONSIVE
 
 .vc-success-page {
     width: 100%;
-    font-family: "Poppins", sans-serif;
+    font-family: "Inter", sans-serif;
     background:
         linear-gradient(
             180deg,
@@ -38048,7 +38132,7 @@ RESPONSIVE
 
 .vc-business-page {
     width: 100%;
-    font-family: "Poppins", sans-serif;
+    font-family: "Inter", sans-serif;
     color: #1c3021;
     background: #f8fbf7;
 }
@@ -39410,7 +39494,7 @@ RESPONSIVE
 
 .vc-verification-page {
     width: 100%;
-    font-family: "Poppins", sans-serif;
+    font-family: "Inter", sans-serif;
     color: #203426;
     background: #f8fbf7;
 }
@@ -40453,7 +40537,7 @@ RESPONSIVE
 
 .vc-business-profile-page {
     width: 100%;
-    font-family: "Poppins", sans-serif;
+    font-family: "Inter", sans-serif;
     background: #f8fbf7;
     color: #213526;
 }
@@ -42275,7 +42359,7 @@ RESPONSIVE
 
 .vc-notifications-page {
     width: 100%;
-    font-family: "Poppins", sans-serif;
+    font-family: "Inter", sans-serif;
     background: #f8fbf7;
     color: #213526;
 }
@@ -42782,7 +42866,7 @@ RESPONSIVE
 
 .vc404-page {
     width: 100%;
-    font-family: "Poppins", sans-serif;
+    font-family: "Inter", sans-serif;
     color: #1d3423;
     background: #f8fbf7;
 }
@@ -43418,7 +43502,7 @@ RESPONSIVE
     margin: 0;
     padding: 0;
     overflow: hidden;
-    font-family: "Poppins", sans-serif;
+    font-family: "Inter", sans-serif;
     color: #23382a;
     background: #ffffff;
 }
@@ -45029,7 +45113,7 @@ RESPONSIVE
     width: 100%;
     margin: 0;
     padding: 0;
-    font-family: "Poppins", sans-serif;
+    font-family: "Inter", sans-serif;
     color: #263b2c;
     background: #f8fbf7;
 }
@@ -45602,7 +45686,7 @@ RESPONSIVE
     width: 100%;
     margin: 0;
     padding: 0;
-    font-family: "Poppins", sans-serif;
+    font-family: "Inter", sans-serif;
     background: #f8fbf7;
     color: #253a2b;
 }
@@ -46215,7 +46299,7 @@ RESPONSIVE
 .vg-policy-page {
     width: 100%;
     margin: 0;
-    font-family: "Poppins", sans-serif;
+    font-family: "Inter", sans-serif;
     background: #f7faf6;
     color: #24362a;
 }
@@ -46617,7 +46701,7 @@ RESPONSIVE
 }
 
 .vg-policy-grid-list span::before {
-    content: "✓";
+    content: "?";
     width: 19px;
     height: 19px;
     flex: 0 0 19px;
@@ -46635,7 +46719,7 @@ RESPONSIVE
 }
 
 .vg-policy-red-list span::before {
-    content: "×";
+    content: "?";
     background: #fff0ed;
     color: #c95642;
     font-size: 15px;
@@ -47544,7 +47628,7 @@ RESPONSIVE
     display: none !important;
 }
 
-/* Verification status — live layout + readable type */
+/* Verification status ? live layout + readable type */
 .vc-status-demo[hidden],
 .vc-status-demo {
     display: none !important;
@@ -47930,7 +48014,7 @@ RESPONSIVE
     width: 100%;
     margin: 0;
     padding: 0;
-    font-family: "Poppins", sans-serif;
+    font-family: "Inter", sans-serif;
  color: #1E1F22;
  background:
  radial-gradient(circle at top left, rgba(54, 150, 74, 0.08), transparent 28%),
@@ -48712,7 +48796,7 @@ RESPONSIVE
     }
 }
 
-/* Manage Address — searchable Hyderabad pincode select */
+/* Manage Address ? searchable Hyderabad pincode select */
 .vg-field-note {
     font-weight: 500;
     color: #6a7a6c;
@@ -49203,7 +49287,7 @@ RESPONSIVE
 }
 .vc-signup-actions .vc-login-submit { flex: 1; }
 .vc-signup-actions .vc-login-register { width: auto; min-width: 120px; margin: 0; }
-/* display:flex on .vc-login-register overrides native [hidden] — force hide */
+/* display:flex on .vc-login-register overrides native [hidden] ? force hide */
 .vc-signup-actions .vc-login-register[hidden],
 #vcSignupPrev[hidden] {
     display: none !important;
@@ -49234,4 +49318,54 @@ RESPONSIVE
 @media (max-width: 700px) {
     .vc-signup-step { font-size: 0; }
     .vc-signup-step span { font-size: 11px; }
+}
+
+/* ============================================================
+   GLOBAL TYPOGRAPHY LOCK ? match homepage Inter system
+============================================================ */
+html body,
+html body *:not(i):not(.fa):not([class^="fa-"]):not([class*=" fa-"]) {
+    font-family: var(--vc-font);
+}
+
+/* Keep document/print surfaces on Arial where intentionally set */
+.vc-invoice-page,
+.vc-invoice-page *,
+.vc-print-doc,
+.vc-print-doc * {
+    font-family: Arial, Helvetica, sans-serif;
+}
+
+.vc-section-tag,
+.vc-product-category,
+.vwhy-subtitle,
+.vrc-subtitle,
+.vbest-subtitle,
+.vcat-subtitle {
+    font-family: var(--vc-font);
+    font-weight: 800;
+    letter-spacing: var(--vc-tracking-label);
+    text-transform: uppercase;
+}
+
+.vc-product-info h1,
+.vc-product-page h1,
+.vc-category-hero h1,
+.vc-shop-heading h1,
+.vwhy-content h2,
+.vrc-heading h2,
+.vbest-heading h2 {
+    font-family: var(--vc-font);
+    font-weight: 800;
+    line-height: var(--vc-leading-tight);
+    color: var(--vc-text);
+}
+
+.vc-product-short-description,
+.vc-product-richtext p,
+.vwhy-intro,
+.vwhy-feature p {
+    font-family: var(--vc-font);
+    color: var(--vc-muted);
+    line-height: var(--vc-leading-body);
 }
