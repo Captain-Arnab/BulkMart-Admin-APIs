@@ -26,7 +26,7 @@ $returnPath = $returnQuery !== [] ? ('products?' . http_build_query($returnQuery
     <div class="card-body pt-4">
       <form method="POST" enctype="multipart/form-data" class="row g-3"
             action="<?= e($isEdit ? url('products/' . $p['id'] . '/update') : url('products')) ?>">
-        <?php if ($isEdit && $returnQuery !== []): ?>
+        <?php if ($isEdit): ?>
           <input type="hidden" name="return_to" value="<?= e(http_build_query($returnQuery)) ?>">
         <?php endif; ?>
         <div class="col-md-6">
@@ -142,9 +142,7 @@ $returnPath = $returnQuery !== [] ? ('products?' . http_build_query($returnQuery
               data-vc-confirm="Delete this product? Past orders keep the item name and price."
               data-vc-confirm-danger
               data-vc-confirm-title="Delete product">
-          <?php if ($returnQuery !== []): ?>
-            <input type="hidden" name="return_to" value="<?= e(http_build_query($returnQuery)) ?>">
-          <?php endif; ?>
+          <input type="hidden" name="return_to" value="<?= e(http_build_query($returnQuery)) ?>">
           <button class="btn btn-outline-danger" type="submit"><i class="bi bi-trash me-1"></i>Delete product</button>
         </form>
       <?php endif; ?>

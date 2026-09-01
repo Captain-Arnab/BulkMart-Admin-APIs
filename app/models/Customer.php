@@ -67,6 +67,13 @@ class Customer extends Model
         return compact('rows', 'total', 'page', 'pages') + ['per_page' => $perPage];
     }
 
+    /** All customers matching filters (no pagination) for export. */
+    public function exportRows(array $filters): array
+    {
+        $result = $this->paginate($filters, 1, 100000);
+        return $result['rows'];
+    }
+
     public function find(int $id): ?array
     {
         return $this->fetchOne('SELECT * FROM customers WHERE id = ?', [$id]);

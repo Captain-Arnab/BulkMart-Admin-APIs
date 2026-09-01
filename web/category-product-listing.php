@@ -59,32 +59,10 @@
              CATEGORY NAVIGATION
         ========================================== -->
         <div class="vc-category-tabs">
-
-            <a href="category.php?cat=all">
+            <a href="category-product-listing.php" class="active">
                 <i class="fa-solid fa-basket-shopping"></i>
                 All Products
             </a>
-
-            <a href="category.php?cat=vegetables" class="active">
-                <i class="fa-solid fa-carrot"></i>
-                Vegetables
-            </a>
-
-            <a href="category.php?cat=fruits">
-                <i class="fa-solid fa-apple-whole"></i>
-                Fruits
-            </a>
-
-            <a href="category.php?cat=leafy">
-                <i class="fa-solid fa-leaf"></i>
-                Leafy Greens
-            </a>
-
-            <a href="category.php?cat=herbs">
-                <i class="fa-solid fa-seedling"></i>
-                Herbs
-            </a>
-
         </div>
 
 

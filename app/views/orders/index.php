@@ -4,6 +4,14 @@
 $success = $success ?? null;
 $error = $error ?? null;
 $totalShown = count($result['rows'] ?? []);
+$exportQs = http_build_query(array_filter([
+    'q' => $filters['q'] ?? null,
+    'status' => !empty($filters['pending']) ? '__pending__' : ($filters['status'] ?? null),
+    'date_from' => $filters['date_from'] ?? null,
+    'date_to' => $filters['date_to'] ?? null,
+    'batch_id' => $filters['batch_id'] ?? null,
+], static fn($v) => $v !== null && $v !== '' && $v !== false));
+$exportUrl = url('orders/export' . ($exportQs !== '' ? '?' . $exportQs : ''));
 ?>
 <div class="pagetitle vc-pagetitle d-flex flex-wrap justify-content-between align-items-end gap-2">
   <div>
@@ -15,8 +23,13 @@ $totalShown = count($result['rows'] ?? []);
       </ol>
     </nav>
   </div>
-  <div class="vc-page-meta text-muted small">
-    <?= (int) ($result['total'] ?? 0) ?> total · page <?= (int) ($result['page'] ?? 1) ?>
+  <div class="d-flex flex-wrap align-items-center gap-2">
+    <span class="vc-page-meta text-muted small">
+      <?= (int) ($result['total'] ?? 0) ?> total · page <?= (int) ($result['page'] ?? 1) ?>
+    </span>
+    <a class="btn btn-outline-success btn-sm" href="<?= e($exportUrl) ?>">
+      <i class="bi bi-file-earmark-excel"></i> Export Excel
+    </a>
   </div>
 </div>
 

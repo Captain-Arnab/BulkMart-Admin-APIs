@@ -18,6 +18,37 @@ class CustomerController extends Controller
         ]);
     }
 
+    public function export(): void
+    {
+        $filters = [
+            'kyc_status' => trim((string) ($_GET['kyc_status'] ?? '')),
+            'q'          => trim((string) ($_GET['q'] ?? '')),
+        ];
+        $rows = (new Customer())->exportRows($filters);
+        $headers = [
+            'ID', 'Business Name', 'Owner Name', 'Mobile', 'Email', 'Business Type',
+            'GST Number', 'FSSAI Number', 'PAN Number', 'KYC Status', 'Blocked', 'Registered At',
+        ];
+        $data = [];
+        foreach ($rows as $c) {
+            $data[] = [
+                $c['id'] ?? '',
+                $c['business_name'] ?? '',
+                $c['owner_name'] ?? '',
+                $c['mobile'] ?? '',
+                $c['email'] ?? '',
+                $c['business_type'] ?? '',
+                $c['gst_number'] ?? '',
+                $c['fssai_number'] ?? '',
+                $c['pan_number'] ?? '',
+                $c['kyc_status'] ?? '',
+                !empty($c['is_blocked']) ? 'Yes' : 'No',
+                $c['created_at'] ?? '',
+            ];
+        }
+        SpreadsheetWriter::downloadXlsx('veggiicart_customers_' . date('Y-m-d') . '.xlsx', $headers, $data);
+    }
+
     public function show(string $id): void
     {
         $model = new Customer();

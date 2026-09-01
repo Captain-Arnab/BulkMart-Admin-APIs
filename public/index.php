@@ -172,6 +172,7 @@ $router->get('/categories/{id}/edit', [CategoryController::class, 'edit'], [requ
 $router->post('/categories/{id}/update', [CategoryController::class, 'update'], [require_module('categories')]);
 $router->post('/categories/{id}/delete', [CategoryController::class, 'delete'], [require_module('categories')]);
 $router->get('/orders', [OrderController::class, 'index'], [require_module('orders')]);
+$router->get('/orders/export', [OrderController::class, 'export'], [require_module('orders')]);
 $router->get('/orders/{id}', [OrderController::class, 'show'], [require_module('orders')]);
 $router->post('/orders/{id}/status', [OrderController::class, 'updateStatus'], [require_module('orders')]);
 $router->post('/orders/{id}/assign', [OrderController::class, 'assign'], [require_module('orders')]);
@@ -184,6 +185,7 @@ $router->post('/delivery/{id}/out-for-delivery', [DeliveryController::class, 'ou
 $router->post('/delivery/{id}/delivered', [DeliveryController::class, 'delivered'], [require_module('delivery')]);
 
 $router->get('/customers', [CustomerController::class, 'index'], [require_module('customers')]);
+$router->get('/customers/export', [CustomerController::class, 'export'], [require_module('customers')]);
 $router->get('/customers/{id}', [CustomerController::class, 'show'], [require_module('customers')]);
 $router->get('/customers/{id}/edit', [CustomerController::class, 'edit'], [require_module('customers')]);
 $router->post('/customers/{id}/update', [CustomerController::class, 'update'], [require_module('customers')]);

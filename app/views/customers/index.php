@@ -1,10 +1,20 @@
 <?php
 $success = $success ?? null; $error = $error ?? null;
+$exportQs = http_build_query(array_filter([
+    'q' => $filters['q'] ?? null,
+    'kyc_status' => $filters['kyc_status'] ?? null,
+], static fn($v) => $v !== null && $v !== ''));
+$exportUrl = url('customers/export' . ($exportQs !== '' ? '?' . $exportQs : ''));
 ?>
 <div class="pagetitle d-flex justify-content-between align-items-center flex-wrap gap-2">
   <div>
     <h1>Customers</h1>
     <nav><ol class="breadcrumb"><li class="breadcrumb-item"><a href="<?= e(url('dashboard')) ?>">Home</a></li><li class="breadcrumb-item active">Customers</li></ol></nav>
+  </div>
+  <div>
+    <a class="btn btn-outline-success btn-sm" href="<?= e($exportUrl) ?>">
+      <i class="bi bi-file-earmark-excel"></i> Export Excel
+    </a>
   </div>
 </div>
 <?php if ($success): ?><div class="alert alert-success"><?= e($success) ?></div><?php endif; ?>

@@ -522,16 +522,18 @@ class ProductController extends Controller
 
     /**
      * Preserve products list filters/page across edit → save.
+     * When return_to is present (edit form), use ONLY that — never the form's
+     * category_id (product category), which would incorrectly re-filter the list.
      *
      * @param array<string,mixed> $source
      * @return array<string,scalar>
      */
     private function listReturnQuery(array $source): array
     {
-        if (!empty($source['return_to']) && is_string($source['return_to'])) {
+        if (array_key_exists('return_to', $source) && is_string($source['return_to'])) {
             $parsed = [];
             parse_str($source['return_to'], $parsed);
-            $source = array_merge($source, $parsed);
+            $source = $parsed;
         }
 
         $out = [];

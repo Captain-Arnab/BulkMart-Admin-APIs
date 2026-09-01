@@ -1215,6 +1215,31 @@
         }
     }
 
+    function categoryTabIcon(name) {
+        var n = String(name || '').toLowerCase();
+        if (/fruit/.test(n)) return 'fa-apple-whole';
+        if (/herb|leafy|leaf|green/.test(n)) return 'fa-seedling';
+        if (/root/.test(n)) return 'fa-carrot';
+        if (/veg/.test(n)) return 'fa-carrot';
+        return 'fa-leaf';
+    }
+
+    function fillCategoryTabs(cats, selectedId) {
+        var tabs = document.querySelector('.vc-category-tabs');
+        if (!tabs) {
+            return;
+        }
+        var allActive = !selectedId;
+        var html = '<a href="category-product-listing.php"' + (allActive ? ' class="active"' : '') + '>' +
+            '<i class="fa-solid fa-basket-shopping"></i> All Products</a>';
+        html += cats.map(function (c) {
+            var sel = String(c.id) === String(selectedId);
+            return '<a href="' + categoryHref(c) + '"' + (sel ? ' class="active"' : '') + '>' +
+                '<i class="fa-solid ' + categoryTabIcon(c.name) + '"></i> ' + escapeHtml(c.name) + '</a>';
+        }).join('');
+        tabs.innerHTML = html;
+    }
+
     function fillCategoryFilters(cats, selectedId) {
         var box = document.querySelector('.vc-category-filter, .vc-search-filter-list');
         if (!box) {
@@ -1265,6 +1290,7 @@
                     selectedId = match.id;
                     return VC.products({ q: q, category_id: selectedId, per_page: 50 }).then(function (r2) {
                         products = (r2 && r2.success && r2.data.products) || [];
+                        fillCategoryTabs(cats, selectedId);
                         fillCategoryFilters(cats, selectedId);
                         renderProductGrid(grid, products);
                         bindShopFilters(grid, cats);
@@ -1273,6 +1299,7 @@
                 }
             }
 
+            fillCategoryTabs(cats, selectedId);
             fillCategoryFilters(cats, selectedId);
             renderProductGrid(grid, products);
             bindShopFilters(grid, cats);

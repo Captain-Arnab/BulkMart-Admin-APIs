@@ -4,17 +4,7 @@ class OrderController extends Controller
 {
     public function index(): void
     {
-        $statusRaw = trim((string) ($_GET['status'] ?? ''));
-        $pending = !empty($_GET['pending']) || $statusRaw === '__pending__';
-        $status = ($pending || $statusRaw === '__pending__') ? '' : $statusRaw;
-        $filters = [
-            'status'    => $status,
-            'date_from' => trim((string) ($_GET['date_from'] ?? '')),
-            'date_to'   => trim((string) ($_GET['date_to'] ?? '')),
-            'q'         => trim((string) ($_GET['q'] ?? '')),
-            'pending'   => $pending,
-            'batch_id'  => trim((string) ($_GET['batch_id'] ?? '')),
-        ];
+        $filters = $this->listFilters();
         $page = max(1, (int) ($_GET['page'] ?? 1));
         $result = (new Order())->paginate($filters, $page, 15);
 
@@ -25,6 +15,64 @@ class OrderController extends Controller
             'success' => flash('success'),
             'error'   => flash('error'),
         ]);
+    }
+
+    public function export(): void
+    {
+        $filters = $this->listFilters();
+        $rows = (new Order())->exportRows($filters);
+        $headers = [
+            'Order Number', 'Batch ID', 'Business Name', 'Owner Name', 'Mobile',
+            'Items', 'Subtotal', 'Delivery Fee', 'Discount', 'Total', 'Payment Method',
+            'Status', 'Placed At', 'Estimated Delivery', 'Delivery Manager',
+            'Address', 'City', 'State', 'Pincode',
+        ];
+        $data = [];
+        foreach ($rows as $o) {
+            $address = trim(implode(', ', array_filter([
+                $o['line1'] ?? '',
+                $o['line2'] ?? '',
+                $o['landmark'] ?? '',
+            ])));
+            $data[] = [
+                $o['order_number'] ?? '',
+                $o['batch_id'] ?? '',
+                $o['business_name'] ?? '',
+                $o['owner_name'] ?? '',
+                $o['mobile'] ?? '',
+                $o['item_count'] ?? '',
+                $o['subtotal'] ?? '',
+                $o['delivery_fee'] ?? '',
+                $o['discount_amount'] ?? '',
+                $o['total'] ?? '',
+                $o['payment_method'] ?? '',
+                Order::STATUS_LABELS[$o['status'] ?? ''] ?? ($o['status'] ?? ''),
+                $o['placed_at'] ?? '',
+                $o['estimated_delivery_date'] ?? '',
+                $o['delivery_manager_name'] ?? '',
+                $address,
+                $o['city'] ?? '',
+                $o['state'] ?? '',
+                $o['pincode'] ?? '',
+            ];
+        }
+        SpreadsheetWriter::downloadXlsx('veggiicart_orders_' . date('Y-m-d') . '.xlsx', $headers, $data);
+    }
+
+    /** @return array{status: string, date_from: string, date_to: string, q: string, pending: bool, batch_id: string} */
+    private function listFilters(): array
+    {
+        $statusRaw = trim((string) ($_GET['status'] ?? ''));
+        $pending = !empty($_GET['pending']) || $statusRaw === '__pending__';
+        $status = ($pending || $statusRaw === '__pending__') ? '' : $statusRaw;
+        return [
+            'status'    => $status,
+            'date_from' => trim((string) ($_GET['date_from'] ?? '')),
+            'date_to'   => trim((string) ($_GET['date_to'] ?? '')),
+            'q'         => trim((string) ($_GET['q'] ?? '')),
+            'pending'   => $pending,
+            'batch_id'  => trim((string) ($_GET['batch_id'] ?? '')),
+        ];
     }
 
     public function show(string $id): void

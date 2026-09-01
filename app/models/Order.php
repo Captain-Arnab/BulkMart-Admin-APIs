@@ -165,6 +165,13 @@ class Order extends Model
         ];
     }
 
+    /** All orders matching filters (no pagination) for export. */
+    public function exportRows(array $filters): array
+    {
+        $result = $this->paginate($filters, 1, 100000);
+        return $result['rows'];
+    }
+
     public function find(int $id): ?array
     {
         return $this->fetchOne(
