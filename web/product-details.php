@@ -440,58 +440,43 @@
                         </span>
 
 
-                        <h2>
-                            Freshness You Can Taste
-                        </h2>
-
-
-                        <p>
-                            Our farm fresh tomatoes are carefully selected
-                            for their colour, texture, freshness and natural
-                            flavour.
-                        </p>
-
-
-                        <p>
-                            They are ideal for Indian curries, salads,
-                            soups, sauces, chutneys and everyday home cooking.
-                            Veggicart aims to make fresh fruits and vegetables
-                            easily available with convenient doorstep delivery.
-                        </p>
+                        <div id="vcProductDescriptionText" class="vc-product-richtext">
+                            <p class="vc-tab-empty">Details coming soon</p>
+                        </div>
 
                     </div>
 
 
 
-                    <div class="vc-product-specifications">
+                    <div class="vc-product-specifications" id="vcProductSpecs">
 
                         <div>
                             <span>Category</span>
-                            <strong>Vegetables</strong>
+                            <strong data-spec="category">—</strong>
                         </div>
 
 
                         <div>
                             <span>Product</span>
-                            <strong>Fresh Tomato</strong>
+                            <strong data-spec="name">—</strong>
                         </div>
 
 
                         <div>
                             <span>Quality</span>
-                            <strong>Premium Fresh</strong>
+                            <strong data-spec="grade">—</strong>
                         </div>
 
 
                         <div>
-                            <span>Available Size</span>
-                            <strong>250 g – 2 Kg</strong>
+                            <span>Unit</span>
+                            <strong data-spec="unit">—</strong>
                         </div>
 
 
                         <div>
-                            <span>Storage</span>
-                            <strong>Cool & Dry Place</strong>
+                            <span>Origin</span>
+                            <strong data-spec="origin">—</strong>
                         </div>
 
                     </div>
@@ -511,59 +496,8 @@
                 id="benefits">
 
 
-                <div class="vc-product-tab-grid">
-
-
-                    <div class="vc-info-card">
-
-                        <i class="fa-solid fa-heart-pulse"></i>
-
-                        <h3>
-                            Healthy Choice
-                        </h3>
-
-                        <p>
-                            A fresh vegetable perfect for balanced
-                            everyday meals and home cooking.
-                        </p>
-
-                    </div>
-
-
-
-                    <div class="vc-info-card">
-
-                        <i class="fa-solid fa-seedling"></i>
-
-                        <h3>
-                            Fresh Produce
-                        </h3>
-
-                        <p>
-                            Carefully selected to maintain good
-                            freshness, texture and appearance.
-                        </p>
-
-                    </div>
-
-
-
-                    <div class="vc-info-card">
-
-                        <i class="fa-solid fa-utensils"></i>
-
-                        <h3>
-                            Versatile Cooking
-                        </h3>
-
-                        <p>
-                            Suitable for salads, curries, sauces,
-                            soups, chutneys and many recipes.
-                        </p>
-
-                    </div>
-
-
+                <div id="vcProductBenefits" class="vc-product-richtext vc-product-tab-panel">
+                    <p class="vc-tab-empty">Details coming soon</p>
                 </div>
 
             </div>
@@ -589,11 +523,9 @@
                         </h3>
 
 
-                        <p>
-                            Store tomatoes in a clean, cool and dry place.
-                            Once fully ripe, refrigeration can help preserve
-                            freshness for a longer period.
-                        </p>
+                        <div id="vcProductStorage" class="vc-product-richtext">
+                            <p class="vc-tab-empty">Details coming soon</p>
+                        </div>
 
                     </div>
 

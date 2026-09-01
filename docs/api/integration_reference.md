@@ -191,7 +191,7 @@ If `password` is omitted (or empty), `customers.password_hash` stays `NULL` (unc
 
 List/search/similar responses still return a single `image_url` (the cover/primary image) for backward compatibility.
 
-Product **detail** adds `description` and an `images` gallery array. `image_url` remains and is always the primary/cover image.
+Product **detail** adds `description`, `benefits`, `storage_tips`, and an `images` gallery array. `image_url` remains and is always the primary/cover image.
 
 ```json
 {
@@ -210,6 +210,8 @@ Product **detail** adds `description` and an `images` gallery array. `image_url`
   "grade": "A",
   "origin": null,
   "description": "Farm fresh tomatoes.",
+  "benefits": "Rich in lycopene and vitamin C.",
+  "storage_tips": "Keep in a cool, dry place. Refrigerate when ripe.",
   "images": [
     { "url": "http://localhost/VGS/veggiicart/public/uploads/products/cover.jpg", "is_primary": true, "sort_order": 0 },
     { "url": "http://localhost/VGS/veggiicart/public/uploads/products/side.jpg", "is_primary": false, "sort_order": 1 }
@@ -217,6 +219,7 @@ Product **detail** adds `description` and an `images` gallery array. `image_url`
 }
 ```
 
+- `description`, `benefits`, and `storage_tips` are optional strings (`null` when not set).
 - `images[].url` is an absolute media URL (same rules as `image_url`).
 - `images[].is_primary` is `true` for exactly one cover image when any images exist.
 - `images[].sort_order` is the admin gallery order (lower first).

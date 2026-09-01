@@ -22368,6 +22368,29 @@ body.vc-modal-open {
     font-size: 29px;
 }
 
+.vc-product-richtext p {
+    margin: 0 0 12px;
+    color: #5d6f63;
+    font-size: 14.5px;
+    line-height: 1.75;
+}
+
+.vc-product-richtext p:last-child {
+    margin-bottom: 0;
+}
+
+.vc-product-tab-panel {
+    padding: 8px 0 4px;
+}
+
+.vc-tab-empty {
+    margin: 0;
+    color: #8a9a8e;
+    font-size: 14.5px;
+    font-style: italic;
+    line-height: 1.75;
+}
+
 .vc-product-description-layout p {
     margin: 0 0 12px;
     color: #6b776d;

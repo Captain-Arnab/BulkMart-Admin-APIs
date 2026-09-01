@@ -39,6 +39,8 @@ CREATE TABLE IF NOT EXISTS `products` (
   `batch_no` VARCHAR(80) NULL,
   `item_code` VARCHAR(80) NULL,
   `description` TEXT NULL,
+  `benefits` TEXT NULL,
+  `storage_tips` TEXT NULL,
   `grade` VARCHAR(40) NULL,
   `origin` VARCHAR(120) NULL,
   `in_stock` TINYINT(1) NOT NULL DEFAULT 1,

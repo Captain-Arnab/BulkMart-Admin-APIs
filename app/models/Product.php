@@ -133,8 +133,8 @@ class Product extends Model
         $this->execute(
             "INSERT INTO products
               (category_id, name, unit, moq, price, stock, image_url, batch_no, item_code,
-               description, grade, origin, in_stock, is_active)
-             VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?)",
+               description, benefits, storage_tips, grade, origin, in_stock, is_active)
+             VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)",
             [
                 $data['category_id'],
                 $data['name'],
@@ -146,6 +146,8 @@ class Product extends Model
                 $data['batch_no'] ?? null,
                 $itemCode,
                 $data['description'] ?? null,
+                $data['benefits'] ?? null,
+                $data['storage_tips'] ?? null,
                 $data['grade'] ?? null,
                 $data['origin'] ?? null,
                 !empty($data['in_stock']) ? 1 : 0,
@@ -160,7 +162,8 @@ class Product extends Model
         return $this->execute(
             "UPDATE products SET
                 category_id = ?, name = ?, unit = ?, moq = ?, price = ?, stock = ?,
-                image_url = ?, batch_no = ?, item_code = ?, description = ?, grade = ?,
+                image_url = ?, batch_no = ?, item_code = ?, description = ?,
+                benefits = ?, storage_tips = ?, grade = ?,
                 origin = ?, in_stock = ?, is_active = ?
              WHERE id = ?",
             [
@@ -174,6 +177,8 @@ class Product extends Model
                 $data['batch_no'] ?? null,
                 $data['item_code'] ?? null,
                 $data['description'] ?? null,
+                $data['benefits'] ?? null,
+                $data['storage_tips'] ?? null,
                 $data['grade'] ?? null,
                 $data['origin'] ?? null,
                 !empty($data['in_stock']) ? 1 : 0,

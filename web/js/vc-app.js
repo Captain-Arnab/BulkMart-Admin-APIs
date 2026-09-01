@@ -1703,6 +1703,46 @@
         bindBulkEnquiryForm();
     }
 
+    function richTextHtml(text) {
+        var raw = String(text || '').trim();
+        if (!raw) {
+            return '<p class="vc-tab-empty">Details coming soon</p>';
+        }
+        return raw.split(/\n+/).map(function (para) {
+            para = para.trim();
+            return para ? '<p>' + escapeHtml(para) + '</p>' : '';
+        }).join('') || '<p class="vc-tab-empty">Details coming soon</p>';
+    }
+
+    function fillProductContentTabs(p) {
+        var descEl = document.getElementById('vcProductDescriptionText');
+        if (descEl) {
+            descEl.innerHTML = richTextHtml(p.description);
+        }
+        var benefitsEl = document.getElementById('vcProductBenefits');
+        if (benefitsEl) {
+            benefitsEl.innerHTML = richTextHtml(p.benefits);
+        }
+        var storageEl = document.getElementById('vcProductStorage');
+        if (storageEl) {
+            storageEl.innerHTML = richTextHtml(p.storage_tips);
+        }
+        var specs = document.getElementById('vcProductSpecs');
+        if (specs) {
+            var setSpec = function (key, value) {
+                var el = specs.querySelector('[data-spec="' + key + '"]');
+                if (el) {
+                    el.textContent = value && String(value).trim() !== '' ? String(value) : '—';
+                }
+            };
+            setSpec('category', p.category_name || '');
+            setSpec('name', titleCaseName(p.name || ''));
+            setSpec('grade', p.grade || 'Premium Fresh');
+            setSpec('unit', p.unit || '');
+            setSpec('origin', p.origin || '');
+        }
+    }
+
     function bootProductDetails() {
         var id = qs('id');
         if (!id) {
@@ -1728,10 +1768,7 @@
                 unitLabel.textContent = '/ ' + p.unit;
             }
             renderProductGallery(p);
-            var desc = document.querySelector('#description, .vc-product-tab-content, .vc-product-description');
-            if (desc && p.description) {
-                desc.textContent = p.description;
-            }
+            fillProductContentTabs(p);
 
             setupProductQuantityUI(p);
 

@@ -227,6 +227,8 @@ class CatalogApiController extends ApiController
         ];
         if ($detail) {
             $out['description'] = $p['description'] ?? null;
+            $out['benefits'] = $p['benefits'] ?? null;
+            $out['storage_tips'] = $p['storage_tips'] ?? null;
             $out['images'] = $this->formatImages((int) $p['id'], $out['image_url']);
         }
         return $out;

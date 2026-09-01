@@ -118,6 +118,14 @@ $returnPath = $returnQuery !== [] ? ('products?' . http_build_query($returnQuery
           <label class="form-label">Description <span class="text-muted fw-normal">(max <?= (int) VC_PRODUCT_DESC_MAX ?> characters)</span></label>
           <textarea name="description" class="form-control" rows="3" maxlength="<?= (int) VC_PRODUCT_DESC_MAX ?>" data-char-count><?= e($p['description'] ?? '') ?></textarea>
         </div>
+        <div class="col-12">
+          <label class="form-label">Benefits <span class="text-muted fw-normal">(optional, max <?= (int) VC_PRODUCT_DESC_MAX ?> characters)</span></label>
+          <textarea name="benefits" class="form-control" rows="3" maxlength="<?= (int) VC_PRODUCT_DESC_MAX ?>" data-char-count><?= e($p['benefits'] ?? '') ?></textarea>
+        </div>
+        <div class="col-12">
+          <label class="form-label">Storage Tips <span class="text-muted fw-normal">(optional, max <?= (int) VC_PRODUCT_DESC_MAX ?> characters)</span></label>
+          <textarea name="storage_tips" class="form-control" rows="3" maxlength="<?= (int) VC_PRODUCT_DESC_MAX ?>" data-char-count><?= e($p['storage_tips'] ?? '') ?></textarea>
+        </div>
         <div class="col-md-3">
           <div class="form-check mt-2">
             <input class="form-check-input" type="checkbox" name="in_stock" id="in_stock"

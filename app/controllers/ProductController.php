@@ -407,6 +407,14 @@ class ProductController extends Controller
         if (vc_strlen($description) > VC_PRODUCT_DESC_MAX) {
             throw new InvalidArgumentException('Description can be at most ' . VC_PRODUCT_DESC_MAX . ' characters.');
         }
+        $benefits = trim((string) ($_POST['benefits'] ?? ''));
+        if (vc_strlen($benefits) > VC_PRODUCT_DESC_MAX) {
+            throw new InvalidArgumentException('Benefits can be at most ' . VC_PRODUCT_DESC_MAX . ' characters.');
+        }
+        $storageTips = trim((string) ($_POST['storage_tips'] ?? ''));
+        if (vc_strlen($storageTips) > VC_PRODUCT_DESC_MAX) {
+            throw new InvalidArgumentException('Storage tips can be at most ' . VC_PRODUCT_DESC_MAX . ' characters.');
+        }
         if ($moq <= 0 || $price < 0 || $stock < 0) {
             throw new InvalidArgumentException('MOQ must be > 0; price/stock cannot be negative.');
         }
@@ -429,20 +437,22 @@ class ProductController extends Controller
         }
 
         return [
-            'category_id' => $categoryId,
-            'name'        => $name,
-            'unit'        => $unit,
-            'moq'         => $moq,
-            'price'       => $price,
-            'stock'       => $stock,
-            'batch_no'    => trim((string) ($_POST['batch_no'] ?? '')) ?: null,
-            'item_code'   => $itemCode,
-            'description' => $description !== '' ? $description : null,
-            'grade'       => trim((string) ($_POST['grade'] ?? '')) ?: null,
-            'origin'      => trim((string) ($_POST['origin'] ?? '')) ?: null,
-            'in_stock'    => $inStock,
-            'is_active'   => isset($_POST['is_active']) ? 1 : 0,
-            'image_url'   => null,
+            'category_id'  => $categoryId,
+            'name'         => $name,
+            'unit'         => $unit,
+            'moq'          => $moq,
+            'price'        => $price,
+            'stock'        => $stock,
+            'batch_no'     => trim((string) ($_POST['batch_no'] ?? '')) ?: null,
+            'item_code'    => $itemCode,
+            'description'  => $description !== '' ? $description : null,
+            'benefits'     => $benefits !== '' ? $benefits : null,
+            'storage_tips' => $storageTips !== '' ? $storageTips : null,
+            'grade'        => trim((string) ($_POST['grade'] ?? '')) ?: null,
+            'origin'       => trim((string) ($_POST['origin'] ?? '')) ?: null,
+            'in_stock'     => $inStock,
+            'is_active'    => isset($_POST['is_active']) ? 1 : 0,
+            'image_url'    => null,
         ];
     }
 
