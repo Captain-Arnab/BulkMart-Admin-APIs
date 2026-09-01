@@ -603,6 +603,48 @@ document.addEventListener("DOMContentLoaded", function () {
 
 document.addEventListener("DOMContentLoaded", function () {
 
+    /* ========================================
+       PRODUCT TABS (always bind — required with VC_LIVE)
+    ======================================== */
+
+    const tabs =
+        document.querySelectorAll(".vc-product-tab");
+
+    const tabContents =
+        document.querySelectorAll(".vc-product-tab-content");
+
+    tabs.forEach(function (tab) {
+
+        tab.addEventListener("click", function () {
+
+            const target =
+                tab.getAttribute("data-tab");
+
+
+            tabs.forEach(function (item) {
+                item.classList.remove("active");
+            });
+
+
+            tabContents.forEach(function (content) {
+                content.classList.remove("active");
+            });
+
+
+            tab.classList.add("active");
+
+
+            const targetContent =
+                document.getElementById(target);
+
+            if (targetContent) {
+                targetContent.classList.add("active");
+            }
+
+        });
+
+    });
+
     if (window.VC_LIVE) {
         return;
     }
@@ -713,49 +755,6 @@ document.addEventListener("DOMContentLoaded", function () {
         });
 
     }
-
-
-    /* ========================================
-       PRODUCT TABS
-    ======================================== */
-
-    const tabs =
-        document.querySelectorAll(".vc-product-tab");
-
-    const tabContents =
-        document.querySelectorAll(".vc-product-tab-content");
-
-    tabs.forEach(function (tab) {
-
-        tab.addEventListener("click", function () {
-
-            const target =
-                tab.getAttribute("data-tab");
-
-
-            tabs.forEach(function (item) {
-                item.classList.remove("active");
-            });
-
-
-            tabContents.forEach(function (content) {
-                content.classList.remove("active");
-            });
-
-
-            tab.classList.add("active");
-
-
-            const targetContent =
-                document.getElementById(target);
-
-            if (targetContent) {
-                targetContent.classList.add("active");
-            }
-
-        });
-
-    });
 
 
     /* ========================================
