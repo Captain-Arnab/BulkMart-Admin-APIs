@@ -20,19 +20,15 @@
 
 
         <!-- =========================================
-             MAIN PRODUCT AREA
+             MAIN PRODUCT AREA (stacked: banner image → info)
         ========================================== -->
         <div class="vc-product-main">
 
 
             <!-- =====================================
-                 LEFT PRODUCT GALLERY
+                 PRODUCT GALLERY (full-width banner)
             ====================================== -->
             <div class="vc-product-gallery">
-
-
-                <!-- THUMBNAILS -->
-                <div class="vc-product-thumbnails" id="vcProductThumbs"></div>
 
 
                 <!-- MAIN IMAGE -->
@@ -65,12 +61,16 @@
 
                 </div>
 
+
+                <!-- THUMBNAILS (below banner when multiple images) -->
+                <div class="vc-product-thumbnails" id="vcProductThumbs"></div>
+
             </div>
 
 
 
             <!-- =====================================
-                 RIGHT PRODUCT INFORMATION
+                 PRODUCT INFORMATION (full width below)
             ====================================== -->
             <div class="vc-product-info">
 
