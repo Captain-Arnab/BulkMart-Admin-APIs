@@ -25934,9 +25934,11 @@ body.vc-modal-open {
 
 .vc-category-filter-promo {
     padding: 23px 19px;
+    border: 1px solid #e2ebe0;
     border-radius: 17px;
-    background: linear-gradient(145deg,#194c27,#2d793a);
-    color: #fff;
+    background: #fff;
+    color: var(--vc-text);
+    box-shadow: 0 8px 22px rgba(39, 76, 41, .05);
 }
 
 .vc-category-filter-promo > span {
@@ -25947,18 +25949,21 @@ body.vc-modal-open {
     justify-content: center;
     margin-bottom: 12px;
     border-radius: 11px;
-    background: rgba(255,255,255,.12);
+    background: #eaf5e7;
+    color: #2f7a3d;
 }
 
 .vc-category-filter-promo h3 {
     margin: 0 0 6px;
+    color: #1d3d25;
     font-size: 15px;
+    font-weight: 800;
 }
 
 .vc-category-filter-promo p {
     margin: 0;
-    color: rgba(255,255,255,.68);
-    font-size: 10px;
+    color: #6a7a6e;
+    font-size: 12px;
     line-height: 1.65;
 }
 
@@ -49350,7 +49355,6 @@ html body *:not(i):not(.fa):not([class^="fa-"]):not([class*=" fa-"]) {
 
 .vc-product-info h1,
 .vc-product-page h1,
-.vc-category-hero h1,
 .vc-shop-heading h1,
 .vwhy-content h2,
 .vrc-heading h2,
@@ -49359,6 +49363,14 @@ html body *:not(i):not(.fa):not([class^="fa-"]):not([class*=" fa-"]) {
     font-weight: 800;
     line-height: var(--vc-leading-tight);
     color: var(--vc-text);
+}
+
+/* Keep category hero title white on green banner */
+.vc-category-hero h1 {
+    font-family: var(--vc-font);
+    font-weight: 800;
+    line-height: var(--vc-leading-tight);
+    color: #fff !important;
 }
 
 .vc-product-short-description,
