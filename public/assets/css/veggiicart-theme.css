@@ -2481,3 +2481,70 @@ a.vc-kpi-link:focus {
   box-shadow: var(--vc-shadow-sm);
 }
 
+/* ---------- Delivery address block + copy/share, Modified badge ---------- */
+.vc-status-group {
+  display: inline-flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 0.35rem;
+}
+.vc-orders-table .vc-status-group { justify-content: flex-start; }
+
+.vc-status--modified {
+  color: #8a4b00;
+  background: rgba(245, 158, 11, 0.16);
+  border-color: rgba(245, 158, 11, 0.4);
+}
+
+.vc-addr-tag {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.3rem;
+  margin-bottom: 0.4rem;
+  padding: 0.15em 0.6em;
+  border-radius: 999px;
+  background: var(--vc-primary-soft);
+  color: var(--vc-deep-forest);
+  font-size: 0.72rem;
+  font-weight: 700;
+  letter-spacing: 0.02em;
+}
+.vc-addr-tag i { font-size: 0.7rem; }
+
+.vc-addr-lines { color: var(--vc-ink); line-height: 1.45; }
+.vc-addr-street { font-weight: 600; }
+.vc-addr-landmark { margin-top: 0.15rem; font-size: 0.82rem; color: var(--vc-muted); }
+
+.vc-addr-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.4rem;
+  margin-top: 0.7rem;
+}
+.vc-addr-actions .btn { display: inline-flex; align-items: center; gap: 0.3rem; }
+.vc-addr-actions .btn.is-copied {
+  border-color: #12833b;
+  color: #12833b;
+  background: rgba(18, 131, 59, 0.08);
+}
+.vc-btn-whatsapp {
+  color: #fff;
+  background: #25d366;
+  border: 1px solid #1fb855;
+}
+.vc-btn-whatsapp:hover,
+.vc-btn-whatsapp:focus { color: #fff; background: #1fb855; }
+
+.vc-addr-geo { margin-top: 0.45rem; font-size: 0.75rem; font-weight: 600; }
+.vc-addr-geo.is-exact { color: #12833b; }
+.vc-addr-geo.is-approx { color: #a15c00; }
+.vc-addr-geo a { font-weight: 600; }
+
+.vc-addr-cell { min-width: 240px; max-width: 320px; }
+.vc-addr-block--compact { font-size: 0.82rem; }
+.vc-addr-block--compact .vc-addr-tag { margin-bottom: 0.25rem; }
+.vc-addr-block--compact .vc-addr-actions { margin-top: 0.45rem; gap: 0.3rem; }
+.vc-addr-block--compact .vc-addr-actions .btn { padding: 0.2rem 0.5rem; }
+.vc-addr-block--compact .vc-addr-geo { margin-top: 0.3rem; font-size: 0.7rem; }
+

@@ -97,6 +97,12 @@ class BusinessApiController extends ApiController
                 );
             }
 
+            if (in_array('business_photo', $this->customers->missingRequiredDocuments($id), true)) {
+                $msg = 'Shop-front photo is required. Upload it via POST /business/documents with '
+                    . 'document_type=shop_front_photo before completing registration.';
+                $this->fail('SHOP_PHOTO_REQUIRED', $msg, 422, ['shop_front_photo' => 'Shop-front photo is required.']);
+            }
+
             // Normalize to label for storage consistency with admin seeds
             $map = [];
             foreach (self::BUSINESS_TYPES as $t) {
@@ -342,7 +348,7 @@ class BusinessApiController extends ApiController
                 ];
             }, $docs),
             'catalog'              => array_map(static function (string $key, string $label): array {
-                return ['key' => $key, 'label' => $label];
+                return ['key' => $key, 'label' => $label, 'required' => in_array($key, Customer::REQUIRED_DOC_TYPES, true)];
             }, array_keys(Customer::DOC_LABELS), array_values(Customer::DOC_LABELS)),
         ]);
     }

@@ -51,10 +51,13 @@ if ($order['status'] === 'cancelled') {
               </div>
             </div>
             <div class="vc-order-summary-side">
-              <span class="<?= e($badge['class']) ?> vc-status--lg">
-                <i class="bi <?= e($badge['icon']) ?>"></i>
-                <?= e($badge['label']) ?>
-              </span>
+              <div class="vc-status-group">
+                <span class="<?= e($badge['class']) ?> vc-status--lg">
+                  <i class="bi <?= e($badge['icon']) ?>"></i>
+                  <?= e($badge['label']) ?>
+                </span>
+                <?php $badgeOrder = $order; require VIEW_PATH . '/shared/modified_badge.php'; ?>
+              </div>
               <div class="vc-order-hero-total">₹<?= e(number_format((float) $order['total'], 2)) ?></div>
             </div>
           </div>
@@ -113,12 +116,7 @@ if ($order['status'] === 'cancelled') {
             </div>
             <div class="vc-info-block">
               <div class="vc-info-label"><i class="bi bi-geo-alt"></i> Delivery address</div>
-              <div><?= e($order['line1']) ?></div>
-              <?php if ($order['line2']): ?><div><?= e($order['line2']) ?></div><?php endif; ?>
-              <div><?= e($order['city']) ?>, <?= e($order['state']) ?> — <?= e($order['pincode']) ?></div>
-              <?php if ($order['landmark']): ?>
-                <div class="small text-muted">Landmark: <?= e($order['landmark']) ?></div>
-              <?php endif; ?>
+              <?php $addrOrder = $order; $addrCompact = false; require VIEW_PATH . '/shared/order_address.php'; ?>
             </div>
           </div>
         </div>

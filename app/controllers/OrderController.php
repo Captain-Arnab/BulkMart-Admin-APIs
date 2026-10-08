@@ -97,6 +97,7 @@ class OrderController extends Controller
             'log'      => $model->statusLog((int) $id),
             'managers' => $model->deliveryManagers(),
             'next'     => Order::nextStatuses($order['status']),
+            'pageScripts' => [asset('js/vc-order-address.js')],
             'success'  => flash('success'),
             'error'    => flash('error'),
         ]);

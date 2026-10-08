@@ -195,6 +195,14 @@ assert_true($access !== '', 're-auth after logout');
 $bt = api('GET', '/business-types');
 assert_true(($bt['json']['success'] ?? false) === true && !empty($bt['json']['data']['business_types']), 'GET /business-types');
 
+$shopPng = makeTinyPng();
+$shopDoc = api('POST', '/business/documents', $access, null, [
+    'document_type' => 'shop_front_photo',
+    'file'          => new CURLFile($shopPng, 'image/png', 'shop.png'),
+]);
+assert_true(($shopDoc['json']['success'] ?? false) === true, 'POST /business/documents (shop_front_photo, required before register)');
+@unlink($shopPng);
+
 $reg = api('POST', '/business/register', $access, [
     'business_name' => 'Verify API Mart',
     'owner_name'    => 'Verify Owner',

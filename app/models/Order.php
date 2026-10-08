@@ -48,9 +48,23 @@ class Order extends Model
         'cancelled'         => [],
     ];
 
+    public const MAX_CUSTOMER_EDITS = 1;
+
     public static function canCancel(string $status): bool
     {
         return in_array($status, ['placed', 'confirmed', 'delivery_date_set'], true);
+    }
+
+    public static function isEditableStatus(string $status): bool
+    {
+        return in_array($status, ['placed', 'confirmed'], true);
+    }
+
+    /** @param array<string,mixed> $order needs status, edit_count */
+    public static function canEdit(array $order): bool
+    {
+        return self::isEditableStatus((string) ($order['status'] ?? ''))
+            && (int) ($order['edit_count'] ?? 0) < self::MAX_CUSTOMER_EDITS;
     }
 
     public static function nextStatuses(string $current): array
@@ -70,6 +84,83 @@ class Order extends Model
             'icon'  => self::STATUS_ICONS[$status] ?? 'bi-circle',
             'key'   => $status,
         ];
+    }
+
+    /** Customer used their one-time edit. */
+    public static function isModified(array $order): bool
+    {
+        return (int) ($order['edit_count'] ?? 0) >= 1;
+    }
+
+    /**
+     * Multi-line address for copy/share, from the find()/paginate() keys:
+     * address_label, line1, line2, city, state, pincode, landmark.
+     */
+    public static function formatAddress(array $order): string
+    {
+        $clean = static fn (string $key): string => trim((string) ($order[$key] ?? ''));
+        $lines = [];
+        if ($clean('address_label') !== '') {
+            $lines[] = $clean('address_label');
+        }
+        $street = implode(', ', array_filter([$clean('line1'), $clean('line2')], 'strlen'));
+        if ($street !== '') {
+            $lines[] = $street;
+        }
+        $region = implode(', ', array_filter([$clean('city'), $clean('state')], 'strlen'));
+        if ($clean('pincode') !== '') {
+            $region .= ($region !== '' ? ' - ' : '') . $clean('pincode');
+        }
+        if ($region !== '') {
+            $lines[] = $region;
+        }
+        if ($clean('landmark') !== '') {
+            $lines[] = 'Landmark: ' . $clean('landmark');
+        }
+        return implode("\n", $lines);
+    }
+
+    /**
+     * Google Maps link: exact pin when geo_lat AND geo_lng are set, otherwise an address search.
+     * The label (e.g. "Godown") is left out of the search query because it only adds noise.
+     *
+     * @return array{url: string, exact: bool}
+     */
+    public static function mapsLink(array $order): array
+    {
+        $lat = trim((string) ($order['geo_lat'] ?? ''));
+        $lng = trim((string) ($order['geo_lng'] ?? ''));
+        if ($lat !== '' && $lng !== '') {
+            return ['url' => 'https://maps.google.com/?q=' . $lat . ',' . $lng, 'exact' => true];
+        }
+        $query = str_replace("\n", ', ', self::formatAddress(['address_label' => ''] + $order));
+        return ['url' => 'https://www.google.com/maps/search/?api=1&query=' . rawurlencode($query), 'exact' => false];
+    }
+
+    /** wa.me share link; $phone pre-fills the recipient (10-digit Indian numbers get the 91 prefix), blank lets the admin pick. */
+    public static function whatsappShareUrl(array $order, ?string $phone = null): string
+    {
+        $maps = self::mapsLink($order);
+        $message = 'Delivery: Order #' . ($order['order_number'] ?? '') . "\n"
+            . trim((string) ($order['business_name'] ?? '')) . "\n";
+        $contact = implode(' · ', array_filter([
+            trim((string) ($order['owner_name'] ?? '')),
+            trim((string) ($order['mobile'] ?? '')),
+        ], 'strlen'));
+        if ($contact !== '') {
+            $message .= 'Contact: ' . $contact . "\n";
+        }
+        if (isset($order['total'])) {
+            $message .= 'COD: Rs ' . number_format((float) $order['total'], 2) . "\n";
+        }
+        $message .= "\n" . self::formatAddress($order) . "\n\n"
+            . ($maps['exact'] ? 'Location: ' : 'Location (approximate, from address): ') . $maps['url'];
+
+        $digits = preg_replace('/\D+/', '', (string) $phone) ?? '';
+        if (strlen($digits) === 10) {
+            $digits = '91' . $digits;
+        }
+        return 'https://wa.me/' . $digits . '?text=' . rawurlencode($message);
     }
 
     /**
@@ -143,8 +234,9 @@ class Order extends Model
         $rows = $this->fetchAll(
             "SELECT o.*,
                     c.business_name, c.owner_name, c.mobile,
-                    dm.name AS delivery_manager_name,
-                    a.line1, a.line2, a.city, a.state, a.pincode, a.landmark,
+                    dm.name AS delivery_manager_name, dm.mobile AS delivery_manager_mobile,
+                    a.label AS address_label, a.line1, a.line2, a.city, a.state, a.pincode, a.landmark,
+                    a.geo_lat, a.geo_lng,
                     (SELECT COUNT(*) FROM order_items oi WHERE oi.order_id = o.id) AS item_count
              FROM orders o
              INNER JOIN customers c ON c.id = o.customer_id
@@ -179,7 +271,9 @@ class Order extends Model
                     c.business_name, c.owner_name, c.mobile, c.email AS customer_email,
                     c.business_type, c.gst_number,
                     a.label AS address_label, a.line1, a.line2, a.city, a.state, a.pincode, a.landmark,
-                    dm.name AS delivery_manager_name, dm.email AS delivery_manager_email
+                    a.geo_lat, a.geo_lng,
+                    dm.name AS delivery_manager_name, dm.email AS delivery_manager_email,
+                    dm.mobile AS delivery_manager_mobile
              FROM orders o
              INNER JOIN customers c ON c.id = o.customer_id
              INNER JOIN addresses a ON a.id = o.address_id
@@ -251,7 +345,7 @@ class Order extends Model
         $page = max(1, min($page, $pages));
         $offset = ($page - 1) * $perPage;
         $rows = $this->fetchAll(
-            "SELECT o.id, o.order_number, o.status, o.subtotal, o.delivery_fee, o.discount_amount, o.coupon_code, o.batch_id, o.total,
+            "SELECT o.id, o.order_number, o.status, o.edit_count, o.subtotal, o.delivery_fee, o.discount_amount, o.coupon_code, o.batch_id, o.total,
                     o.payment_method, o.estimated_delivery_date, o.placed_at, o.delivered_at,
                     (SELECT COUNT(*) FROM order_items oi WHERE oi.order_id = o.id) AS item_count
              FROM orders o

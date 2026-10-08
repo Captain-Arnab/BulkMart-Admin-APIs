@@ -49381,3 +49381,330 @@ html body *:not(i):not(.fa):not([class^="fa-"]):not([class*=" fa-"]) {
     color: var(--vc-muted);
     line-height: var(--vc-leading-body);
 }
+
+/* =========================================================
+   Required shop photo, MOQ stepper, one-time order edit
+   ========================================================= */
+
+.vc-upload-card.is-required {
+    border-color: #e3a5a0;
+    background: #fffafa;
+}
+
+.vc-upload-card small.vc-doc-required-tag {
+    display: inline-block;
+    margin-top: 4px;
+    padding: 2px 8px;
+    border-radius: 999px;
+    background: #fde8e7;
+    color: #b42318 !important;
+    font-weight: 700;
+    letter-spacing: .02em;
+}
+
+.vc-upload-card.is-invalid {
+    border: 1.5px solid #d92d20;
+    background: #fff5f4;
+}
+
+.vc-upload-card.is-uploaded {
+    border-style: solid;
+    border-color: #4b9c51;
+}
+
+.vc-upload-card.is-uploaded .vc-file-name::after {
+    content: " \2713 uploaded";
+    color: #1a7f37;
+    font-weight: 700;
+}
+
+.vc-upload-error {
+    display: block;
+    margin-top: 6px;
+    color: #b42318;
+    font-size: 12px;
+    font-weight: 600;
+}
+
+.vc-moq-stepper {
+    display: inline-flex;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 6px;
+}
+
+.vc-moq-stepper .vc-qty-box button:disabled,
+#vcMoqMinus:disabled {
+    opacity: .35;
+    cursor: not-allowed;
+    background: transparent;
+}
+
+.vc-moq-stepper .vc-qty-box input[readonly],
+#vcProductQty[readonly] {
+    cursor: default;
+}
+
+.vc-moq-bulk-link {
+    padding: 0;
+    border: 0;
+    background: none;
+    color: #2f7a3d;
+    font: inherit;
+    font-size: 12px;
+    font-weight: 700;
+    text-decoration: underline;
+    cursor: pointer;
+}
+
+.vc-moq-hint {
+    display: block;
+    margin-top: 4px;
+    color: #6b7c6f;
+    font-size: 11px;
+}
+
+#vcMoqPlus.is-bulk {
+    background: #2f7a3d;
+    color: #fff;
+}
+
+.vc-bulk-quote-row.is-highlight {
+    border-style: solid;
+    border-color: #2f7a3d;
+    background: #eef7ec;
+}
+
+.vc-alloc-cell .vc-qty-box {
+    width: 140px;
+}
+
+.vc-alloc-cell .vc-qty-box input {
+    width: 100%;
+    padding: 0;
+    border-top: 0;
+    border-bottom: 0;
+    border-radius: 0;
+}
+
+.vc-alloc-cell.is-invalid .vc-qty-box {
+    border-color: #d92d20;
+    background: #fff5f4;
+}
+
+.vg-order-edit-locked {
+    display: flex;
+    align-items: flex-start;
+    gap: 10px;
+    margin-bottom: 18px;
+    padding: 14px 16px;
+    border: 1px solid #e2ebe0;
+    border-radius: 14px;
+    background: #f7faf6;
+    color: #4d6552;
+    font-size: 13px;
+    font-weight: 600;
+}
+
+.vc-order-edit-modal {
+    position: fixed;
+    inset: 0;
+    z-index: 2000;
+    display: none;
+    align-items: center;
+    justify-content: center;
+    padding: 16px;
+}
+
+.vc-order-edit-modal.show {
+    display: flex;
+}
+
+.vc-order-edit-backdrop {
+    position: absolute;
+    inset: 0;
+    background: rgba(17, 33, 20, .55);
+}
+
+.vc-order-edit-dialog {
+    position: relative;
+    width: min(760px, 100%);
+    max-height: calc(100vh - 32px);
+    display: flex;
+    flex-direction: column;
+    border-radius: 18px;
+    background: #fff;
+    box-shadow: 0 24px 60px rgba(0, 0, 0, .25);
+    overflow: hidden;
+}
+
+.vc-order-edit-head {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 18px 22px;
+    border-bottom: 1px solid #edf2ec;
+}
+
+.vc-order-edit-head h3 {
+    margin: 0;
+    color: #1f3b25;
+    font-size: 18px;
+}
+
+.vc-order-edit-x {
+    width: 36px;
+    height: 36px;
+    border: 0;
+    border-radius: 50%;
+    background: #f2f6f1;
+    color: #2d4a33;
+    cursor: pointer;
+}
+
+.vc-order-edit-warn {
+    margin: 14px 22px 0;
+    padding: 10px 14px;
+    border-radius: 10px;
+    background: #fff7e6;
+    color: #8a5a00;
+    font-size: 13px;
+}
+
+.vc-order-edit-list {
+    padding: 8px 22px;
+    overflow-y: auto;
+}
+
+.vc-order-edit-row {
+    display: grid;
+    grid-template-columns: 1fr auto 90px auto;
+    align-items: center;
+    gap: 14px;
+    padding: 14px 0;
+    border-bottom: 1px solid #f0f4ef;
+}
+
+.vc-order-edit-row.is-removed {
+    opacity: .55;
+}
+
+.vc-order-edit-row.is-removed .vc-order-edit-info strong {
+    text-decoration: line-through;
+}
+
+.vc-order-edit-info strong {
+    display: block;
+    color: #23442a;
+    font-size: 14px;
+}
+
+.vc-order-edit-info small {
+    display: block;
+    margin-top: 2px;
+    color: #6b7c6f;
+    font-size: 12px;
+}
+
+.vc-order-edit-info small.vc-order-edit-row-err {
+    color: #b42318;
+    font-weight: 600;
+}
+
+.vc-order-edit-line {
+    text-align: right;
+    color: #23442a;
+    font-weight: 700;
+}
+
+.vc-order-edit-remove {
+    border: 0;
+    background: none;
+    color: #b42318;
+    font: inherit;
+    font-size: 12px;
+    font-weight: 700;
+    cursor: pointer;
+}
+
+.vc-order-edit-error {
+    margin: 0 22px 10px;
+    padding: 10px 14px;
+    border-radius: 10px;
+    background: #fde8e7;
+    color: #b42318;
+    font-size: 13px;
+    font-weight: 600;
+}
+
+.vc-order-edit-foot {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: space-between;
+    gap: 14px;
+    padding: 16px 22px;
+    border-top: 1px solid #edf2ec;
+    background: #fafcf9;
+}
+
+.vc-order-edit-sum span {
+    display: block;
+    color: #6b7c6f;
+    font-size: 12px;
+}
+
+.vc-order-edit-sum strong {
+    color: #1f3b25;
+    font-size: 20px;
+}
+
+.vc-order-edit-sum small {
+    display: block;
+    max-width: 320px;
+    color: #8a978d;
+    font-size: 11px;
+}
+
+.vc-order-edit-actions {
+    display: flex;
+    gap: 10px;
+}
+
+.vc-order-edit-cancel,
+.vc-order-edit-save {
+    min-height: 42px;
+    padding: 0 18px;
+    border-radius: 10px;
+    font: inherit;
+    font-size: 14px;
+    font-weight: 700;
+    cursor: pointer;
+}
+
+.vc-order-edit-cancel {
+    border: 1px solid #cfd8d2;
+    background: #fff;
+    color: #2d4a33;
+}
+
+.vc-order-edit-save {
+    border: 0;
+    background: #2f7a3d;
+    color: #fff;
+}
+
+.vc-order-edit-save:disabled {
+    opacity: .5;
+    cursor: not-allowed;
+}
+
+@media (max-width: 640px) {
+    .vc-order-edit-row {
+        grid-template-columns: 1fr auto;
+    }
+
+    .vc-order-edit-line {
+        text-align: left;
+    }
+}

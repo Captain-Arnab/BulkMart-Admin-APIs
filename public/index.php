@@ -132,6 +132,8 @@ $router->get('/api/v1/orders/{id}/invoice', [OrderApiController::class, 'invoice
 $router->post('/api/v1/orders/{id}/reorder', [OrderApiController::class, 'reorder'], $apiAuth);
 $router->post('/api/v1/orders/{id}/cancel', [OrderApiController::class, 'cancel'], $apiAuth);
 $router->get('/api/v1/orders/{id}', [OrderApiController::class, 'show'], $apiAuth);
+$router->put('/api/v1/orders/{id}', [OrderApiController::class, 'update'], $apiAuth);
+$router->post('/api/v1/orders/{id}', [OrderApiController::class, 'update'], $apiAuth); // clients without PUT
 
 // ---------------------------------------------------------------------------
 // Admin panel (session auth)

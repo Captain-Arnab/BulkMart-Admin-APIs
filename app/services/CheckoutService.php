@@ -165,7 +165,7 @@ class CheckoutService
                         'name'       => '',
                     ];
                 }
-                $built = $this->buildLinesFromQuantities($pseudoCart, false);
+                $built = $this->buildLinesFromQuantities($pseudoCart);
                 $result = $this->insertOrder(
                     $customerId,
                     $block['address_id'],
@@ -214,23 +214,158 @@ class CheckoutService
     }
 
     /**
-     * Lock products and build order lines from cart-like rows.
-     * When $enforceMoqPerLine is true (normal cart), each line must meet MOQ.
-     * For split pieces, pass false and validate MOQ on totals separately via cart path.
+     * One-time customer edit of an order's line items (replaces all lines).
+     * Lines are re-priced at current catalog prices; delivery fee is kept; coupon is re-evaluated.
+     * If stock was already deducted (confirmed), old quantities are restored and new ones deducted.
      *
-     * @param list<array<string,mixed>> $rows
-     * @return array{lines:list<array<string,mixed>>,subtotal:float}
+     * @param mixed $items list<array{product_id:int,quantity:float}> from the request body
+     * @return array{order:array,items:array}
      */
-    private function buildLinesFromCartQuantities(array $rows): array
+    public function editOrder(int $orderId, int $customerId, mixed $items): array
     {
-        return $this->buildLinesFromQuantities($rows, true);
+        $rows = $this->normalizeEditItems($items);
+
+        $this->db->beginTransaction();
+        try {
+            $stmt = $this->db->prepare('SELECT * FROM orders WHERE id = ? FOR UPDATE');
+            $stmt->execute([$orderId]);
+            $order = $stmt->fetch();
+            if (!$order || (int) $order['customer_id'] !== $customerId) {
+                throw new DomainException('Order not found.');
+            }
+            if ((int) $order['edit_count'] >= Order::MAX_CUSTOMER_EDITS) {
+                throw new DomainException(
+                    'This order has already been modified once (edit_count = ' . (int) $order['edit_count']
+                    . '). Orders can only be modified one time. You can still cancel it if it has not been dispatched.'
+                );
+            }
+            if (!Order::isEditableStatus((string) $order['status'])) {
+                throw new DomainException(
+                    'This order can no longer be modified (status: '
+                    . (Order::STATUS_LABELS[$order['status']] ?? $order['status']) . ').'
+                );
+            }
+
+            $orderService = new OrderService($this->db);
+            $stockDeducted = $orderService->wasStockDeducted($orderId, (string) $order['status']);
+            if ($stockDeducted) {
+                $orderService->restoreStock($orderId);
+            }
+
+            $built = $this->buildLinesFromQuantities($rows);
+
+            $discount = 0.0;
+            $couponCode = $order['coupon_code'] ?: null;
+            if ($couponCode !== null) {
+                $offer = $this->coupons->getActiveByCode((string) $couponCode);
+                if (!$offer) {
+                    throw new DomainException(
+                        'Coupon ' . $couponCode . ' on this order has expired, so the order cannot be modified. '
+                        . 'Cancel and place a new order instead.'
+                    );
+                }
+                try {
+                    $discount = $this->coupons->calculate($offer, $built['lines'])['discount'];
+                } catch (DomainException $e) {
+                    throw new DomainException(
+                        'These changes make coupon ' . $couponCode . ' ineligible: ' . $e->getMessage()
+                    );
+                }
+            }
+            $deliveryFee = (float) $order['delivery_fee'];
+            $total = round(max(0, $built['subtotal'] - $discount) + $deliveryFee, 2);
+
+            $this->db->prepare('DELETE FROM order_items WHERE order_id = ?')->execute([$orderId]);
+            $this->insertOrderItems($orderId, $built['lines']);
+
+            if ($stockDeducted) {
+                $orderService->deductStock($orderId);
+            }
+
+            $upd = $this->db->prepare(
+                'UPDATE orders SET subtotal = ?, discount_amount = ?, total = ?, edit_count = edit_count + 1
+                 WHERE id = ? AND edit_count < ?'
+            );
+            $upd->execute([$built['subtotal'], $discount, $total, $orderId, Order::MAX_CUSTOMER_EDITS]);
+            if ($upd->rowCount() !== 1) {
+                throw new DomainException('This order has already been modified once. Orders can only be modified one time.');
+            }
+
+            $this->db->prepare(
+                'INSERT INTO order_status_log (order_id, status, changed_by_admin_id, note) VALUES (?,?,NULL,?)'
+            )->execute([
+                $orderId,
+                $order['status'],
+                'Order modified by customer (one-time edit). New total ₹' . number_format($total, 2),
+            ]);
+            $this->db->prepare(
+                'INSERT INTO notifications (customer_id, title, body, type, related_id, is_read)
+                 VALUES (?,?,?,?,?,0)'
+            )->execute([
+                $customerId,
+                'Order modified',
+                "Your order {$order['order_number']} has been updated. New total ₹" . number_format($total, 2)
+                    . '. This order cannot be modified again.',
+                'order',
+                $orderId,
+            ]);
+
+            $this->db->commit();
+
+            return [
+                'order' => $this->orders->find($orderId) ?? [],
+                'items' => $this->orders->items($orderId),
+            ];
+        } catch (Throwable $e) {
+            if ($this->db->inTransaction()) {
+                $this->db->rollBack();
+            }
+            throw $e;
+        }
+    }
+
+    /**
+     * @param mixed $items
+     * @return list<array{product_id:int,quantity:float,name:string}>
+     */
+    private function normalizeEditItems(mixed $items): array
+    {
+        if (!is_array($items) || $items === []) {
+            throw new DomainException(
+                'items must be a non-empty list of {product_id, quantity}. To remove everything, cancel the order instead.'
+            );
+        }
+        $rows = [];
+        foreach (array_values($items) as $idx => $item) {
+            $pid = is_array($item) ? (int) ($item['product_id'] ?? 0) : 0;
+            $qty = is_array($item) ? (float) ($item['quantity'] ?? 0) : 0.0;
+            if ($pid < 1 || $qty <= 0) {
+                throw new DomainException('items[' . $idx . '] needs a valid product_id and a quantity greater than 0.');
+            }
+            if (isset($rows[$pid])) {
+                throw new DomainException('Product #' . $pid . ' appears more than once in items.');
+            }
+            $rows[$pid] = ['product_id' => $pid, 'quantity' => $qty, 'name' => ''];
+        }
+        return array_values($rows);
     }
 
     /**
      * @param list<array<string,mixed>> $rows
      * @return array{lines:list<array<string,mixed>>,subtotal:float}
      */
-    private function buildLinesFromQuantities(array $rows, bool $enforceMoqPerLine): array
+    private function buildLinesFromCartQuantities(array $rows): array
+    {
+        return $this->buildLinesFromQuantities($rows);
+    }
+
+    /**
+     * Lock products and build order lines; every line must be an exact multiple of the product MOQ.
+     *
+     * @param list<array<string,mixed>> $rows
+     * @return array{lines:list<array<string,mixed>>,subtotal:float}
+     */
+    private function buildLinesFromQuantities(array $rows): array
     {
         $lines = [];
         $subtotal = 0.0;
@@ -246,14 +381,9 @@ class CheckoutService
             }
 
             $qty = (float) $ci['quantity'];
-            $moq = (float) $product['moq'];
             $stock = (float) $product['stock'];
 
-            if ($enforceMoqPerLine && $qty < $moq) {
-                throw new DomainException(
-                    'Quantity for "' . $product['name'] . '" is below MOQ (' . $moq . ').'
-                );
-            }
+            Product::assertMoqMultiple($product, $qty);
             if ($stock < $qty || (int) $product['in_stock'] === 0) {
                 throw new DomainException(
                     'Insufficient stock for "' . $product['name'] . '" (available ' . $stock . ', requested ' . $qty . ').'
@@ -335,22 +465,7 @@ class CheckoutService
         ]);
         $orderId = (int) $this->db->lastInsertId();
 
-        $ins = $this->db->prepare(
-            'INSERT INTO order_items
-              (order_id, product_id, product_name_snapshot, unit_snapshot, quantity, unit_price_snapshot, line_total)
-             VALUES (?,?,?,?,?,?,?)'
-        );
-        foreach ($lines as $line) {
-            $ins->execute([
-                $orderId,
-                $line['product_id'],
-                $line['product_name_snapshot'],
-                $line['unit_snapshot'],
-                $line['quantity'],
-                $line['unit_price_snapshot'],
-                $line['line_total'],
-            ]);
-        }
+        $this->insertOrderItems($orderId, $lines);
 
         $note = $batchId
             ? 'Placed via multi-address checkout (batch ' . $batchId . ')'
@@ -376,6 +491,27 @@ class CheckoutService
         }
 
         return ['order_id' => $orderId, 'order_number' => $orderNumber];
+    }
+
+    /** @param list<array<string,mixed>> $lines */
+    private function insertOrderItems(int $orderId, array $lines): void
+    {
+        $ins = $this->db->prepare(
+            'INSERT INTO order_items
+              (order_id, product_id, product_name_snapshot, unit_snapshot, quantity, unit_price_snapshot, line_total)
+             VALUES (?,?,?,?,?,?,?)'
+        );
+        foreach ($lines as $line) {
+            $ins->execute([
+                $orderId,
+                $line['product_id'],
+                $line['product_name_snapshot'],
+                $line['unit_snapshot'],
+                $line['quantity'],
+                $line['unit_price_snapshot'],
+                $line['line_total'],
+            ]);
+        }
     }
 
     private function generateOrderNumber(): string

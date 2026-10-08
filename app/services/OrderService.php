@@ -348,7 +348,7 @@ class OrderService
         return (string) random_int(100000, 999999);
     }
 
-    private function deductStock(int $orderId): void
+    public function deductStock(int $orderId): void
     {
         $items = $this->orders->items($orderId);
         foreach ($items as $item) {
@@ -370,7 +370,7 @@ class OrderService
         }
     }
 
-    private function restoreStock(int $orderId): void
+    public function restoreStock(int $orderId): void
     {
         $items = $this->orders->items($orderId);
         foreach ($items as $item) {
@@ -386,7 +386,7 @@ class OrderService
         }
     }
 
-    private function wasStockDeducted(int $orderId, string $currentStatus): bool
+    public function wasStockDeducted(int $orderId, string $currentStatus): bool
     {
         if (in_array($currentStatus, ['confirmed', 'delivery_date_set', 'out_for_delivery', 'delivered'], true)) {
             return true;

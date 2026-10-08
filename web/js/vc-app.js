@@ -69,6 +69,135 @@
         return (res && res.error && res.error.message) || fallback || 'Something went wrong.';
     }
 
+    /* ---------- MOQ quantity rules (server: quantity must be moq × units) ---------- */
+
+    function moqOf(p) {
+        var m = Number(p && p.moq);
+        return m > 0 ? m : 1;
+    }
+
+    function roundQty(n) {
+        return Math.round(Number(n) * 100) / 100;
+    }
+
+    /** Hundredths, because quantities are DECIMAL(12,2) server-side. */
+    function isMoqMultiple(qty, moq) {
+        var q = Math.round(Number(qty) * 100);
+        var m = Math.round(Number(moq) * 100);
+        if (q <= 0) {
+            return false;
+        }
+        return m <= 0 || q % m === 0;
+    }
+
+    /** Next MOQ multiple above/below `current` (snaps legacy non-multiples onto the grid). */
+    function stepMoq(current, moq, dir) {
+        var units = Number(current) / moq;
+        var next = dir > 0 ? Math.floor(units + 1e-9) + 1 : Math.ceil(units - 1e-9) - 1;
+        return roundQty(next * moq);
+    }
+
+    function unitShort(unit) {
+        return String(unit || '').replace(/^\s*per\s+/i, '').trim();
+    }
+
+    function moqHint(p) {
+        var u = unitShort(p && p.unit);
+        var moq = moqOf(p);
+        return 'MOQ ' + moq + (u ? ' ' + u : '') + ' · steps of ' + moq;
+    }
+
+    function openBulkQuote(productId) {
+        if (!productId) {
+            return;
+        }
+        if (bootProductDetails.current && Number(bootProductDetails.current.id) === Number(productId)
+            && document.getElementById('vcBulkEnquiryModal')) {
+            openBulkEnquiryModal(bootProductDetails.current);
+            return;
+        }
+        window.location.href = 'product-details.php?id=' + encodeURIComponent(productId) + '&bulk=1';
+    }
+
+    /**
+     * Stepper markup. o: { value, moq, min?, max?, bulk?, productId?, attrs?, inputAttrs?, editable? }
+     * bulk=true: at `max` (bulk_quote_threshold) the + button opens Get Bulk Quote instead of stepping.
+     */
+    function moqStepperHtml(o) {
+        var moq = moqOf(o);
+        var value = roundQty(Number(o.value) || 0);
+        var min = o.min != null ? Number(o.min) : moq;
+        var max = o.max != null && Number(o.max) > 0 ? Number(o.max) : null;
+        var atMax = max !== null && value >= max - 1e-9;
+        return '<div class="vc-moq-stepper"' + (o.attrs || '') +
+                ' data-moq="' + moq + '" data-min="' + min + '"' +
+                (max !== null ? ' data-max="' + max + '"' : '') +
+                (o.bulk ? ' data-bulk="1" data-product-id="' + escapeHtml(o.productId) + '"' : '') + '>' +
+            '<div class="vc-qty-box">' +
+                '<button type="button" class="vc-qty-minus" data-moq-step="-1" aria-label="Decrease by ' + moq + '"' +
+                    (value <= min + 1e-9 ? ' disabled' : '') + '><i class="fa-solid fa-minus"></i></button>' +
+                '<input type="number" value="' + value + '"' +
+                    (o.editable ? ' min="' + min + '" step="' + moq + '" inputmode="decimal"' : ' readonly tabindex="-1"') +
+                    (o.inputAttrs || '') + ' aria-label="Quantity">' +
+                '<button type="button" class="vc-qty-plus" data-moq-step="1" aria-label="Increase by ' + moq + '"' +
+                    (atMax && !o.bulk ? ' disabled' : '') + '><i class="fa-solid fa-plus"></i></button>' +
+            '</div>' +
+            (atMax && o.bulk
+                ? '<button type="button" class="vc-moq-bulk-link" data-bulk-quote="' + escapeHtml(o.productId) + '">' +
+                    '<i class="fa-solid fa-boxes-stacked"></i> Need more? Get Bulk Quote</button>'
+                : '') +
+        '</div>';
+    }
+
+    /**
+     * Resolve a [data-moq-step] click. Returns { value } to apply, { bulk: productId } when the
+     * customer tries to go past bulk_quote_threshold, or null when the step is out of range.
+     */
+    function moqStepperNext(btn) {
+        var box = btn.closest('.vc-moq-stepper');
+        if (!box) {
+            return null;
+        }
+        var input = box.querySelector('input');
+        var moq = Number(box.getAttribute('data-moq')) || 1;
+        var min = Number(box.getAttribute('data-min'));
+        var maxAttr = box.getAttribute('data-max');
+        var max = maxAttr !== null ? Number(maxAttr) : null;
+        var dir = Number(btn.getAttribute('data-moq-step'));
+        var next = stepMoq(Number(input && input.value) || 0, moq, dir);
+        if (dir < 0 && next < min - 1e-9) {
+            return null;
+        }
+        if (dir > 0 && max !== null && next > max + 1e-9) {
+            return box.getAttribute('data-bulk') === '1' ? { bulk: box.getAttribute('data-product-id') } : null;
+        }
+        return { value: next };
+    }
+
+    /** Re-sync +/- disabled state after a stepper's value changed in place. */
+    function syncMoqStepper(box) {
+        var input = box.querySelector('input');
+        var v = Number(input && input.value) || 0;
+        var min = Number(box.getAttribute('data-min'));
+        var maxAttr = box.getAttribute('data-max');
+        var minus = box.querySelector('[data-moq-step="-1"]');
+        var plus = box.querySelector('[data-moq-step="1"]');
+        if (minus) {
+            minus.disabled = v <= min + 1e-9;
+        }
+        if (plus && box.getAttribute('data-bulk') !== '1') {
+            plus.disabled = maxAttr !== null && v >= Number(maxAttr) - 1e-9;
+        }
+    }
+
+    document.addEventListener('click', function (e) {
+        var bulkBtn = e.target.closest('[data-bulk-quote]');
+        if (bulkBtn) {
+            e.preventDefault();
+            openBulkQuote(bulkBtn.getAttribute('data-bulk-quote'));
+        }
+    });
+
     function toast(message, type) {
         if (window.VC && typeof window.VC.toast === 'function' && typeof Swal !== 'undefined') {
             return window.VC.toast(message, type);
@@ -1414,27 +1543,6 @@
         });
     }
 
-    function isKgProductUnit(unit) {
-        var u = String(unit || '').toLowerCase();
-        if (!u) {
-            return true;
-        }
-        if (/(bunch|dozen|piece|pcs|pack|bag|box|tray|bundle|leaf|leaves)/.test(u)) {
-            return false;
-        }
-        return /kg|kilo|kilogram/.test(u) || u === 'per kg' || u.indexOf('per kg') !== -1;
-    }
-
-    function qtyTiersForProduct(p) {
-        var base = [25, 50, 75, 100];
-        var moq = Number(p && p.moq) || 1;
-        var filtered = base.filter(function (q) { return q >= moq; });
-        if (!filtered.length) {
-            filtered = [Math.max(moq, 100)];
-        }
-        return filtered;
-    }
-
     function openBulkEnquiryModal(product) {
         var modal = document.getElementById('vcBulkEnquiryModal');
         if (!modal) {
@@ -1575,123 +1683,78 @@
         });
     }
 
+    /** Product page stepper: starts at 1×moq, ±moq per tap, capped at bulk_quote_threshold (both from the API). */
     function setupProductQuantityUI(p) {
         var qtyInput = document.getElementById('vcProductQty');
-        var tierBlock = document.getElementById('vcQtyTierBlock');
-        var tierWrap = document.getElementById('vcQtyTiers');
         var legacyBox = document.getElementById('vcLegacyQtyBox');
         var lineTotal = document.getElementById('vcQtyLineTotal');
-        var purchase = document.querySelector('.vc-product-purchase');
         var hint = document.getElementById('vcQtyTierHint');
+        var quoteLabel = document.getElementById('vcBulkQuoteLabel');
+        var minus = document.getElementById('vcMoqMinus');
+        var plus = document.getElementById('vcMoqPlus');
         var unitPrice = Number(p.price) || 0;
-        var useKgTiers = isKgProductUnit(p.unit);
-
-        function syncLineTotal(qty) {
-            if (!lineTotal) {
-                return;
-            }
-            if (!qty || qty < 1) {
-                lineTotal.hidden = true;
-                return;
-            }
-            lineTotal.hidden = false;
-            lineTotal.textContent = 'Line total: ' + money(unitPrice * qty) +
-                ' for ' + qty + (useKgTiers ? ' KG' : (' ' + (p.unit || 'units')));
-        }
+        var unit = unitShort(p.unit);
+        var moq = moqOf(p);
+        var max = Number(p.bulk_quote_threshold) > 0 ? Number(p.bulk_quote_threshold) : null;
 
         function setQty(qty) {
-            qty = Number(qty) || 1;
+            qty = roundQty(qty);
             if (qtyInput) {
                 qtyInput.value = String(qty);
             }
-            syncLineTotal(qty);
+            if (minus) {
+                minus.disabled = qty <= moq + 1e-9;
+            }
+            var atMax = max !== null && qty >= max - 1e-9;
+            if (plus) {
+                plus.classList.toggle('is-bulk', atMax);
+                plus.setAttribute('aria-label', atMax ? 'Get bulk quote' : 'Increase quantity');
+                plus.title = atMax ? 'Above ' + max + (unit ? ' ' + unit : '') + '? Get a bulk quote' : '';
+            }
+            if (quoteLabel) {
+                quoteLabel.textContent = max !== null
+                    ? 'Need more than ' + max + (unit ? ' ' + unit : '') + '?'
+                    : 'Need a larger bulk order?';
+            }
+            var row = document.getElementById('vcBulkQuoteRow');
+            if (row) {
+                row.classList.toggle('is-highlight', atMax);
+            }
+            if (lineTotal) {
+                lineTotal.hidden = false;
+                lineTotal.textContent = 'Line total: ' + money(unitPrice * qty) + ' for ' + qty + (unit ? ' ' + unit : '');
+            }
         }
 
-        if (useKgTiers) {
-            var tiers = qtyTiersForProduct(p);
-            if (tierWrap) {
-                tierWrap.hidden = false;
-                tierWrap.innerHTML = tiers.map(function (q, i) {
-                    return '<button type="button" class="vc-weight-btn' + (i === 0 ? ' active' : '') +
-                        '" data-qty="' + q + '">' + q + ' KG</button>';
-                }).join('');
-                tierWrap.querySelectorAll('.vc-weight-btn').forEach(function (btn) {
-                    btn.addEventListener('click', function () {
-                        tierWrap.querySelectorAll('.vc-weight-btn').forEach(function (b) {
-                            b.classList.remove('active');
-                        });
-                        btn.classList.add('active');
-                        setQty(btn.getAttribute('data-qty'));
-                    });
-                });
-            }
-            if (legacyBox) {
-                // Keep qty in the action row; KG chips still set the value
-                legacyBox.hidden = false;
-            }
-            if (purchase) {
-                purchase.classList.add('vc-purchase-tiers-only');
-            }
-            if (hint) {
-                hint.textContent = 'Fixed bulk packs in KG' +
-                    (Number(p.moq) > 25 ? ' · MOQ ' + p.moq + ' KG' : '');
-            }
-            if (tierBlock) {
-                tierBlock.hidden = false;
-            }
-            setQty(tiers[0]);
-        } else {
-            if (tierBlock) {
-                // Keep bulk quote CTA; hide KG chips for bunch/dozen/etc.
-                if (tierWrap) {
-                    tierWrap.innerHTML = '';
-                    tierWrap.hidden = true;
-                }
-                if (hint) {
-                    hint.textContent = 'Sold ' + (p.unit || 'per unit') +
-                        ' — use quantity below, or request a bulk quote for large orders.';
-                }
-                var quoteLabel = document.querySelector('.vc-bulk-quote-row > span');
-                if (quoteLabel) {
-                    quoteLabel.textContent = 'Need a larger bulk order?';
-                }
-            }
-            if (legacyBox) {
-                legacyBox.hidden = false;
-            }
-            if (purchase) {
-                purchase.classList.remove('vc-purchase-tiers-only');
-            }
-            var moq = Math.max(1, Number(p.moq) || 1);
-            if (qtyInput) {
-                qtyInput.min = String(moq);
-                qtyInput.value = String(moq);
-            }
-            setQty(moq);
+        if (legacyBox) {
+            legacyBox.hidden = false;
+        }
+        if (hint) {
+            hint.textContent = moqHint(p) + (max !== null ? ' · up to ' + max + (unit ? ' ' + unit : '') : '');
+        }
+        if (qtyInput) {
+            qtyInput.min = String(moq);
+            qtyInput.step = String(moq);
+        }
+        setQty(moq);
 
-            var minus = document.getElementById('vcQtyMinus');
-            var plus = document.getElementById('vcQtyPlus');
-            if (minus && !minus.dataset.bound) {
-                minus.dataset.bound = '1';
-                minus.addEventListener('click', function () {
-                    var v = Math.max(moq, (Number(qtyInput && qtyInput.value) || moq) - 1);
-                    setQty(v);
-                });
-            }
-            if (plus && !plus.dataset.bound) {
-                plus.dataset.bound = '1';
-                plus.addEventListener('click', function () {
-                    var v = (Number(qtyInput && qtyInput.value) || moq) + 1;
-                    setQty(v);
-                });
-            }
-            if (qtyInput && !qtyInput.dataset.bound) {
-                qtyInput.dataset.bound = '1';
-                qtyInput.addEventListener('change', function () {
-                    var v = Math.max(moq, Number(qtyInput.value) || moq);
-                    setQty(v);
-                });
-            }
+        if (minus) {
+            minus.onclick = function () {
+                var next = stepMoq(Number(qtyInput && qtyInput.value) || moq, moq, -1);
+                if (next >= moq - 1e-9) {
+                    setQty(next);
+                }
+            };
+        }
+        if (plus) {
+            plus.onclick = function () {
+                var next = stepMoq(Number(qtyInput && qtyInput.value) || moq, moq, 1);
+                if (max !== null && next > max + 1e-9) {
+                    openBulkEnquiryModal(p);
+                    return;
+                }
+                setQty(next);
+            };
         }
 
         var bulkBtn = document.getElementById('vcBulkQuoteBtn');
@@ -1755,6 +1818,7 @@
                 return;
             }
             var p = res.data.product;
+            bootProductDetails.current = p;
             rememberView(p.id);
             var title = document.querySelector('.vc-product-info h1, .vc-product-title, .vc-product-page h1');
             if (title) title.textContent = titleCaseName(p.name);
@@ -1797,6 +1861,9 @@
             fillProductContentTabs(p);
 
             setupProductQuantityUI(p);
+            if (qs('bulk') === '1') {
+                openBulkEnquiryModal(p);
+            }
 
             var qtyInput = document.getElementById('vcProductQty');
             var addBtn = document.getElementById('vcAddCartBtn') ||
@@ -2243,9 +2310,14 @@
             trade_licence: 'trade_license',
             pan_card: 'pan_card',
             aadhaar_card: 'aadhaar_card',
-            shop_photo: 'business_photo',
+            shop_photo: 'shop_front_photo',
             business_card: 'owner_photo'
         };
+        // input name -> File already accepted by POST /business/documents (so Back/Continue doesn't re-upload)
+        var uploadedFiles = {};
+        var uploadedLabels = {};
+        var shopPhotoOnServer = false;
+        var uploadingDocs = false;
 
         function val(id) {
             return String((document.getElementById(id) || {}).value || '').trim();
@@ -2294,13 +2366,112 @@
             var addr = [shop, delivery !== shop ? ('Delivery: ' + delivery) : '', val('vcSignupLandmark'), val('vcSignupCity'), val('vcSignupState'), val('vcSignupPincode')]
                 .filter(Boolean).join(', ');
             setText('vcReviewAddress', addr || '—');
-            var docs = [];
-            form.querySelectorAll('.vc-upload-card input[type="file"]').forEach(function (input) {
-                if (input.files && input.files[0]) {
-                    docs.push((input.closest('.vc-upload-card').querySelector('strong') || {}).textContent || input.name);
+            var docs = Object.keys(uploadedLabels).map(function (k) { return uploadedLabels[k] + ' ✓'; });
+            if (shopPhotoOnServer && !uploadedLabels.shop_photo) {
+                docs.unshift('Shop Front Photo ✓ (uploaded earlier)');
+            }
+            setText('vcReviewDocs', docs.length ? docs.join(', ') : 'Shop Front Photo missing — go back to Step 4');
+        }
+
+        function docCardLabel(input) {
+            var card = input.closest('.vc-upload-card');
+            return ((card && card.querySelector('strong')) || {}).textContent || input.name;
+        }
+
+        function setDocCardState(input, state, message) {
+            var card = input.closest('.vc-upload-card');
+            if (!card) return;
+            card.classList.toggle('is-uploaded', state === 'done');
+            card.classList.toggle('is-invalid', state === 'error');
+            var errEl = card.querySelector('.vc-upload-error');
+            if (errEl) {
+                errEl.hidden = state !== 'error';
+                errEl.textContent = state === 'error' ? (message || '') : '';
+            }
+        }
+
+        function setNextBusy(busy, label) {
+            uploadingDocs = busy;
+            if (nextBtn) nextBtn.disabled = busy;
+            if (prevBtn) prevBtn.disabled = busy;
+            if (nextText) nextText.textContent = busy ? (label || 'Please wait…') : (step === 5 ? 'Submit Application' : 'Continue');
+        }
+
+        function hasShopPhotoOnServer() {
+            if (shopPhotoOnServer) return Promise.resolve(true);
+            return VC.documents().then(function (res) {
+                var docs = (res && res.success && res.data && res.data.documents) || [];
+                shopPhotoOnServer = docs.some(function (d) {
+                    return d.document_type === 'business_photo' || d.document_type === 'shop_front_photo';
+                });
+                return shopPhotoOnServer;
+            }, function () { return false; });
+        }
+
+        /**
+         * Step 4 → 5: upload documents now (shop photo first), because POST /business/register
+         * returns 422 SHOP_PHOTO_REQUIRED until a shop_front_photo exists. Resolves true when it's safe to continue.
+         */
+        function uploadStepDocuments() {
+            var photoInput = form.querySelector('.vc-upload-card input[type="file"][name="shop_photo"]');
+            var photoSelected = !!(photoInput && photoInput.files && photoInput.files[0]);
+            var precheck = photoSelected ? Promise.resolve(true) : hasShopPhotoOnServer();
+
+            return precheck.then(function (present) {
+                if (!present) {
+                    if (photoInput) setDocCardState(photoInput, 'error', 'Shop Front Photo is required.');
+                    toast('Please upload a Shop Front Photo to continue.', 'error');
+                    return false;
                 }
+                var pending = [];
+                form.querySelectorAll('.vc-upload-card input[type="file"]').forEach(function (input) {
+                    var f = input.files && input.files[0];
+                    if (f && uploadedFiles[input.name] !== f) pending.push(input);
+                });
+                pending.sort(function (a, b) {
+                    return (b.name === 'shop_photo' ? 1 : 0) - (a.name === 'shop_photo' ? 1 : 0);
+                });
+                if (!pending.length) return true;
+
+                setNextBusy(true, 'Uploading documents…');
+                var optionalFailures = [];
+                var chain = Promise.resolve(true);
+                pending.forEach(function (input) {
+                    chain = chain.then(function (keepGoing) {
+                        if (!keepGoing) return false;
+                        var file = input.files[0];
+                        var label = docCardLabel(input);
+                        return VC.uploadDocument(docNameMap[input.name] || input.name, file).then(function (up) {
+                            if (up && up.success) {
+                                uploadedFiles[input.name] = file;
+                                uploadedLabels[input.name] = label;
+                                if (input.name === 'shop_photo') shopPhotoOnServer = true;
+                                setDocCardState(input, 'done');
+                                return true;
+                            }
+                            var msg = apiErrorMessage(up, 'Could not upload ' + label + '.');
+                            setDocCardState(input, 'error', msg);
+                            if (input.name === 'shop_photo') {
+                                toast(msg, 'error');
+                                return false;
+                            }
+                            optionalFailures.push(label);
+                            return true;
+                        });
+                    });
+                });
+                return chain.then(function (ok) {
+                    setNextBusy(false);
+                    if (ok && optionalFailures.length) {
+                        toast('Could not upload: ' + optionalFailures.join(', ') + '. These are optional — you can add them later.', 'error');
+                    }
+                    return ok;
+                }, function () {
+                    setNextBusy(false);
+                    toast('Upload failed. Check your connection and try again.', 'error');
+                    return false;
+                });
             });
-            setText('vcReviewDocs', docs.length ? docs.join(', ') : 'None selected (optional)');
         }
 
         function sendOtp() {
@@ -2432,6 +2603,12 @@
                 }
                 return true;
             }
+            if (n === 4) {
+                return uploadStepDocuments().then(function (ok) {
+                    if (ok) showStep(5);
+                    return false;
+                });
+            }
             if (n === 5) {
                 var terms = document.getElementById('vcSignupTerms');
                 if (!terms || !terms.checked) {
@@ -2475,36 +2652,37 @@
                 body.password_confirmation = val('vcSignupPasswordConfirm');
             }
 
-            if (nextBtn) nextBtn.disabled = true;
+            if (!shopPhotoOnServer) {
+                // Documents are uploaded when leaving Step 4; never call register without the shop photo.
+                toast('Please upload a Shop Front Photo to continue.', 'error');
+                showStep(4);
+                return;
+            }
+
+            setNextBusy(true, 'Submitting…');
             VC.businessRegister(body).then(function (res) {
                 if (!res || !res.success) {
-                    if (nextBtn) nextBtn.disabled = false;
+                    setNextBusy(false);
+                    var code = res && res.error && res.error.code;
+                    if (code === 'SHOP_PHOTO_REQUIRED') {
+                        shopPhotoOnServer = false;
+                        delete uploadedFiles.shop_photo;
+                        delete uploadedLabels.shop_photo;
+                        var photoInput = form.querySelector('.vc-upload-card input[type="file"][name="shop_photo"]');
+                        if (photoInput) setDocCardState(photoInput, 'error', 'Shop Front Photo is required.');
+                        showStep(4);
+                    }
                     toast(apiErrorMessage(res, 'Could not submit registration.'), 'error');
                     return null;
                 }
                 if (res.data && res.data.customer) {
                     VC.setSession({ customer: res.data.customer });
                 }
-                var uploads = form.querySelectorAll('.vc-upload-card input[type="file"]');
-                var chain = Promise.resolve();
-                uploads.forEach(function (input) {
-                    if (!input.files || !input.files[0]) return;
-                    var docType = docNameMap[input.name] || input.name;
-                    chain = chain.then(function () {
-                        return VC.uploadDocument(docType, input.files[0]).then(function (up) {
-                            if (!up || !up.success) {
-                                toast((up && up.error && up.error.message) || ('Could not upload ' + input.name), 'error');
-                            }
-                        });
-                    });
-                });
-                return chain.then(function () {
-                    var kyc = (res.data && (res.data.kyc_status || (res.data.customer && res.data.customer.kyc_status))) || 'pending';
-                    toast(kyc === 'approved' ? 'Registration approved. Welcome!' : 'Application submitted for review.');
-                    window.location.href = 'verification-status.php';
-                });
+                var kyc = (res.data && (res.data.kyc_status || (res.data.customer && res.data.customer.kyc_status))) || 'pending';
+                toast(kyc === 'approved' ? 'Registration approved. Welcome!' : 'Application submitted for review.');
+                window.location.href = 'verification-status.php';
             }).catch(function () {
-                if (nextBtn) nextBtn.disabled = false;
+                setNextBusy(false);
                 toast('Could not submit registration.', 'error');
             });
         }
@@ -2544,6 +2722,7 @@
                 if (nameEl) {
                     nameEl.textContent = (input.files && input.files[0]) ? input.files[0].name : 'No file selected';
                 }
+                setDocCardState(input, uploadedFiles[input.name] && uploadedFiles[input.name] === (input.files && input.files[0]) ? 'done' : 'idle');
             });
         });
 
@@ -2583,6 +2762,7 @@
 
         if (nextBtn) {
             nextBtn.addEventListener('click', function () {
+                if (uploadingDocs) return;
                 if (step === 5) {
                     submitRegistration();
                     return;
@@ -2713,11 +2893,15 @@
                                 '</div>' +
                                 '<div class="vc-cart-price"><span>Price</span><strong>' + money(item.price) + '</strong></div>' +
                                 '<div class="vc-cart-quantity"><span>Quantity</span>' +
-                                    '<div class="vc-qty-box">' +
-                                        '<button type="button" class="vc-qty-minus" data-qty-delta="-1" data-item-id="' + item.id + '" data-qty="' + item.quantity + '"><i class="fa-solid fa-minus"></i></button>' +
-                                        '<input type="number" value="' + item.quantity + '" min="' + (item.moq || 1) + '" data-item-id="' + item.id + '">' +
-                                        '<button type="button" class="vc-qty-plus" data-qty-delta="1" data-item-id="' + item.id + '" data-qty="' + item.quantity + '"><i class="fa-solid fa-plus"></i></button>' +
-                                    '</div>' +
+                                    moqStepperHtml({
+                                        value: item.quantity,
+                                        moq: item.moq,
+                                        max: item.bulk_quote_threshold,
+                                        bulk: true,
+                                        productId: item.product_id,
+                                        attrs: ' data-cart-item="' + item.id + '"'
+                                    }) +
+                                    '<small class="vc-moq-hint">' + escapeHtml(moqHint(item)) + '</small>' +
                                 '</div>' +
                                 '<div class="vc-cart-total"><span>Total</span><strong>' + money(item.line_total) + '</strong></div>' +
                             '</div>'
@@ -2736,17 +2920,24 @@
                     VC.removeCartItem(rm.getAttribute('data-remove-item')).then(function () { bootCart(); refreshHeaderCounts(); });
                     return;
                 }
-                var deltaBtn = e.target.closest('[data-qty-delta]');
-                if (deltaBtn) {
-                    var next = Number(deltaBtn.getAttribute('data-qty')) + Number(deltaBtn.getAttribute('data-qty-delta'));
-                    if (next < 1) {
+                var stepBtn = e.target.closest('.vc-moq-stepper[data-cart-item] [data-moq-step]');
+                if (stepBtn) {
+                    var step = moqStepperNext(stepBtn);
+                    if (!step) {
                         return;
                     }
-                    VC.updateCartItem(deltaBtn.getAttribute('data-item-id'), next).then(function (res) {
+                    if (step.bulk) {
+                        openBulkQuote(step.bulk);
+                        return;
+                    }
+                    var itemId = stepBtn.closest('.vc-moq-stepper').getAttribute('data-cart-item');
+                    stepBtn.disabled = true;
+                    VC.updateCartItem(itemId, step.value).then(function (res) {
                         if (!res || !res.success) {
-                            toast((res && res.error && res.error.message) || 'Could not update quantity.', 'error');
+                            toast(apiErrorMessage(res, 'Could not update quantity.'), 'error');
                         }
                         bootCart();
+                        refreshHeaderCounts();
                     });
                     return;
                 }
@@ -2884,14 +3075,25 @@
             var rows = (cartRef.items || []).map(function (item) {
                 var pid = item.product_id || item.id;
                 var totalQty = Number(item.quantity) || 0;
-                var inputs = addrs.map(function (a) {
-                    return '<label class="vc-alloc-cell"><span>' + escapeHtml(a.label || ('#' + a.id)) + '</span>' +
-                        '<input type="number" min="0" step="0.01" class="vc-alloc-input" data-pid="' + pid +
-                        '" data-aid="' + a.id + '" value="0"></label>';
+                var moq = moqOf(item);
+                var unit = unitShort(item.unit);
+                var inputs = addrs.map(function (a, i) {
+                    return '<div class="vc-alloc-cell"><span>' + escapeHtml(a.label || ('#' + a.id)) + '</span>' +
+                        moqStepperHtml({
+                            value: i === 0 ? totalQty : 0,
+                            moq: moq,
+                            min: 0,
+                            max: totalQty,
+                            editable: true,
+                            attrs: ' data-alloc-stepper="1"',
+                            inputAttrs: ' class="vc-alloc-input" data-pid="' + pid + '" data-aid="' + a.id + '"'
+                        }) + '</div>';
                 }).join('');
-                return '<div class="vc-alloc-row" data-pid="' + pid + '" data-total="' + totalQty + '">' +
+                return '<div class="vc-alloc-row" data-pid="' + pid + '" data-total="' + totalQty + '" data-moq="' + moq +
+                    '" data-unit="' + escapeHtml(unit) + '">' +
                     '<div class="vc-alloc-head"><strong>' + escapeHtml(titleCaseName(item.name)) +
-                    '</strong> <span class="vc-alloc-need-wrap">Cart total: <b class="vc-alloc-need">' + totalQty + '</b></span>' +
+                    '</strong> <span class="vc-alloc-need-wrap">Cart total: <b class="vc-alloc-need">' + totalQty + '</b>' +
+                    ' · MOQ ' + moq + (unit ? ' ' + escapeHtml(unit) : '') + '</span>' +
                     ' <span class="vc-alloc-status" data-status-for="' + pid + '">Allocate fully</span></div>' +
                     '<div class="vc-alloc-inputs">' + inputs + '</div></div>';
             }).join('');
@@ -2903,14 +3105,49 @@
                 '</div>' +
                 '<div class="vc-multi-panel">' +
                     '<div class="vc-multi-panel-title">Allocate quantities</div>' +
-                    '<p class="vc-multi-panel-sub">Each product’s inputs must add up exactly to the cart total.</p>' +
+                    '<p class="vc-multi-panel-sub">Each product’s split must add up exactly to the cart total, and every address gets 0 or a multiple of that product’s MOQ.</p>' +
                     '<div class="vc-multi-alloc-list">' + rows + '</div>' +
                 '</div>';
 
             box.querySelectorAll('.vc-alloc-input').forEach(function (inp) {
-                inp.addEventListener('input', validateAllocations);
+                inp.addEventListener('input', function () {
+                    syncMoqStepper(inp.closest('.vc-moq-stepper'));
+                    validateAllocations();
+                });
+            });
+            box.querySelectorAll('[data-alloc-stepper] [data-moq-step]').forEach(function (btn) {
+                btn.addEventListener('click', function () {
+                    var step = moqStepperNext(btn);
+                    if (!step) {
+                        return;
+                    }
+                    var stepper = btn.closest('.vc-moq-stepper');
+                    stepper.querySelector('input').value = String(step.value);
+                    syncMoqStepper(stepper);
+                    validateAllocations();
+                });
             });
             validateAllocations();
+        }
+
+        /** Per-row check: sum equals cart qty and each address share is 0 or an MOQ multiple. */
+        function allocRowState(row) {
+            var need = roundQty(Number(row.getAttribute('data-total')) || 0);
+            var moq = Number(row.getAttribute('data-moq')) || 1;
+            var sum = 0;
+            var badCells = [];
+            row.querySelectorAll('.vc-alloc-input').forEach(function (inp) {
+                var v = Number(inp.value) || 0;
+                sum += v;
+                var bad = v < 0 || (v > 0 && !isMoqMultiple(v, moq));
+                inp.closest('.vc-alloc-cell').classList.toggle('is-invalid', bad);
+                if (bad) {
+                    badCells.push(v);
+                }
+            });
+            sum = roundQty(sum);
+            return { need: need, sum: sum, moq: moq, badCells: badCells,
+                ok: badCells.length === 0 && Math.abs(sum - need) < 0.001 };
         }
 
         function validateAllocations() {
@@ -2921,20 +3158,19 @@
             }
             var ok = true;
             box.querySelectorAll('.vc-alloc-row').forEach(function (row) {
-                var need = Number(row.getAttribute('data-total')) || 0;
                 var pid = row.getAttribute('data-pid');
-                var sum = 0;
-                row.querySelectorAll('.vc-alloc-input').forEach(function (inp) {
-                    sum += Number(inp.value) || 0;
-                });
-                sum = Math.round(sum * 100) / 100;
-                need = Math.round(need * 100) / 100;
+                var unit = row.getAttribute('data-unit') || '';
+                var st = allocRowState(row);
+                if (!st.ok) ok = false;
                 var status = box.querySelector('[data-status-for="' + pid + '"]');
-                var match = Math.abs(sum - need) < 0.001;
-                if (!match) ok = false;
                 if (status) {
-                    status.textContent = match ? '✓ Fully allocated' : ('Allocated ' + sum + ' / ' + need);
-                    status.style.color = match ? '#1a7f37' : '#b42318';
+                    if (st.badCells.length) {
+                        status.textContent = 'Each address needs 0 or a multiple of ' + st.moq + (unit ? ' ' + unit : '') +
+                            ' (e.g. ' + st.moq + ', ' + roundQty(st.moq * 2) + ', ' + roundQty(st.moq * 3) + ')';
+                    } else {
+                        status.textContent = st.ok ? '✓ Fully allocated' : ('Allocated ' + st.sum + ' / ' + st.need);
+                    }
+                    status.style.color = st.ok ? '#1a7f37' : '#b42318';
                 }
             });
             updatePlaceEnabled(ok);
@@ -2958,12 +3194,7 @@
             if (!box) return false;
             var ok = true;
             box.querySelectorAll('.vc-alloc-row').forEach(function (row) {
-                var need = Math.round((Number(row.getAttribute('data-total')) || 0) * 100) / 100;
-                var sum = 0;
-                row.querySelectorAll('.vc-alloc-input').forEach(function (inp) {
-                    sum += Number(inp.value) || 0;
-                });
-                if (Math.abs(Math.round(sum * 100) / 100 - need) > 0.001) ok = false;
+                if (!allocRowState(row).ok) ok = false;
             });
             return ok && (cartRef.items || []).length > 0;
         }
@@ -3275,7 +3506,7 @@
                         }
                         if (!validateAllocations()) {
                             placeBtn.disabled = false;
-                            toast('Allocate each product fully across addresses.', 'error');
+                            toast('Fix the highlighted splits: each product must add up to its cart total, and every address share must be 0 or a multiple of its MOQ.', 'error');
                             return;
                         }
                         VC.placeMultiAddressOrder(buildMultiPayload(notes)).then(function (res) {
@@ -3825,6 +4056,276 @@
         setText('vgTrackingId', order.order_number ? ('Order: ' + order.order_number) : '—');
     }
 
+    function vcConfirmDialog(message, opts) {
+        if (VC.confirm) {
+            return VC.confirm(message, opts);
+        }
+        return Promise.resolve(window.confirm(message));
+    }
+
+    function vcAlertDialog(message, opts) {
+        if (VC.alert) {
+            return VC.alert(message, opts);
+        }
+        window.alert(message);
+        return Promise.resolve();
+    }
+
+    function refreshOrderDetails(orderId) {
+        return VC.order(orderId).then(function (res) {
+            if (res && res.success && res.data && res.data.order) {
+                var o = res.data.order;
+                fillOrderDetailsPage(o, VC.getCustomer() || {}, addrLine(o.address || {}));
+            }
+            return res;
+        });
+    }
+
+    function ensureOrderEditModal() {
+        var modal = document.getElementById('vcOrderEditModal');
+        if (modal) {
+            return modal;
+        }
+        modal = document.createElement('div');
+        modal.id = 'vcOrderEditModal';
+        modal.className = 'vc-order-edit-modal';
+        modal.setAttribute('role', 'dialog');
+        modal.setAttribute('aria-modal', 'true');
+        modal.setAttribute('aria-hidden', 'true');
+        modal.innerHTML =
+            '<div class="vc-order-edit-backdrop" data-edit-close></div>' +
+            '<div class="vc-order-edit-dialog">' +
+                '<div class="vc-order-edit-head">' +
+                    '<h3 id="vcOrderEditTitle">Edit order</h3>' +
+                    '<button type="button" class="vc-order-edit-x" data-edit-close aria-label="Close"><i class="fa-solid fa-xmark"></i></button>' +
+                '</div>' +
+                '<p class="vc-order-edit-warn"><i class="fa-solid fa-triangle-exclamation"></i> ' +
+                    'You can modify this order <strong>only once</strong>. After you save, it cannot be changed again (you can still cancel it).</p>' +
+                '<div class="vc-order-edit-list" id="vcOrderEditList"></div>' +
+                '<div class="vc-order-edit-error" id="vcOrderEditError" role="alert" hidden></div>' +
+                '<div class="vc-order-edit-foot">' +
+                    '<div class="vc-order-edit-sum"><span>Estimated subtotal</span><strong id="vcOrderEditSubtotal">—</strong>' +
+                        '<small>At today’s prices. Delivery fee and coupon are recalculated when you save.</small></div>' +
+                    '<div class="vc-order-edit-actions">' +
+                        '<button type="button" class="vc-order-edit-cancel" data-edit-close>Keep order as is</button>' +
+                        '<button type="button" class="vc-order-edit-save" id="vcOrderEditSave">Save changes</button>' +
+                    '</div>' +
+                '</div>' +
+            '</div>';
+        document.body.appendChild(modal);
+        modal.addEventListener('click', function (e) {
+            if (e.target.closest('[data-edit-close]') && !modal.classList.contains('is-saving')) {
+                closeOrderEditModal();
+            }
+        });
+        document.addEventListener('keydown', function (e) {
+            if (e.key === 'Escape' && modal.classList.contains('show') && !modal.classList.contains('is-saving')) {
+                closeOrderEditModal();
+            }
+        });
+        return modal;
+    }
+
+    function closeOrderEditModal() {
+        var modal = document.getElementById('vcOrderEditModal');
+        if (!modal) {
+            return;
+        }
+        modal.classList.remove('show');
+        modal.setAttribute('aria-hidden', 'true');
+        document.body.classList.remove('vc-modal-open');
+    }
+
+    /** One-time order edit. Submits the FULL desired item list to PUT /orders/{id}. */
+    function openOrderEditModal(order) {
+        var modal = ensureOrderEditModal();
+        var list = document.getElementById('vcOrderEditList');
+        var errBox = document.getElementById('vcOrderEditError');
+        var saveBtn = document.getElementById('vcOrderEditSave');
+        var subtotalEl = document.getElementById('vcOrderEditSubtotal');
+        var rows = [];
+
+        setText('vcOrderEditTitle', 'Edit order ' + (order.order_number ? '#' + order.order_number : ''));
+        list.innerHTML = '<div class="vg-order-loading">Loading current prices and order rules…</div>';
+        errBox.hidden = true;
+        errBox.textContent = '';
+        saveBtn.disabled = true;
+        modal.classList.add('show');
+        modal.setAttribute('aria-hidden', 'false');
+        document.body.classList.add('vc-modal-open');
+
+        var byProduct = {};
+        var lines = [];
+        (order.items || []).forEach(function (it) {
+            var pid = it.product_id ? Number(it.product_id) : 0;
+            if (pid && byProduct[pid]) {
+                byProduct[pid].original = roundQty(byProduct[pid].original + Number(it.quantity));
+                return;
+            }
+            var line = { product_id: pid, name: titleCaseName(it.name), unit: it.unit || '', original: roundQty(it.quantity) };
+            if (pid) byProduct[pid] = line;
+            lines.push(line);
+        });
+
+        Promise.all(lines.map(function (line) {
+            if (!line.product_id) {
+                return Promise.resolve(null);
+            }
+            return VC.product(line.product_id).then(function (r) {
+                return r && r.success && r.data ? r.data.product : null;
+            }, function () { return null; });
+        })).then(function (products) {
+            rows = lines.map(function (line, i) {
+                var p = products[i];
+                return {
+                    product_id: line.product_id,
+                    name: p ? titleCaseName(p.name) : line.name,
+                    unit: p ? p.unit : line.unit,
+                    original: line.original,
+                    qty: line.original,
+                    moq: p ? moqOf(p) : 1,
+                    max: p && Number(p.bulk_quote_threshold) > 0 ? Number(p.bulk_quote_threshold) : null,
+                    price: p ? Number(p.price) || 0 : 0,
+                    unavailable: !p,
+                    removed: !p
+                };
+            });
+            render();
+        });
+
+        function keptRows() {
+            return rows.filter(function (r) { return !r.removed; });
+        }
+
+        function isChanged() {
+            return rows.some(function (r) { return r.removed || Math.abs(r.qty - r.original) > 0.001; });
+        }
+
+        function rowProblem(r) {
+            if (r.removed) return '';
+            if (!isMoqMultiple(r.qty, r.moq)) {
+                var u = unitShort(r.unit);
+                return 'Set a multiple of ' + r.moq + (u ? ' ' + u : '') + ' (MOQ).';
+            }
+            return '';
+        }
+
+        function render() {
+            list.innerHTML = rows.map(function (r, idx) {
+                var u = unitShort(r.unit);
+                if (r.unavailable) {
+                    return '<div class="vc-order-edit-row is-removed">' +
+                        '<div class="vc-order-edit-info"><strong>' + escapeHtml(r.name) + '</strong>' +
+                        '<small>No longer available — will be removed from this order.</small></div></div>';
+                }
+                var problem = rowProblem(r);
+                return '<div class="vc-order-edit-row' + (r.removed ? ' is-removed' : '') + (problem ? ' is-invalid' : '') + '" data-edit-idx="' + idx + '">' +
+                    '<div class="vc-order-edit-info"><strong>' + escapeHtml(r.name) + '</strong>' +
+                        '<small>' + money(r.price) + (r.unit ? ' ' + escapeHtml(r.unit) : '') + ' · ' + escapeHtml(moqHint(r)) +
+                        (r.max ? ' · up to ' + r.max + (u ? ' ' + escapeHtml(u) : '') : '') + '</small>' +
+                        (problem ? '<small class="vc-order-edit-row-err">' + escapeHtml(problem) + '</small>' : '') +
+                    '</div>' +
+                    (r.removed
+                        ? '<div class="vc-order-edit-qty"><em>Removed</em></div>'
+                        : '<div class="vc-order-edit-qty">' + moqStepperHtml({
+                            value: r.qty, moq: r.moq, max: r.max, bulk: true, productId: r.product_id,
+                            attrs: ' data-edit-stepper="' + idx + '"'
+                        }) + '</div>') +
+                    '<div class="vc-order-edit-line">' + (r.removed ? '—' : money(r.price * r.qty)) + '</div>' +
+                    '<button type="button" class="vc-order-edit-remove" data-edit-toggle="' + idx + '">' +
+                        (r.removed ? '<i class="fa-solid fa-rotate-left"></i> Undo' : '<i class="fa-solid fa-trash-can"></i> Remove') +
+                    '</button>' +
+                '</div>';
+            }).join('') || '<div class="vg-order-loading">No items to edit.</div>';
+
+            var subtotal = keptRows().reduce(function (s, r) { return s + r.price * r.qty; }, 0);
+            if (subtotalEl) subtotalEl.textContent = money(subtotal);
+            var hasProblem = keptRows().some(function (r) { return !!rowProblem(r); });
+            saveBtn.disabled = !keptRows().length || hasProblem || !isChanged();
+            saveBtn.title = !keptRows().length ? 'Keep at least one item, or cancel the order instead.'
+                : (!isChanged() ? 'No changes yet.' : '');
+        }
+
+        list.onclick = function (e) {
+            var toggle = e.target.closest('[data-edit-toggle]');
+            if (toggle) {
+                var r = rows[Number(toggle.getAttribute('data-edit-toggle'))];
+                if (r && !r.unavailable) {
+                    if (!r.removed && keptRows().length <= 1) {
+                        errBox.hidden = false;
+                        errBox.textContent = 'An order needs at least one item. To drop everything, cancel the order instead.';
+                        return;
+                    }
+                    r.removed = !r.removed;
+                    errBox.hidden = true;
+                    render();
+                }
+                return;
+            }
+            var stepBtn = e.target.closest('[data-edit-stepper] [data-moq-step]');
+            if (stepBtn) {
+                var step = moqStepperNext(stepBtn);
+                if (!step) return;
+                if (step.bulk) {
+                    openBulkQuote(step.bulk);
+                    return;
+                }
+                var row = rows[Number(stepBtn.closest('[data-edit-stepper]').getAttribute('data-edit-stepper'))];
+                if (row) {
+                    row.qty = step.value;
+                    render();
+                }
+            }
+        };
+
+        saveBtn.onclick = function () {
+            var items = keptRows().map(function (r) {
+                return { product_id: r.product_id, quantity: r.qty };
+            });
+            if (!items.length) return;
+            vcConfirmDialog('Save these changes? This order cannot be modified again after this.', {
+                title: 'Confirm order changes',
+                confirmText: 'Yes, save changes',
+                cancelText: 'Go back'
+            }).then(function (yes) {
+                if (!yes) return;
+                modal.classList.add('is-saving');
+                saveBtn.disabled = true;
+                saveBtn.textContent = 'Saving…';
+                VC.updateOrder(order.id, items).then(function (res) {
+                    modal.classList.remove('is-saving');
+                    saveBtn.textContent = 'Save changes';
+                    if (!res || !res.success) {
+                        errBox.hidden = false;
+                        errBox.textContent = apiErrorMessage(res, 'Could not update the order.');
+                        render();
+                        if (res && res.error && res.error.code === 'EDIT_LIMIT_REACHED') {
+                            saveBtn.disabled = true;
+                            refreshOrderDetails(order.id);
+                        }
+                        return;
+                    }
+                    closeOrderEditModal();
+                    var updated = res.data && res.data.order;
+                    if (updated) {
+                        fillOrderDetailsPage(updated, VC.getCustomer() || {}, addrLine(updated.address || {}));
+                    }
+                    refreshOrderDetails(order.id);
+                    vcAlertDialog('Your order has been confirmed. This order cannot be modified again.', {
+                        icon: 'success',
+                        title: 'Order updated'
+                    });
+                }).catch(function () {
+                    modal.classList.remove('is-saving');
+                    saveBtn.textContent = 'Save changes';
+                    errBox.hidden = false;
+                    errBox.textContent = 'Could not update the order. Check your connection and try again.';
+                    render();
+                });
+            });
+        };
+    }
+
     function fillOrderDetailsPage(order, cust, line) {
         var payLabel = order.payment_method || 'Cash on Delivery';
         if (/^cod$/i.test(String(payLabel).trim())) {
@@ -3940,6 +4441,17 @@
                     }
                 });
             };
+        }
+
+        var editCard = document.getElementById('vgEditCard');
+        var editBtn = document.getElementById('vgEditBtn');
+        var editLocked = document.getElementById('vgEditLockedNote');
+        if (editCard && editBtn) {
+            editCard.hidden = order.can_edit !== true;
+            editBtn.onclick = order.can_edit === true ? function () { openOrderEditModal(order); } : null;
+        }
+        if (editLocked) {
+            editLocked.hidden = !(order.can_edit !== true && Number(order.edit_count) > 0 && order.can_cancel);
         }
 
         var cancelCard = document.getElementById('vgCancelCard');
@@ -4745,8 +5257,67 @@
                 pincode: (document.getElementById('vcPincode') || {}).value || '',
                 landmark: (document.getElementById('vcLandmark') || {}).value || ''
             };
-            VC.businessRegister(body).then(function (res) {
-                if (!res || !res.success) {
+            // Documents first (shop photo first of all): register returns 422 SHOP_PHOTO_REQUIRED without it.
+            var uploads = Array.prototype.slice.call(document.querySelectorAll('.vc-upload-card input[type="file"]'));
+            var nameMap = {
+                gst_certificate: 'gst_certificate',
+                fssai_document: 'fssai_license',
+                shop_registration: 'shop_establishment',
+                msme_certificate: 'msme_certificate',
+                trade_licence: 'trade_license',
+                pan_card: 'pan_card',
+                aadhaar_card: 'aadhaar_card',
+                shop_photo: 'shop_front_photo',
+                business_card: 'owner_photo'
+            };
+            var photoInput = document.querySelector('.vc-upload-card input[type="file"][name="shop_photo"]');
+            var photoSelected = !!(photoInput && photoInput.files && photoInput.files[0]);
+            var submitBtn = form.querySelector('[type="submit"]');
+            uploads.sort(function (a, b) {
+                return (b.name === 'shop_photo' ? 1 : 0) - (a.name === 'shop_photo' ? 1 : 0);
+            });
+
+            var precheck = photoSelected ? Promise.resolve(true) : VC.documents().then(function (res) {
+                var docs = (res && res.success && res.data && res.data.documents) || [];
+                return docs.some(function (d) {
+                    return d.document_type === 'business_photo' || d.document_type === 'shop_front_photo';
+                });
+            });
+
+            precheck.then(function (present) {
+                if (!present) {
+                    toast('Please upload a Shop Front Photo to continue.', 'error');
+                    if (photoInput) photoInput.closest('.vc-upload-card').classList.add('is-invalid');
+                    return null;
+                }
+                if (submitBtn) submitBtn.disabled = true;
+                var chain = Promise.resolve(true);
+                uploads.forEach(function (input) {
+                    if (!input.files || !input.files[0]) {
+                        return;
+                    }
+                    var docType = nameMap[input.name] || input.name;
+                    chain = chain.then(function (keepGoing) {
+                        if (!keepGoing) return false;
+                        return VC.uploadDocument(docType, input.files[0]).then(function (up) {
+                            if (up && up.success) return true;
+                            toast(apiErrorMessage(up, 'Could not upload ' + input.name + '.'), 'error');
+                            return input.name !== 'shop_photo';
+                        });
+                    });
+                });
+                return chain.then(function (ok) {
+                    return ok ? VC.businessRegister(body) : null;
+                });
+            }).then(function (res) {
+                if (submitBtn) submitBtn.disabled = false;
+                if (res === null || res === undefined) {
+                    return;
+                }
+                if (!res.success) {
+                    if (res.error && res.error.code === 'SHOP_PHOTO_REQUIRED' && photoInput) {
+                        photoInput.closest('.vc-upload-card').classList.add('is-invalid');
+                    }
                     toast(apiErrorMessage(res, 'Could not submit registration.'), 'error');
                     return;
                 }
@@ -4755,32 +5326,13 @@
                     VC.setSession({ customer: res.data.customer });
                 }
                 setText('vcRegAppId', formatBizId(cust));
-                var uploads = document.querySelectorAll('.vc-upload-card input[type="file"]');
-                var chain = Promise.resolve();
-                var nameMap = {
-                    gst_certificate: 'gst_certificate',
-                    fssai_document: 'fssai_license',
-                    shop_registration: 'shop_establishment',
-                    msme_certificate: 'msme_certificate',
-                    trade_licence: 'trade_license',
-                    pan_card: 'pan_card',
-                    aadhaar_card: 'aadhaar_card',
-                    shop_photo: 'business_photo',
-                    business_card: 'owner_photo'
-                };
-                uploads.forEach(function (input) {
-                    if (!input.files || !input.files[0]) {
-                        return;
-                    }
-                    var docType = nameMap[input.name] || input.name;
-                    chain = chain.then(function () { return VC.uploadDocument(docType, input.files[0]); });
-                });
-                chain.then(function () {
-                    var success = document.getElementById('vcRegistrationSuccess');
-                    if (success) success.classList.add('show');
-                    toast('Registration submitted');
-                    setTimeout(function () { window.location.href = 'verification-status.php'; }, 1200);
-                });
+                var success = document.getElementById('vcRegistrationSuccess');
+                if (success) success.classList.add('show');
+                toast('Registration submitted');
+                setTimeout(function () { window.location.href = 'verification-status.php'; }, 1200);
+            }).catch(function () {
+                if (submitBtn) submitBtn.disabled = false;
+                toast('Could not submit registration.', 'error');
             });
         }, true);
     }

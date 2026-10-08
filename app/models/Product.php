@@ -6,6 +6,64 @@ class Product extends Model
 
     public const LOW_STOCK_THRESHOLD = 10;
 
+    /** Above MOQ × this many units, clients show Bulk Enquiry instead of the quantity stepper. */
+    public const BULK_QUOTE_MOQ_MULTIPLIER = 5;
+
+    /** Quantities are DECIMAL(12,2), so compare in hundredths to avoid float drift. */
+    public static function isMoqMultiple(float $qty, float $moq): bool
+    {
+        $qtyCents = (int) round($qty * 100);
+        if ($qty <= 0 || abs($qty * 100 - $qtyCents) > 0.0001) {
+            return false;
+        }
+        $moqCents = (int) round($moq * 100);
+        if ($moqCents <= 0) {
+            return true;
+        }
+        return $qtyCents % $moqCents === 0;
+    }
+
+    /** Smallest MOQ multiple that is >= $qty (at least one MOQ unit). */
+    public static function roundUpToMoq(float $qty, float $moq): float
+    {
+        if ($moq <= 0) {
+            return $qty;
+        }
+        $units = max(1, (int) ceil(round($qty / $moq, 6)));
+        return round($units * $moq, 2);
+    }
+
+    public static function formatQty(float $qty): string
+    {
+        return rtrim(rtrim(number_format($qty, 2, '.', ''), '0'), '.');
+    }
+
+    /** @param array<string,mixed> $product */
+    public static function bulkQuoteThreshold(array $product): float
+    {
+        return round((float) $product['moq'] * self::BULK_QUOTE_MOQ_MULTIPLIER, 2);
+    }
+
+    /**
+     * @param array<string,mixed> $product needs name, unit, moq
+     * @throws DomainException
+     */
+    public static function assertMoqMultiple(array $product, float $qty): void
+    {
+        $moq = (float) $product['moq'];
+        if (self::isMoqMultiple($qty, $moq)) {
+            return;
+        }
+        $unit = trim((string) preg_replace('/^per\s+/i', '', trim((string) ($product['unit'] ?? ''))));
+        $m = self::formatQty($moq);
+        $examples = implode(', ', [$m, self::formatQty($moq * 2), self::formatQty($moq * 3)]);
+        throw new DomainException(
+            'Quantity for "' . display_name((string) $product['name']) . '" must be a multiple of its MOQ of '
+            . $m . ($unit !== '' ? ' ' . $unit : '') . ' (e.g. ' . $examples . '). '
+            . 'You requested ' . self::formatQty($qty) . '.'
+        );
+    }
+
     public function allWithCategory(?string $q = null, ?int $categoryId = null): array
     {
         return $this->paginateWithCategory($q, $categoryId, 1, 10000)['rows'];

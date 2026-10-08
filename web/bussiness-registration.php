@@ -1053,21 +1053,22 @@ document.addEventListener('DOMContentLoaded', function () {
                                 </label>
 
 
-                                <!-- SHOP PHOTO -->
-                                <label class="vc-upload-card">
+                                <!-- SHOP PHOTO (mandatory: register returns SHOP_PHOTO_REQUIRED without it) -->
+                                <label class="vc-upload-card is-required">
 
                                     <input type="file"
                                            name="shop_photo"
                                            accept="image/*"
-                                           capture="environment">
+                                           capture="environment"
+                                           aria-required="true">
 
                                     <span class="vc-upload-icon">
                                         <i class="fa-solid fa-camera"></i>
                                     </span>
 
                                     <div>
-                                        <strong>Shop-front Photo</strong>
-                                        <small>Camera or gallery</small>
+                                        <strong>Shop Front Photo</strong>
+                                        <small class="vc-doc-required-tag">Required</small>
                                     </div>
 
                                     <span class="vc-upload-action">

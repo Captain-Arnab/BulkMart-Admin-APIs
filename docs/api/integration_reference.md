@@ -120,6 +120,16 @@ veggiicart/
 
 Completes business KYC registration for the authenticated customer (JWT from OTP verify). Mobile OTP remains the required signup path; password is **optional**.
 
+**Shop-front photo is mandatory.** Upload it first via `POST /business/documents` with `document_type=shop_front_photo` (aliases: `shop_photo`, `business_photo`; stored as `business_photo`). Without it, register returns:
+
+```json
+{ "success": false, "data": null,
+  "error": { "code": "SHOP_PHOTO_REQUIRED", "message": "Shop-front photo is required. Upload it via POST /business/documents with document_type=shop_front_photo before completing registration.",
+             "fields": { "shop_front_photo": "Shop-front photo is required." } } }
+```
+
+(HTTP 422.) All other document types stay optional. `GET /business/verification-status` → `catalog[].required` is `true` only for `business_photo`.
+
 **Required body fields:** `business_name`, `owner_name`, `business_type`
 
 **Optional body fields:**
@@ -201,6 +211,7 @@ Product **detail** adds `description`, `benefits`, `storage_tips`, and an `image
   "name": "Tomato",
   "unit": "per kg",
   "moq": 1,
+  "bulk_quote_threshold": 5,
   "price": 38,
   "stock": 40,
   "in_stock": true,
@@ -224,6 +235,13 @@ Product **detail** adds `description`, `benefits`, `storage_tips`, and an `image
 - `images[].is_primary` is `true` for exactly one cover image when any images exist.
 - `images[].sort_order` is the admin gallery order (lower first).
 - If a product has no `product_images` rows yet, `images` is a one-item array built from `image_url`, or `[]` if there is no image.
+
+#### Quantity rules (MOQ multiples) — replaces the old 25/50/75/100 KG tiers
+
+- Every quantity sent to `POST /cart/items`, `PUT /cart/items/{id}`, `POST /orders` (cart lines), `POST /orders/multi-address` (**each per-address allocation**), and `PUT /orders/{id}` must be an exact multiple of that product's `moq` (`quantity = moq × units`, units ≥ 1). Otherwise → 422 `VALIDATION_ERROR`, e.g. `Quantity for "Onion Big Size" must be a multiple of its MOQ of 20 kg (e.g. 20, 40, 60). You requested 30.`
+- `moq` is on every product object (list, search, detail, similar, frequently-bought) and on cart lines.
+- `bulk_quote_threshold` = `moq × 5` (also on cart lines). The stepper should allow `moq … bulk_quote_threshold` in steps of `moq`; above that, show **Get Bulk Quote** (`POST /bulk-enquiries`) instead. The server does **not** cap orders at the threshold — it is a UX cutoff only. Clients may compute `5 × moq` themselves, but prefer the field so the multiplier can change server-side (`Product::BULK_QUOTE_MOQ_MULTIPLIER`).
+- `POST /orders/{id}/reorder` rounds legacy quantities **up** to the next MOQ multiple.
 
 ### Cart — `CartApiController`
 
@@ -274,8 +292,21 @@ Product **detail** adds `description`, `benefits`, `storage_tips`, and an `image
 | POST | `/orders/{id}/reorder` | `reorder` | JWT |
 | POST | `/orders/{id}/cancel` | `cancel` | JWT |
 | GET | `/orders/{id}` | `show` | JWT |
+| PUT | `/orders/{id}` | `update` (one-time edit) | JWT |
+| POST | `/orders/{id}` | `update` | JWT (PUT fallback) |
 
-**Registered route count:** **58** (including POST aliases for PUT).
+**Registered route count:** **60** (including POST aliases for PUT).
+
+#### `PUT /orders/{id}` — one-time order modification
+
+Body: `{ "items": [ { "product_id": 61, "quantity": 5 }, { "product_id": 84, "quantity": 60 } ] }` — the **full** new item list (replaces all lines; products may be added/removed; each quantity must be an MOQ multiple; no duplicate `product_id`; empty list → 422, cancel instead).
+
+- Allowed only when `status` is `placed` or `confirmed` **and** `edit_count = 0`. Order objects expose `edit_count` and `can_edit` (list + detail) — use `can_edit` to show/hide the button.
+- Second attempt → 422 `EDIT_LIMIT_REACHED` (enforced server-side with a row lock + conditional update).
+- Lines are re-priced at **current** catalog prices; `delivery_fee` is kept; an order coupon is re-evaluated (edit rejected if it would make the coupon ineligible/expired).
+- Stock: `placed` → validated only (deducted on confirm, as usual). `confirmed` → old quantities restored, new ones validated and deducted, atomically.
+- Cart and cart coupon are untouched. Cancellation is independent of `edit_count` (`can_cancel` unchanged; an edited order can still be cancelled and stock is restored for the edited quantities).
+- Success: 200 `{ "message": "...", "order": { ...same shape as GET /orders/{id}, edit_count: 1, can_edit: false } }`.
 
 ### vs `verify_api.php` coverage
 

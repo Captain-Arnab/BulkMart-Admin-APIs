@@ -36,6 +36,7 @@ class CartApiController extends ApiController
                 $this->fail('NOT_FOUND', 'Product not found.', 404);
             }
 
+            Product::assertMoqMultiple($product, $qty);
             $existing = $this->cart->findByProduct($this->customerId(), $productId);
             $newQty = $existing ? ((float) $existing['quantity'] + $qty) : $qty;
             if (!empty($body['replace']) || !empty($body['absolute'])) {
@@ -124,13 +125,8 @@ class CartApiController extends ApiController
     /** @param array<string,mixed> $product */
     private function assertMoqAndStock(array $product, float $qty): void
     {
-        $moq = (float) $product['moq'];
         $stock = (float) $product['stock'];
-        if ($qty < $moq) {
-            throw new DomainException(
-                'Quantity must be at least MOQ (' . $moq . ') for "' . $product['name'] . '".'
-            );
-        }
+        Product::assertMoqMultiple($product, $qty);
         if ((int) $product['in_stock'] === 0 || $stock < $qty) {
             throw new DomainException(
                 'Insufficient stock for "' . $product['name'] . '" (available ' . $stock . ').'
@@ -152,6 +148,7 @@ class CartApiController extends ApiController
                 'name'          => display_name($ci['name'] ?? ''),
                 'unit'          => $ci['unit'],
                 'moq'           => (float) $ci['moq'],
+                'bulk_quote_threshold' => Product::bulkQuoteThreshold($ci),
                 'price'         => (float) $ci['price'],
                 'stock'         => (float) $ci['stock'],
                 'quantity'      => (float) $ci['quantity'],

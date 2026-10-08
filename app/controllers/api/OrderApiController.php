@@ -157,6 +157,8 @@ class OrderApiController extends ApiController
                     'delivered_at'             => $o['delivered_at'],
                     'item_count'               => (int) ($o['item_count'] ?? 0),
                     'can_cancel'               => Order::canCancel((string) $o['status']),
+                    'edit_count'               => (int) ($o['edit_count'] ?? 0),
+                    'can_edit'                 => Order::canEdit($o),
                 ];
             }, $result['rows']),
             'pagination' => [
@@ -177,6 +179,41 @@ class OrderApiController extends ApiController
         $items = $this->orders->items((int) $id);
         $log = $this->orders->statusLog((int) $id);
         $this->ok(['order' => $this->formatOrder($order, $items, $log)]);
+    }
+
+    /** One-time edit: body { items: [{product_id, quantity}, ...] } replaces all order lines. */
+    public function update(string $id): never
+    {
+        try {
+            $customer = $this->requireCustomer();
+            if (($customer['kyc_status'] ?? '') !== 'approved') {
+                $this->fail('KYC_REQUIRED', 'Your business verification must be approved before modifying orders.', 403);
+            }
+            $order = $this->orders->findForCustomer((int) $id, $this->customerId());
+            if (!$order) {
+                $this->fail('NOT_FOUND', 'Order not found.', 404);
+            }
+            if ((int) ($order['edit_count'] ?? 0) >= Order::MAX_CUSTOMER_EDITS) {
+                $this->fail(
+                    'EDIT_LIMIT_REACHED',
+                    'This order has already been modified once (edit_count = ' . (int) $order['edit_count']
+                    . '). Orders can only be modified one time. You can still cancel it if it has not been dispatched.',
+                    422
+                );
+            }
+
+            $body = $this->input();
+            $result = $this->checkout->editOrder((int) $id, $this->customerId(), $body['items'] ?? null);
+            $log = $this->orders->statusLog((int) $id);
+            $this->ok([
+                'message' => 'Order updated. This order cannot be modified again.',
+                'order'   => $this->formatOrder($result['order'], $result['items'], $log),
+            ]);
+        } catch (DomainException $e) {
+            $this->fail('VALIDATION_ERROR', $e->getMessage(), 422);
+        } catch (Throwable $e) {
+            $this->handleException($e);
+        }
     }
 
     public function cancel(string $id): never
@@ -220,11 +257,7 @@ class OrderApiController extends ApiController
                     ];
                     continue;
                 }
-                $qty = (float) $line['quantity'];
-                $moq = (float) $product['moq'];
-                if ($qty < $moq) {
-                    $qty = $moq;
-                }
+                $qty = Product::roundUpToMoq((float) $line['quantity'], (float) $product['moq']);
                 if ((int) $product['in_stock'] === 0 || (float) $product['stock'] < $qty) {
                     $skipped[] = [
                         'product_id' => (int) $product['id'],
@@ -424,6 +457,8 @@ Status: ' . $esc($invoice['status_label'] ?? $invoice['status']) . ' · Payment:
             'status'                  => $status,
             'status_label'            => Order::STATUS_LABELS[$status] ?? $status,
             'can_cancel'              => $status !== '' && Order::canCancel($status),
+            'edit_count'              => (int) ($order['edit_count'] ?? 0),
+            'can_edit'                => $status !== '' && Order::canEdit($order),
             'subtotal'                => (float) ($order['subtotal'] ?? 0),
             'delivery_fee'            => (float) ($order['delivery_fee'] ?? 0),
             'discount_amount'         => (float) ($order['discount_amount'] ?? 0),
@@ -443,6 +478,8 @@ Status: ' . $esc($invoice['status_label'] ?? $invoice['status']) . ' · Payment:
                 'state'    => $order['state'] ?? null,
                 'pincode'  => $order['pincode'] ?? null,
                 'landmark' => $order['landmark'] ?? null,
+                'geo_lat'  => isset($order['geo_lat']) ? (float) $order['geo_lat'] : null,
+                'geo_lng'  => isset($order['geo_lng']) ? (float) $order['geo_lng'] : null,
             ],
             'items' => array_map(function (array $i) {
                 return [

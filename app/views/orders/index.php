@@ -126,10 +126,13 @@ $exportUrl = url('orders/export' . ($exportQs !== '' ? '?' . $exportQs : ''));
               </td>
               <td class="vc-money">₹<?= e(number_format((float) $o['total'], 2)) ?></td>
               <td>
-                <span class="<?= e($badge['class']) ?>">
-                  <i class="bi <?= e($badge['icon']) ?>"></i>
-                  <?= e($badge['label']) ?>
-                </span>
+                <div class="vc-status-group">
+                  <span class="<?= e($badge['class']) ?>">
+                    <i class="bi <?= e($badge['icon']) ?>"></i>
+                    <?= e($badge['label']) ?>
+                  </span>
+                  <?php $badgeOrder = $o; require VIEW_PATH . '/shared/modified_badge.php'; ?>
+                </div>
               </td>
               <td>
                 <div class="vc-datetime">

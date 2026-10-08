@@ -19,6 +19,17 @@ $modules = $modules ?? [];
       <?php endforeach; ?>
     </select>
   </div>
+  <div class="col-md-6">
+    <label class="form-label" for="mobile">Mobile Number
+      <span class="badge bg-warning-subtle text-warning-emphasis ms-1" id="mobileRecommended">Recommended for Delivery Managers</span>
+    </label>
+    <div class="input-group">
+      <span class="input-group-text">+91</span>
+      <input type="tel" name="mobile" id="mobile" class="form-control" inputmode="numeric" maxlength="15"
+             placeholder="10-digit mobile" value="<?= e($admin['mobile'] ?? '') ?>">
+    </div>
+    <div class="form-text" id="mobileHelp">Optional. For Delivery Managers, this number pre-fills the recipient of “Share via WhatsApp” on their assigned orders.</div>
+  </div>
   <div class="col-12" id="modulesBox">
     <label class="form-label">Module permissions (Sub-Admin)</label>
     <div class="row">
@@ -47,7 +58,11 @@ $modules = $modules ?? [];
 (function(){
   const sel=document.getElementById('role_type');
   const box=document.getElementById('modulesBox');
-  function sync(){ box.style.display = sel.value==='sub_admin' ? '' : 'none'; }
+  const rec=document.getElementById('mobileRecommended');
+  function sync(){
+    box.style.display = sel.value==='sub_admin' ? '' : 'none';
+    rec.style.display = sel.value==='delivery_manager' ? '' : 'none';
+  }
   sel.addEventListener('change', sync); sync();
 })();
 </script>

@@ -14,7 +14,8 @@ class RoleController extends Controller
             $q = mb_strtolower($filters['q']);
             $admins = array_values(array_filter($admins, static function (array $a) use ($q): bool {
                 return str_contains(mb_strtolower($a['name']), $q)
-                    || str_contains(mb_strtolower($a['email']), $q);
+                    || str_contains(mb_strtolower($a['email']), $q)
+                    || str_contains((string) ($a['mobile'] ?? ''), $q);
             }));
         }
         if ($filters['role'] !== '') {
@@ -58,7 +59,7 @@ class RoleController extends Controller
             } elseif ($data['role_type'] === 'delivery_manager') {
                 $model->syncModules($id, ['delivery']);
             }
-            flash('success', 'Admin user created.');
+            flash('success', 'Admin user created.' . $this->missingMobileNote($data));
             redirect('roles');
         } catch (Throwable $e) {
             flash('error', $e->getMessage());
@@ -108,7 +109,7 @@ class RoleController extends Controller
             } else {
                 $model->syncModules((int) $id, []);
             }
-            flash('success', 'Admin user updated.');
+            flash('success', 'Admin user updated.' . $this->missingMobileNote($data));
             redirect('roles');
         } catch (Throwable $e) {
             flash('error', $e->getMessage());
@@ -141,6 +142,14 @@ class RoleController extends Controller
         redirect('roles');
     }
 
+    private function missingMobileNote(array $data): string
+    {
+        if ($data['role_type'] !== 'delivery_manager' || $data['mobile'] !== null) {
+            return '';
+        }
+        return ' No mobile number set — WhatsApp share links for this manager\'s orders will open without a recipient.';
+    }
+
     private function validated(bool $requirePassword): array
     {
         $name = trim((string) ($_POST['name'] ?? ''));
@@ -168,6 +177,7 @@ class RoleController extends Controller
         return [
             'name'        => $name,
             'email'       => $email,
+            'mobile'      => AdminUser::normalizeMobile((string) ($_POST['mobile'] ?? '')),
             'password'    => $password,
             'role_type'   => $role,
             'is_active'   => isset($_POST['is_active']) ? 1 : 0,

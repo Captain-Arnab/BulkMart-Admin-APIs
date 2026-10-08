@@ -38,17 +38,19 @@ $codWarn = $codWarn ?? null;
         <div class="card-body">
           <div class="d-flex justify-content-between mb-3">
             <h5 class="card-title mb-0">Delivery details</h5>
-            <span class="<?= e($badge['class']) ?>">
-              <i class="bi <?= e($badge['icon']) ?>"></i>
-              <?= e($badge['label']) ?>
-            </span>
+            <div class="vc-status-group">
+              <span class="<?= e($badge['class']) ?>">
+                <i class="bi <?= e($badge['icon']) ?>"></i>
+                <?= e($badge['label']) ?>
+              </span>
+              <?php $badgeOrder = $order; require VIEW_PATH . '/shared/modified_badge.php'; ?>
+            </div>
           </div>
           <div class="mb-3">
             <div class="fw-semibold"><?= e($order['business_name']) ?></div>
             <div><?= e($order['owner_name']) ?> · <?= e($order['mobile']) ?></div>
             <div class="mt-2">
-              <?= e($order['line1']) ?><?php if ($order['line2']): ?>, <?= e($order['line2']) ?><?php endif; ?><br>
-              <?= e($order['city']) ?>, <?= e($order['state']) ?> — <?= e($order['pincode']) ?>
+              <?php $addrOrder = $order; $addrCompact = false; require VIEW_PATH . '/shared/order_address.php'; ?>
             </div>
           </div>
           <table class="table table-sm">

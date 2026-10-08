@@ -76,13 +76,35 @@ class AdminUser extends Model
         return $this->ensureUser($name, $email, $password, 'super_admin');
     }
 
+    /**
+     * Normalise an optional mobile to 10 digits (accepts spaces, dashes, +91 / 91 / 0 prefix).
+     * Returns null for blank input; throws on anything that isn't an Indian mobile.
+     */
+    public static function normalizeMobile(?string $raw): ?string
+    {
+        $digits = preg_replace('/\D+/', '', (string) $raw) ?? '';
+        if ($digits === '') {
+            return null;
+        }
+        if (strlen($digits) === 12 && str_starts_with($digits, '91')) {
+            $digits = substr($digits, 2);
+        } elseif (strlen($digits) === 11 && $digits[0] === '0') {
+            $digits = substr($digits, 1);
+        }
+        if (!preg_match('/^[6-9]\d{9}$/', $digits)) {
+            throw new InvalidArgumentException('Mobile number must be a valid 10-digit Indian mobile (e.g. 98765 43210).');
+        }
+        return $digits;
+    }
+
     public function createAdmin(array $data): int
     {
         $this->execute(
-            'INSERT INTO admin_users (name, email, password_hash, role_type, is_active) VALUES (?,?,?,?,?)',
+            'INSERT INTO admin_users (name, email, mobile, password_hash, role_type, is_active) VALUES (?,?,?,?,?,?)',
             [
                 $data['name'],
                 strtolower($data['email']),
+                $data['mobile'] ?? null,
                 password_hash($data['password'], PASSWORD_DEFAULT),
                 $data['role_type'],
                 !empty($data['is_active']) ? 1 : 0,
@@ -95,18 +117,18 @@ class AdminUser extends Model
     {
         if ($newPassword !== null && $newPassword !== '') {
             return $this->execute(
-                'UPDATE admin_users SET name=?, email=?, role_type=?, is_active=?, password_hash=? WHERE id=?',
+                'UPDATE admin_users SET name=?, email=?, mobile=?, role_type=?, is_active=?, password_hash=? WHERE id=?',
                 [
-                    $data['name'], strtolower($data['email']), $data['role_type'],
+                    $data['name'], strtolower($data['email']), $data['mobile'] ?? null, $data['role_type'],
                     !empty($data['is_active']) ? 1 : 0,
                     password_hash($newPassword, PASSWORD_DEFAULT), $id,
                 ]
             );
         }
         return $this->execute(
-            'UPDATE admin_users SET name=?, email=?, role_type=?, is_active=? WHERE id=?',
+            'UPDATE admin_users SET name=?, email=?, mobile=?, role_type=?, is_active=? WHERE id=?',
             [
-                $data['name'], strtolower($data['email']), $data['role_type'],
+                $data['name'], strtolower($data['email']), $data['mobile'] ?? null, $data['role_type'],
                 !empty($data['is_active']) ? 1 : 0, $id,
             ]
         );

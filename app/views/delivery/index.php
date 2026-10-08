@@ -104,7 +104,7 @@ $qsBase = static function (array $extra = []) use ($tab, $filters): string {
             <tr>
               <th>Order</th>
               <th>Customer</th>
-              <th>Area</th>
+              <th>Delivery address</th>
               <th>ETA</th>
               <th>Status</th>
               <th>COD</th>
@@ -131,9 +131,8 @@ $qsBase = static function (array $extra = []) use ($tab, $filters): string {
                   <span class="meta"><i class="bi bi-phone"></i> <?= e($o['mobile']) ?></span>
                 </div>
               </td>
-              <td class="small">
-                <?= e($o['city'] ?? '') ?>
-                <?php if (!empty($o['pincode'])): ?><div class="text-muted"><?= e($o['pincode']) ?></div><?php endif; ?>
+              <td class="vc-addr-cell">
+                <?php $addrOrder = $o; $addrCompact = true; require VIEW_PATH . '/shared/order_address.php'; ?>
               </td>
               <td>
                 <?php if (!empty($o['estimated_delivery_date'])): ?>
@@ -143,10 +142,13 @@ $qsBase = static function (array $extra = []) use ($tab, $filters): string {
                 <?php endif; ?>
               </td>
               <td>
-                <span class="<?= e($badge['class']) ?>">
-                  <i class="bi <?= e($badge['icon']) ?>"></i>
-                  <?= e($badge['label']) ?>
-                </span>
+                <div class="vc-status-group">
+                  <span class="<?= e($badge['class']) ?>">
+                    <i class="bi <?= e($badge['icon']) ?>"></i>
+                    <?= e($badge['label']) ?>
+                  </span>
+                  <?php $badgeOrder = $o; require VIEW_PATH . '/shared/modified_badge.php'; ?>
+                </div>
               </td>
               <td class="vc-money">₹<?= e(number_format((float) $o['total'], 2)) ?></td>
               <?php if (($user['role'] ?? '') === 'super_admin'): ?>

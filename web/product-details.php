@@ -143,7 +143,7 @@
 
 
                 <!-- =====================================
-                     QUANTITY TIERS (25 / 50 / 75 / 100 KG)
+                     QUANTITY (multiples of the product MOQ, up to bulk_quote_threshold)
                 ====================================== -->
                 <div class="vc-product-option" id="vcQtyTierBlock">
 
@@ -154,23 +154,13 @@
                         </strong>
 
                         <span id="vcQtyTierHint">
-                            Fixed bulk packs in KG
+                            Ordered in multiples of the minimum order quantity
                         </span>
 
                     </div>
 
-
-                    <div class="vc-weight-options" id="vcQtyTiers">
-
-                        <button type="button" class="vc-weight-btn active" data-qty="25">25 KG</button>
-                        <button type="button" class="vc-weight-btn" data-qty="50">50 KG</button>
-                        <button type="button" class="vc-weight-btn" data-qty="75">75 KG</button>
-                        <button type="button" class="vc-weight-btn" data-qty="100">100 KG</button>
-
-                    </div>
-
-                    <div class="vc-bulk-quote-row">
-                        <span>Need more than 100 KG?</span>
+                    <div class="vc-bulk-quote-row" id="vcBulkQuoteRow">
+                        <span id="vcBulkQuoteLabel">Need a larger bulk order?</span>
                         <button type="button" class="vc-bulk-quote-btn" id="vcBulkQuoteBtn">
                             Get Bulk Quote
                         </button>
@@ -183,7 +173,7 @@
 
 
                 <!-- =====================================
-                     QUANTITY + CART (non-kg products keep stepper)
+                     QUANTITY STEPPER + CART (steps by MOQ)
                 ====================================== -->
                 <div class="vc-product-purchase">
 
@@ -192,7 +182,8 @@
 
                         <button
                             type="button"
-                            id="vcQtyMinus">
+                            id="vcMoqMinus"
+                            aria-label="Decrease quantity">
 
                             <i class="fa-solid fa-minus"></i>
 
@@ -202,13 +193,16 @@
                         <input
                             type="number"
                             id="vcProductQty"
-                            value="25"
-                            min="1">
+                            value="1"
+                            min="1"
+                            readonly
+                            aria-label="Quantity">
 
 
                         <button
                             type="button"
-                            id="vcQtyPlus">
+                            id="vcMoqPlus"
+                            aria-label="Increase quantity">
 
                             <i class="fa-solid fa-plus"></i>
 
@@ -872,7 +866,7 @@
         </div>
 
         <p class="vc-bulk-modal-lead">
-            Tell us what you need above 100 KG. Our team will call you within 24 hours
+            Tell us how much you need beyond the regular order limit. Our team will call you within 24 hours
             (<strong>(Veggiicart@gmail.com · +91 8099999086)</strong>.
         </p>
 

@@ -273,6 +273,23 @@
                     </div>
                 </div>
 
+                <div class="vg-order-action-card" id="vgEditCard" hidden>
+                    <div class="vg-action-card-icon help">
+                        <i class="fa-solid fa-pen-to-square"></i>
+                    </div>
+                    <h3>Edit Order</h3>
+                    <p>Change quantities or remove items. You can modify this order <strong>only once</strong>.</p>
+                    <button type="button" class="vg-support-btn" id="vgEditBtn">
+                        <i class="fa-solid fa-pen"></i>
+                        Edit this order
+                    </button>
+                </div>
+
+                <div class="vg-order-edit-locked" id="vgEditLockedNote" hidden>
+                    <i class="fa-solid fa-lock"></i>
+                    <span>This order has already been modified once and cannot be modified again.</span>
+                </div>
+
                 <div class="vg-order-action-card" id="vgCancelCard" hidden>
                     <div class="vg-action-card-icon help">
                         <i class="fa-solid fa-ban"></i>

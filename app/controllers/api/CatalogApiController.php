@@ -216,6 +216,7 @@ class CatalogApiController extends ApiController
             'name'          => display_name($p['name'] ?? ''),
             'unit'          => $p['unit'],
             'moq'           => (float) $p['moq'],
+            'bulk_quote_threshold' => Product::bulkQuoteThreshold($p),
             'price'         => (float) $p['price'],
             'stock'         => (float) $p['stock'],
             'in_stock'      => (int) $p['in_stock'] === 1 && (float) $p['stock'] > 0,

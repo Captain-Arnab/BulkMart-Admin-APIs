@@ -3,9 +3,9 @@
 /**
  * Public bulk enquiry API.
  *
- * Flutter note (app team): Product Detail should mirror website qty tiers
- * (25/50/75/100 KG chips + "Get Bulk Quote" for >100 KG) and POST here.
- * Skip fixed KG chips for non-kg units (per bunch / per dozen).
+ * Client note: quantities step in multiples of the product's `moq` (cart/order APIs reject anything else).
+ * Show "Get Bulk Quote" (POST here) instead of the stepper once the customer wants more than
+ * the product's `bulk_quote_threshold` (= 5 × MOQ).
  */
 class BulkEnquiryApiController extends ApiController
 {

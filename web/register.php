@@ -16,16 +16,17 @@ $vcBizTypes = [
     ['Other', 'fa-ellipsis'],
 ];
 
+// [input name, label, icon, required]. Shop Front Photo is mandatory server-side (SHOP_PHOTO_REQUIRED).
 $vcDocTypes = [
-    ['gst_certificate', 'GST Certificate', 'fa-file-invoice'],
-    ['fssai_document', 'FSSAI Licence', 'fa-certificate'],
-    ['shop_registration', 'Shop Registration', 'fa-shop'],
-    ['msme_certificate', 'MSME Certificate', 'fa-building-circle-check'],
-    ['trade_licence', 'Trade Licence', 'fa-file-signature'],
-    ['pan_card', 'PAN Card', 'fa-id-card'],
-    ['aadhaar_card', 'Aadhaar Card', 'fa-address-card'],
-    ['shop_photo', 'Shop-front Photo', 'fa-camera'],
-    ['business_card', 'Business Visiting Card', 'fa-address-book'],
+    ['shop_photo', 'Shop Front Photo', 'fa-camera', true],
+    ['gst_certificate', 'GST Certificate', 'fa-file-invoice', false],
+    ['fssai_document', 'FSSAI Licence', 'fa-certificate', false],
+    ['shop_registration', 'Shop Registration', 'fa-shop', false],
+    ['msme_certificate', 'MSME Certificate', 'fa-building-circle-check', false],
+    ['trade_licence', 'Trade Licence', 'fa-file-signature', false],
+    ['pan_card', 'PAN Card', 'fa-id-card', false],
+    ['aadhaar_card', 'Aadhaar Card', 'fa-address-card', false],
+    ['business_card', 'Business Visiting Card', 'fa-address-book', false],
 ];
 ?>
 
@@ -60,8 +61,8 @@ $vcDocTypes = [
                         <div class="vc-signup-benefit">
                             <span><i class="fa-solid fa-file-shield"></i></span>
                             <div>
-                                <strong>Optional documents</strong>
-                                <small>Upload now or later</small>
+                                <strong>Shop photo + documents</strong>
+                                <small>Shop front photo required, the rest optional</small>
                             </div>
                         </div>
                     </div>
@@ -297,19 +298,27 @@ $vcDocTypes = [
                         <div class="vc-step-heading">
                             <span>Step 04</span>
                             <h2>Upload documents</h2>
-                            <p>All documents are optional right now. JPG, PNG or PDF up to 5 MB.</p>
+                            <p>A clear <strong>Shop Front Photo is required</strong> to continue. All other documents are optional. JPG, PNG or PDF up to 5 MB.</p>
                         </div>
                         <div class="vc-upload-grid">
-                            <?php foreach ($vcDocTypes as [$name, $label, $icon]): ?>
-                                <label class="vc-upload-card">
-                                    <input type="file" name="<?= htmlspecialchars($name, ENT_QUOTES, 'UTF-8') ?>" accept="image/*,.pdf">
+                            <?php foreach ($vcDocTypes as [$name, $label, $icon, $isRequired]): ?>
+                                <label class="vc-upload-card<?= $isRequired ? ' is-required' : '' ?>">
+                                    <input type="file" name="<?= htmlspecialchars($name, ENT_QUOTES, 'UTF-8') ?>"
+                                        accept="<?= $isRequired ? 'image/*' : 'image/*,.pdf' ?>"<?= $isRequired ? ' required aria-required="true"' : '' ?>>
                                     <span class="vc-upload-icon"><i class="fa-solid <?= htmlspecialchars($icon, ENT_QUOTES, 'UTF-8') ?>"></i></span>
                                     <div>
                                         <strong><?= htmlspecialchars($label, ENT_QUOTES, 'UTF-8') ?></strong>
-                                        <small>Optional</small>
+                                        <?php if ($isRequired): ?>
+                                            <small class="vc-doc-required-tag">Required</small>
+                                        <?php else: ?>
+                                            <small>Optional</small>
+                                        <?php endif; ?>
                                     </div>
                                     <span class="vc-upload-action"><i class="fa-solid fa-cloud-arrow-up"></i> Upload</span>
                                     <span class="vc-file-name">No file selected</span>
+                                    <?php if ($isRequired): ?>
+                                        <span class="vc-upload-error" id="vcShopPhotoError" hidden></span>
+                                    <?php endif; ?>
                                 </label>
                             <?php endforeach; ?>
                         </div>
@@ -341,7 +350,7 @@ $vcDocTypes = [
                         </div>
                         <div class="vc-review-card">
                             <h3>Documents</h3>
-                            <p id="vcReviewDocs">None selected (optional)</p>
+                            <p id="vcReviewDocs">—</p>
                         </div>
 
                         <label class="vc-signup-terms" style="margin-top:16px">

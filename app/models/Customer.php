@@ -26,8 +26,12 @@ class Customer extends Model
         'shop_registration'  => 'shop_establishment',
         'trade_licence'      => 'trade_license',
         'shop_photo'         => 'business_photo',
+        'shop_front_photo'   => 'business_photo',
         'business_card'      => 'owner_photo',
     ];
+
+    /** Must be uploaded (POST /business/documents) before POST /business/register succeeds. */
+    public const REQUIRED_DOC_TYPES = ['business_photo'];
 
     /** Types allowed by the customer_documents table. */
     public const UPLOADABLE_DOC_TYPES = [
@@ -217,6 +221,17 @@ class Customer extends Model
             [$customerId, $type, $fileUrl]
         );
         return (int) $this->db->lastInsertId();
+    }
+
+    /** @return list<string> canonical required types this customer has not uploaded yet */
+    public function missingRequiredDocuments(int $customerId): array
+    {
+        $in = implode(',', array_fill(0, count(self::REQUIRED_DOC_TYPES), '?'));
+        $rows = $this->fetchAll(
+            "SELECT DISTINCT document_type FROM customer_documents WHERE customer_id = ? AND document_type IN ($in)",
+            array_merge([$customerId], self::REQUIRED_DOC_TYPES)
+        );
+        return array_values(array_diff(self::REQUIRED_DOC_TYPES, array_column($rows, 'document_type')));
     }
 
     public function findDocument(int $docId, int $customerId): ?array
