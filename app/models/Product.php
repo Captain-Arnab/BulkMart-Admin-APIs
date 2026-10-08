@@ -274,6 +274,11 @@ class Product extends Model
         );
     }
 
+    public function updateMoq(int $id, float $moq): bool
+    {
+        return $this->execute('UPDATE products SET moq = ? WHERE id = ?', [round($moq, 2), $id]);
+    }
+
     public function setActive(int $id, bool $active): bool
     {
         return $this->execute('UPDATE products SET is_active = ? WHERE id = ?', [$active ? 1 : 0, $id]);

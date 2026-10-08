@@ -108,6 +108,7 @@ $exportUrl = url('products/export' . ($exportQs !== '' ? '?' . $exportQs : ''));
               <th>Item Code</th>
               <th>Batch No</th>
               <th>Price</th>
+              <th title="Minimum order quantity — customers order in multiples of this">MOQ</th>
               <th>Stock</th>
               <th>Status</th>
               <th>Active</th>
@@ -116,7 +117,7 @@ $exportUrl = url('products/export' . ($exportQs !== '' ? '?' . $exportQs : ''));
           </thead>
           <tbody>
           <?php if (!$products): ?>
-            <tr><td colspan="10" class="text-center text-muted py-4">No products found.</td></tr>
+            <tr><td colspan="11" class="text-center text-muted py-4">No products found.</td></tr>
           <?php endif; ?>
           <?php foreach ($products as $p): ?>
             <?php $badge = Product::stockBadge($p); ?>
@@ -141,6 +142,18 @@ $exportUrl = url('products/export' . ($exportQs !== '' ? '?' . $exportQs : ''));
               <td><code><?= e($p['item_code'] ?: '—') ?></code></td>
               <td><?= e($p['batch_no'] ?: '—') ?></td>
               <td>₹<?= e(number_format((float)$p['price'], 2)) ?></td>
+              <td style="min-width:130px">
+                <form method="POST" action="<?= e(url('products/' . $p['id'] . '/moq')) ?>" class="d-flex gap-1">
+                  <?php foreach ($listQuery as $lk => $lv): ?>
+                    <input type="hidden" name="<?= e((string) $lk) ?>" value="<?= e((string) $lv) ?>">
+                  <?php endforeach; ?>
+                  <input type="number" step="0.01" min="0.01" name="moq" required
+                         value="<?= e(Product::formatQty((float) $p['moq'])) ?>"
+                         class="form-control form-control-sm" style="max-width:72px"
+                         aria-label="MOQ for <?= e($p['name']) ?>">
+                  <button class="btn btn-sm btn-outline-primary" type="submit" title="Save MOQ">Save</button>
+                </form>
+              </td>
               <td style="min-width:140px">
                 <form method="POST" action="<?= e(url('products/' . $p['id'] . '/stock')) ?>" class="d-flex gap-1">
                   <?php foreach ($listQuery as $lk => $lv): ?>

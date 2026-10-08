@@ -173,6 +173,26 @@ class ProductController extends Controller
         redirect($this->productsListPath($_POST));
     }
 
+    public function updateMoq(string $id): void
+    {
+        $moq = round((float) ($_POST['moq'] ?? 0), 2);
+        if ($moq <= 0) {
+            flash('error', 'MOQ must be greater than 0.');
+            redirect($this->productsListPath($_POST));
+        }
+        $model = new Product();
+        $product = $model->find((int) $id);
+        if (!$product) {
+            flash('error', 'Product not found.');
+            redirect($this->productsListPath($_POST));
+        }
+        $model->updateMoq((int) $id, $moq);
+        $unit = trim((string) preg_replace('/^per\s+/i', '', trim((string) ($product['unit'] ?? ''))));
+        flash('success', 'MOQ for "' . display_name((string) $product['name']) . '" updated to '
+            . Product::formatQty($moq) . ($unit !== '' ? ' ' . $unit : '') . '.');
+        redirect($this->productsListPath($_POST));
+    }
+
     public function delete(string $id): void
     {
         $this->deleteByIds([(int) $id]);

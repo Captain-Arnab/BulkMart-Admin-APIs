@@ -166,6 +166,7 @@ $router->post('/products/{id}/update', [ProductController::class, 'update'], [re
 $router->post('/products/{id}/deactivate', [ProductController::class, 'deactivate'], [require_module('products')]);
 $router->post('/products/{id}/delete', [ProductController::class, 'delete'], [require_module('products')]);
 $router->post('/products/{id}/stock', [ProductController::class, 'updateStock'], [require_module('products')]);
+$router->post('/products/{id}/moq', [ProductController::class, 'updateMoq'], [require_module('products')]);
 
 $router->get('/categories', [CategoryController::class, 'index'], [require_module('categories')]);
 $router->get('/categories/create', [CategoryController::class, 'create'], [require_module('categories')]);
