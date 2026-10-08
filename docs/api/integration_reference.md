@@ -292,21 +292,51 @@ Product **detail** adds `description`, `benefits`, `storage_tips`, and an `image
 | POST | `/orders/{id}/reorder` | `reorder` | JWT |
 | POST | `/orders/{id}/cancel` | `cancel` | JWT |
 | GET | `/orders/{id}` | `show` | JWT |
-| PUT | `/orders/{id}` | `update` (one-time edit) | JWT |
+| PUT | `/orders/{id}` | `update` (edit: max 2×, within 2 min) | JWT |
 | POST | `/orders/{id}` | `update` | JWT (PUT fallback) |
 
 **Registered route count:** **60** (including POST aliases for PUT).
 
-#### `PUT /orders/{id}` — one-time order modification
+#### `PUT /orders/{id}` — customer order edit (time-limited, max 2 edits)
 
 Body: `{ "items": [ { "product_id": 61, "quantity": 5 }, { "product_id": 84, "quantity": 60 } ] }` — the **full** new item list (replaces all lines; products may be added/removed; each quantity must be an MOQ multiple; no duplicate `product_id`; empty list → 422, cancel instead).
 
-- Allowed only when `status` is `placed` or `confirmed` **and** `edit_count = 0`. Order objects expose `edit_count` and `can_edit` (list + detail) — use `can_edit` to show/hide the button.
-- Second attempt → 422 `EDIT_LIMIT_REACHED` (enforced server-side with a row lock + conditional update).
+**Edit rule** (constants in `Order`: `ORDER_EDIT_WINDOW_SECONDS = 120`, `ORDER_EDIT_MAX_COUNT = 2`). An order is editable only when **all** hold:
+
+1. `edit_count < 2`
+2. server now − `placed_at` ≤ 120 seconds (server clock only — never the device clock)
+3. `status` is `placed` or `confirmed`
+
+Errors (all 422, checked in this order, under a row lock so concurrent edits cannot both pass):
+
+| Code | When | Message (example) |
+|------|------|-------------------|
+| `EDIT_LIMIT_REACHED` | `edit_count >= 2` | "This order has already been edited 2 times, which is the maximum. It cannot be modified again. You can still cancel it if it has not been dispatched." |
+| `EDIT_WINDOW_EXPIRED` | more than 120 s since `placed_at` | "The 2-minute edit window for this order has ended. Orders can only be edited within 2 minutes of placing them. You can still cancel it if it has not been dispatched." |
+| `VALIDATION_ERROR` | status no longer editable, or invalid items / MOQ / stock / coupon | server message |
+
+**Edit fields on every order object** (`GET /orders`, `GET /orders/{id}`, place / edit / cancel responses), all computed with the rule above:
+
+| Field | Type | Meaning |
+|-------|------|---------|
+| `can_edit` | bool | Show the Edit button only when `true` |
+| `edit_count` | int | Successful edits so far |
+| `edit_remaining` | int | `max(0, 2 − edit_count)` |
+| `edit_max_count` | int | `2` |
+| `edit_window_seconds` | int | `120` |
+| `edit_expires_at` | ISO 8601 | `placed_at + 120 s`, e.g. `2026-10-08T13:02:14+05:30` |
+| `edit_seconds_left` | int | Seconds until `edit_expires_at` while `can_edit` is true, else `0` |
+| `server_time` | ISO 8601 | Server clock when the response was built |
+
+**Countdown on clients:** start from `edit_seconds_left` (or `edit_expires_at − server_time`) and count down with a local monotonic timer; do **not** compare `edit_expires_at` against the device clock. Hide the Edit button at zero; the server rejects late edits with `EDIT_WINDOW_EXPIRED` regardless.
+
+- Each successful edit increments `edit_count` by 1.
 - Lines are re-priced at **current** catalog prices; `delivery_fee` is kept; an order coupon is re-evaluated (edit rejected if it would make the coupon ineligible/expired).
 - Stock: `placed` → validated only (deducted on confirm, as usual). `confirmed` → old quantities restored, new ones validated and deducted, atomically.
-- Cart and cart coupon are untouched. Cancellation is independent of `edit_count` (`can_cancel` unchanged; an edited order can still be cancelled and stock is restored for the edited quantities).
-- Success: 200 `{ "message": "...", "order": { ...same shape as GET /orders/{id}, edit_count: 1, can_edit: false } }`.
+- Cart and cart coupon are untouched. **Cancellation is independent of `edit_count` and the edit window** — `can_cancel` is status-based only (`placed`, `confirmed`, `delivery_date_set`); an edited order can still be cancelled and stock is restored for the edited quantities.
+- Success: 200 `{ "message": "...", "order": { ...same shape as GET /orders/{id} } }`. `message` is "Order updated. You can edit this order 1 more time(s) within the remaining time." after the first edit, and "Your order has been confirmed. This order cannot be modified again." after the second.
+
+**Timezone:** PHP runs in `APP_TIMEZONE` (`Asia/Kolkata` by default, `app.timezone` in `config.local.php`) and every DB connection sets the MySQL session `time_zone` to the same offset, so `placed_at` (written with `NOW()`) and PHP's `time()` refer to the same clock.
 
 ### vs `verify_api.php` coverage
 

@@ -57,6 +57,7 @@ function db(): PDO
         PDO::ATTR_EMULATE_PREPARES   => false,
         PDO::MYSQL_ATTR_MULTI_STATEMENTS => true,
     ]);
+    $pdo->exec("SET time_zone = '" . (new DateTimeImmutable('now'))->format('P') . "'");
 
     return $pdo;
 }

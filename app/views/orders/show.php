@@ -56,7 +56,7 @@ if ($order['status'] === 'cancelled') {
                   <i class="bi <?= e($badge['icon']) ?>"></i>
                   <?= e($badge['label']) ?>
                 </span>
-                <?php $badgeOrder = $order; require VIEW_PATH . '/shared/modified_badge.php'; ?>
+                <?php $badgeOrder = $order; $badgeShowCount = true; $badgeLarge = true; require VIEW_PATH . '/shared/modified_badge.php'; ?>
               </div>
               <div class="vc-order-hero-total">₹<?= e(number_format((float) $order['total'], 2)) ?></div>
             </div>
@@ -104,15 +104,21 @@ if ($order['status'] === 'cancelled') {
             </div>
           <?php endif; ?>
 
-          <div class="vc-order-summary-grid">
+          <div class="vc-order-summary-grid vc-order-summary-grid--address">
             <div class="vc-info-block">
               <div class="vc-info-label"><i class="bi bi-shop"></i> Customer</div>
               <div class="vc-info-title"><?= e($order['business_name']) ?></div>
-              <div><?= e($order['owner_name']) ?></div>
-              <div class="text-muted"><i class="bi bi-phone"></i> <?= e($order['mobile']) ?></div>
-              <?php if ($order['customer_email']): ?>
-                <div class="small text-muted"><?= e($order['customer_email']) ?></div>
-              <?php endif; ?>
+              <div class="vc-info-sub"><?= e($order['owner_name']) ?></div>
+              <div class="vc-info-contacts">
+                <a class="vc-info-contact" href="tel:<?= e($order['mobile']) ?>" title="Call customer">
+                  <i class="bi bi-telephone"></i><?= e($order['mobile']) ?>
+                </a>
+                <?php if ($order['customer_email']): ?>
+                  <a class="vc-info-contact" href="mailto:<?= e($order['customer_email']) ?>">
+                    <i class="bi bi-envelope"></i><?= e($order['customer_email']) ?>
+                  </a>
+                <?php endif; ?>
+              </div>
             </div>
             <div class="vc-info-block">
               <div class="vc-info-label"><i class="bi bi-geo-alt"></i> Delivery address</div>

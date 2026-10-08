@@ -273,7 +273,7 @@
         placeOrder: function (body) { return request('POST', '/orders', body); },
         placeMultiAddressOrder: function (body) { return request('POST', '/orders/multi-address', body); },
         cancelOrder: function (id, reason) { return request('POST', '/orders/' + id + '/cancel', { reason: reason || '' }); },
-        /** One-time edit. `items` is the FULL desired list [{product_id, quantity}], not a diff. */
+        /** Order edit (limited count + time window). `items` is the FULL desired list [{product_id, quantity}], not a diff. */
         updateOrder: function (id, items) { return request('PUT', '/orders/' + id, { items: items }); },
         reorder: function (id) { return request('POST', '/orders/' + id + '/reorder'); },
         invoice: function (id) { return request('GET', '/orders/' + id + '/invoice'); },

@@ -157,8 +157,7 @@ class OrderApiController extends ApiController
                     'delivered_at'             => $o['delivered_at'],
                     'item_count'               => (int) ($o['item_count'] ?? 0),
                     'can_cancel'               => Order::canCancel((string) $o['status']),
-                    'edit_count'               => (int) ($o['edit_count'] ?? 0),
-                    'can_edit'                 => Order::canEdit($o),
+                    ...$this->editFields($o),
                 ];
             }, $result['rows']),
             'pagination' => [
@@ -181,7 +180,10 @@ class OrderApiController extends ApiController
         $this->ok(['order' => $this->formatOrder($order, $items, $log)]);
     }
 
-    /** One-time edit: body { items: [{product_id, quantity}, ...] } replaces all order lines. */
+    /**
+     * Customer edit: body { items: [{product_id, quantity}, ...] } replaces all order lines.
+     * Allowed up to Order::ORDER_EDIT_MAX_COUNT times within Order::ORDER_EDIT_WINDOW_SECONDS of placement.
+     */
     public function update(string $id): never
     {
         try {
@@ -193,22 +195,18 @@ class OrderApiController extends ApiController
             if (!$order) {
                 $this->fail('NOT_FOUND', 'Order not found.', 404);
             }
-            if ((int) ($order['edit_count'] ?? 0) >= Order::MAX_CUSTOMER_EDITS) {
-                $this->fail(
-                    'EDIT_LIMIT_REACHED',
-                    'This order has already been modified once (edit_count = ' . (int) $order['edit_count']
-                    . '). Orders can only be modified one time. You can still cancel it if it has not been dispatched.',
-                    422
-                );
-            }
 
             $body = $this->input();
             $result = $this->checkout->editOrder((int) $id, $this->customerId(), $body['items'] ?? null);
             $log = $this->orders->statusLog((int) $id);
+            $formatted = $this->formatOrder($result['order'], $result['items'], $log);
             $this->ok([
-                'message' => 'Order updated. This order cannot be modified again.',
-                'order'   => $this->formatOrder($result['order'], $result['items'], $log),
+                'message' => Order::editSuccessMessage($formatted['edit_remaining']),
+                'order'   => $formatted,
             ]);
+        } catch (OrderEditDeniedException $e) {
+            $code = $e->errorCode === Order::EDIT_STATUS_LOCKED ? 'VALIDATION_ERROR' : $e->errorCode;
+            $this->fail($code, $e->getMessage(), 422);
         } catch (DomainException $e) {
             $this->fail('VALIDATION_ERROR', $e->getMessage(), 422);
         } catch (Throwable $e) {
@@ -444,6 +442,26 @@ Status: ' . $esc($invoice['status_label'] ?? $invoice['status']) . ' · Payment:
     }
 
     /**
+     * Edit-rule fields for clients. server_time lets a countdown run off server time instead of the device clock.
+     *
+     * @param array<string,mixed> $order
+     */
+    private function editFields(array $order): array
+    {
+        $state = Order::editState($order);
+        return [
+            'can_edit'          => ($order['status'] ?? '') !== '' && $state['can_edit'],
+            'edit_count'        => $state['edit_count'],
+            'edit_remaining'    => $state['edit_remaining'],
+            'edit_max_count'    => Order::ORDER_EDIT_MAX_COUNT,
+            'edit_window_seconds' => Order::ORDER_EDIT_WINDOW_SECONDS,
+            'edit_expires_at'   => $state['edit_expires_at'],
+            'edit_seconds_left' => $state['edit_seconds_left'],
+            'server_time'       => date('c'),
+        ];
+    }
+
+    /**
      * @param array<string,mixed> $order
      * @param array<int,array<string,mixed>> $items
      * @param array<int,array<string,mixed>> $log
@@ -457,8 +475,7 @@ Status: ' . $esc($invoice['status_label'] ?? $invoice['status']) . ' · Payment:
             'status'                  => $status,
             'status_label'            => Order::STATUS_LABELS[$status] ?? $status,
             'can_cancel'              => $status !== '' && Order::canCancel($status),
-            'edit_count'              => (int) ($order['edit_count'] ?? 0),
-            'can_edit'                => $status !== '' && Order::canEdit($order),
+            ...$this->editFields($order),
             'subtotal'                => (float) ($order['subtotal'] ?? 0),
             'delivery_fee'            => (float) ($order['delivery_fee'] ?? 0),
             'discount_amount'         => (float) ($order['discount_amount'] ?? 0),

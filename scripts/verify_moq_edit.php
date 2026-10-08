@@ -1,7 +1,7 @@
 <?php
 /**
  * Verify: mandatory shop-front photo, MOQ-multiple quantities (cart + orders),
- * one-time order edit, cancel-after-edit, and admin order address fields.
+ * order edit rule (max 2 edits within 120 s of placement), cancel-after-edit, and admin order address fields.
  * Usage: php scripts/verify_moq_edit.php   (needs XAMPP Apache + MySQL, SMS dev mode)
  */
 
@@ -201,13 +201,26 @@ $pdo->prepare('UPDATE cart_items SET quantity = 40 WHERE customer_id = ? AND pro
 $r = api('POST', '/orders', $token, ['address_id' => $addrIds[0]]);
 check($r['code'] === 201, 'POST /orders with A=15, B=40 -> 201');
 $orderId = (int) ($r['json']['data']['order']['id'] ?? 0);
-check(($r['json']['data']['order']['edit_count'] ?? null) === 0 && ($r['json']['data']['order']['can_edit'] ?? null) === true,
-    'new order: edit_count=0, can_edit=true');
+$new = $r['json']['data']['order'] ?? [];
+check(($new['edit_count'] ?? null) === 0 && ($new['can_edit'] ?? null) === true && ($new['edit_remaining'] ?? null) === 2,
+    'new order: edit_count=0, can_edit=true, edit_remaining=2');
 
 // ---------------------------------------------------------------------------
-// 5. One-time edit (on a confirmed order so stock re-balancing is exercised)
+// 5. Edit rule: max 2 edits within 120 s of placement (confirmed order so stock re-balancing is exercised)
 // ---------------------------------------------------------------------------
-echo "\n== One-time edit ==\n";
+echo "\n== Order edit (max " . Order::ORDER_EDIT_MAX_COUNT . ' within ' . Order::ORDER_EDIT_WINDOW_SECONDS . "s) ==\n";
+check(Order::ORDER_EDIT_WINDOW_SECONDS === 120 && Order::ORDER_EDIT_MAX_COUNT === 2, 'constants: window 120s, max 2 edits');
+
+$g = api('GET', '/orders/' . $orderId, $token)['json']['data']['order'] ?? [];
+$placedAt = (string) $pdo->query("SELECT placed_at FROM orders WHERE id = $orderId")->fetchColumn();
+$expiresTs = strtotime((string) ($g['edit_expires_at'] ?? ''));
+check($expiresTs === strtotime($placedAt) + 120, "GET /orders/{id}: edit_expires_at = placed_at + 120s ({$g['edit_expires_at']})");
+$left = $expiresTs - time();
+check($left > 90 && $left <= 120 && ($g['edit_seconds_left'] ?? -1) > 90 && ($g['edit_seconds_left'] ?? 999) <= 120,
+    "timezone consistent: PHP sees ~{$left}s left on a just-placed order (DB placed_at $placedAt)");
+check(isset($g['server_time']) && abs(strtotime($g['server_time']) - time()) <= 5, 'server_time present and close to now');
+$dbPhpSkew = abs((int) $pdo->query('SELECT UNIX_TIMESTAMP(NOW())')->fetchColumn() - strtotime((string) $pdo->query('SELECT NOW()')->fetchColumn()));
+check($dbPhpSkew <= 1, 'MySQL NOW() and PHP strtotime agree on the same instant (session time_zone aligned)');
 $adminId = (int) $pdo->query("SELECT id FROM admin_users WHERE role_type = 'super_admin' LIMIT 1")->fetchColumn();
 $stockA0 = stockOf($A);
 $stockB0 = stockOf($B);
@@ -230,9 +243,12 @@ $r = api('PUT', '/orders/' . $orderId, $token, ['items' => [
     ['product_id' => $B, 'quantity' => 60],
 ]]);
 $o = $r['json']['data']['order'] ?? [];
-check($r['code'] === 200, 'edit A 15->5, B 40->60 -> 200');
-check(($o['edit_count'] ?? null) === 1 && ($o['can_edit'] ?? null) === false && ($o['can_cancel'] ?? null) === true,
-    'after edit: edit_count=1, can_edit=false, can_cancel=true');
+check($r['code'] === 200, 'first edit A 15->5, B 40->60 -> 200');
+check(($o['edit_count'] ?? null) === 1 && ($o['edit_remaining'] ?? null) === 1 && ($o['can_edit'] ?? null) === true
+    && ($o['can_cancel'] ?? null) === true,
+    'after first edit: edit_count=1, edit_remaining=1, can_edit=true, can_cancel=true');
+check(($r['json']['data']['message'] ?? '') === 'Order updated. You can edit this order 1 more time(s) within the remaining time.',
+    'first edit message: ' . ($r['json']['data']['message'] ?? ''));
 $expectedSubtotal = round(5 * $priceA + 60 * $priceB, 2);
 check(abs((float) ($o['subtotal'] ?? 0) - $expectedSubtotal) < 0.01
     && abs((float) ($o['total'] ?? 0) - round($expectedSubtotal + $fee, 2)) < 0.01,
@@ -242,45 +258,83 @@ check(count($items) === 2 && (float) $items[$A] === 5.0 && (float) $items[$B] ==
 check(abs(stockOf($A) - ($stockA0 - 5)) < 0.001 && abs(stockOf($B) - ($stockB0 - 60)) < 0.001,
     'stock re-balanced for confirmed order (A back +10, B extra -20)');
 
-$r = api('PUT', '/orders/' . $orderId, $token, ['items' => [['product_id' => $A, 'quantity' => 10]]]);
+$r = api('PUT', '/orders/' . $orderId, $token, ['items' => [
+    ['product_id' => $A, 'quantity' => 10],
+    ['product_id' => $B, 'quantity' => 60],
+]]);
+$o = $r['json']['data']['order'] ?? [];
+check($r['code'] === 200, 'second edit A 5->10 -> 200');
+check(($o['edit_count'] ?? null) === 2 && ($o['edit_remaining'] ?? null) === 0 && ($o['can_edit'] ?? null) === false
+    && ($o['edit_seconds_left'] ?? null) === 0 && ($o['can_cancel'] ?? null) === true,
+    'after second edit: edit_count=2, edit_remaining=0, can_edit=false, can_cancel=true');
+check(($r['json']['data']['message'] ?? '') === 'Your order has been confirmed. This order cannot be modified again.',
+    'second edit message: ' . ($r['json']['data']['message'] ?? ''));
+check(abs(stockOf($A) - ($stockA0 - 10)) < 0.001 && abs(stockOf($B) - ($stockB0 - 60)) < 0.001,
+    'stock re-balanced again (A -5 more)');
+
+$r = api('PUT', '/orders/' . $orderId, $token, ['items' => [['product_id' => $A, 'quantity' => 15]]]);
 check($r['code'] === 422 && ($r['json']['error']['code'] ?? '') === 'EDIT_LIMIT_REACHED',
-    'second edit (PUT) -> 422 EDIT_LIMIT_REACHED: ' . errMsg($r));
-$r = api('POST', '/orders/' . $orderId, $token, ['items' => [['product_id' => $A, 'quantity' => 10]]]);
-check($r['code'] === 422, 'second edit (POST fallback) -> 422');
+    'third edit (PUT) -> 422 EDIT_LIMIT_REACHED: ' . errMsg($r));
+$r = api('POST', '/orders/' . $orderId, $token, ['items' => [['product_id' => $A, 'quantity' => 15]]]);
+check($r['code'] === 422 && ($r['json']['error']['code'] ?? '') === 'EDIT_LIMIT_REACHED', 'third edit (POST fallback) -> 422 EDIT_LIMIT_REACHED');
 try {
-    (new CheckoutService($pdo))->editOrder($orderId, $customerId, [['product_id' => $A, 'quantity' => 10]]);
-    check(false, 'service-level second edit rejected');
-} catch (DomainException $e) {
-    check(str_contains($e->getMessage(), 'edit_count = 1'), 'service-level second edit rejected (bypassing controller)');
+    (new CheckoutService($pdo))->editOrder($orderId, $customerId, [['product_id' => $A, 'quantity' => 15]]);
+    check(false, 'service-level third edit rejected');
+} catch (OrderEditDeniedException $e) {
+    check($e->errorCode === 'EDIT_LIMIT_REACHED', 'service-level third edit rejected with EDIT_LIMIT_REACHED (bypassing controller)');
 }
-check(abs(stockOf($A) - ($stockA0 - 5)) < 0.001, 'rejected second edit leaves stock untouched');
+check((int) $pdo->query("SELECT edit_count FROM orders WHERE id = $orderId")->fetchColumn() === 2
+    && abs(stockOf($A) - ($stockA0 - 10)) < 0.001, 'rejected third edit leaves edit_count=2 and stock untouched');
+$g = api('GET', '/orders/' . $orderId, $token)['json']['data']['order'] ?? [];
+check(($g['can_edit'] ?? null) === false && ($g['edit_count'] ?? null) === 2 && ($g['edit_remaining'] ?? null) === 0,
+    'GET /orders/{id} after limit: can_edit=false, edit_count=2, edit_remaining=0');
 
 // ---------------------------------------------------------------------------
-// 6. Cancel after edit + fresh order with no leaked state
+// 6. Cancel after edits (independent of edit_count / window)
 // ---------------------------------------------------------------------------
-echo "\n== Cancel after edit ==\n";
+echo "\n== Cancel after edits ==\n";
 $r = api('POST', '/orders/' . $orderId . '/cancel', $token, ['reason' => 'verify cancel after edit']);
-check($r['code'] === 200 && ($r['json']['data']['order']['status'] ?? '') === 'cancelled', 'cancel edited order -> 200 cancelled');
+check($r['code'] === 200 && ($r['json']['data']['order']['status'] ?? '') === 'cancelled', 'cancel twice-edited order -> 200 cancelled');
 check(abs(stockOf($A) - $stockA0) < 0.001 && abs(stockOf($B) - $stockB0) < 0.001, 'cancel restored the edited quantities exactly');
 
 $cartCount = (int) $pdo->query("SELECT COUNT(*) FROM cart_items WHERE customer_id = $customerId")->fetchColumn();
 check($cartCount === 0, 'cart empty after place/edit/cancel (edit never touched cart)');
-$r = api('POST', '/cart/items', $token, ['product_id' => $A, 'quantity' => 5, 'replace' => true]);
+
+// ---------------------------------------------------------------------------
+// 7. Edit window (placed_at moved back on the DB clock instead of sleeping 2 minutes)
+// ---------------------------------------------------------------------------
+echo "\n== Edit window ==\n";
+api('POST', '/cart/items', $token, ['product_id' => $A, 'quantity' => 5, 'replace' => true]);
 $r = api('POST', '/orders', $token, ['address_id' => $addrIds[1]]);
 $fresh = $r['json']['data']['order'] ?? [];
 check($r['code'] === 201 && ($fresh['edit_count'] ?? null) === 0 && ($fresh['can_edit'] ?? null) === true,
-    'fresh order after cancel -> 201, edit_count=0, can_edit=true');
+    'fresh order -> 201, edit_count=0, can_edit=true');
 $freshId = (int) ($fresh['id'] ?? 0);
 
+$pdo->exec("UPDATE orders SET placed_at = NOW() - INTERVAL 110 SECOND WHERE id = $freshId");
 $stockA1 = stockOf($A);
 $r = api('PUT', '/orders/' . $freshId, $token, ['items' => [['product_id' => $A, 'quantity' => 10]]]);
-check($r['code'] === 200 && abs(stockOf($A) - $stockA1) < 0.001, 'edit on placed order -> 200, no stock movement until confirm');
+check($r['code'] === 200 && ($r['json']['data']['order']['edit_count'] ?? null) === 1
+    && abs(stockOf($A) - $stockA1) < 0.001, 'edit at 110s (inside window) on placed order -> 200, no stock movement until confirm');
+$sl = (int) ($r['json']['data']['order']['edit_seconds_left'] ?? -1);
+check($sl >= 1 && $sl <= 10, "edit_seconds_left reflects the shrinking window ({$sl}s)");
+
+$pdo->exec("UPDATE orders SET placed_at = NOW() - INTERVAL 121 SECOND WHERE id = $freshId");
+$g = api('GET', '/orders/' . $freshId, $token)['json']['data']['order'] ?? [];
+check(($g['can_edit'] ?? null) === false && ($g['edit_seconds_left'] ?? null) === 0 && ($g['edit_remaining'] ?? null) === 1,
+    'GET at 121s: can_edit=false, edit_seconds_left=0, edit_remaining=1');
+$r = api('PUT', '/orders/' . $freshId, $token, ['items' => [['product_id' => $A, 'quantity' => 15]]]);
+check($r['code'] === 422 && ($r['json']['error']['code'] ?? '') === 'EDIT_WINDOW_EXPIRED',
+    'edit at 121s -> 422 EDIT_WINDOW_EXPIRED: ' . errMsg($r));
+check((int) $pdo->query("SELECT edit_count FROM orders WHERE id = $freshId")->fetchColumn() === 1,
+    'expired-window edit leaves edit_count=1');
 $r = api('POST', '/orders/' . $freshId . '/cancel', $token, ['reason' => 'verify cleanup']);
-check($r['code'] === 200, 'cancel fresh edited (placed) order -> 200');
+check($r['code'] === 200, 'cancel after the edit window -> 200 (cancel is status-based only)');
 
 $list = api('GET', '/orders', $token);
 $row = array_values(array_filter($list['json']['data']['orders'] ?? [], static fn ($o) => (int) $o['id'] === $orderId))[0] ?? [];
-check(($row['edit_count'] ?? null) === 1 && ($row['can_edit'] ?? null) === false, 'GET /orders list exposes edit_count/can_edit');
+check(($row['edit_count'] ?? null) === 2 && ($row['can_edit'] ?? null) === false && ($row['edit_remaining'] ?? null) === 0
+    && array_key_exists('edit_expires_at', $row), 'GET /orders list exposes edit_count/can_edit/edit_remaining/edit_expires_at');
 
 // ---------------------------------------------------------------------------
 // Admin order detail address fields (Order::find feeds /orders/{id} admin page)
@@ -294,5 +348,26 @@ check(abs((float) $admin['geo_lat'] - 17.385044) < 0.00001 && abs((float) $admin
 echo '      sample: ' . json_encode(array_intersect_key($admin, array_flip($keys))) . "\n";
 
 @unlink($png);
+
+// ---------------------------------------------------------------------------
+// Cleanup: every order above is cancelled (stock restored), so drop the stub customer and its data.
+// Set VERIFY_KEEP_DATA=1 to keep it for inspection.
+// ---------------------------------------------------------------------------
+if (!getenv('VERIFY_KEEP_DATA')) {
+    $open = (int) $pdo->query("SELECT COUNT(*) FROM orders WHERE customer_id = $customerId AND status <> 'cancelled'")->fetchColumn();
+    if ($open === 0) {
+        $pdo->exec("DELETE FROM orders WHERE customer_id = $customerId");
+        $pdo->exec("DELETE FROM customers WHERE id = $customerId");
+        $dir = PUBLIC_PATH . '/uploads/kyc/' . $customerId;
+        foreach (glob($dir . '/*') ?: [] as $f) {
+            @unlink($f);
+        }
+        @rmdir($dir);
+        echo "\n      cleaned up stub customer $customerId and its orders\n";
+    } else {
+        echo "\n      kept stub customer $customerId ($open open order(s))\n";
+    }
+}
+
 echo "\n" . ($fail === 0 ? 'All MOQ / edit / shop-photo checks passed.' : "$fail check(s) failed.") . "\n";
 exit($fail === 0 ? 0 : 1);

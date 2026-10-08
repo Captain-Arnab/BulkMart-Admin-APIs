@@ -278,7 +278,11 @@
                         <i class="fa-solid fa-pen-to-square"></i>
                     </div>
                     <h3>Edit Order</h3>
-                    <p>Change quantities or remove items. You can modify this order <strong>only once</strong>.</p>
+                    <p><span id="vgEditWindowCopy">You can edit this order a limited number of times shortly after placing it.</span></p>
+                    <div class="vg-order-edit-timer" aria-live="polite">
+                        <span><i class="fa-regular fa-clock"></i> Time left <strong id="vgEditCountdown">—</strong></span>
+                        <span id="vgEditRemaining"></span>
+                    </div>
                     <button type="button" class="vg-support-btn" id="vgEditBtn">
                         <i class="fa-solid fa-pen"></i>
                         Edit this order
@@ -287,7 +291,7 @@
 
                 <div class="vg-order-edit-locked" id="vgEditLockedNote" hidden>
                     <i class="fa-solid fa-lock"></i>
-                    <span>This order has already been modified once and cannot be modified again.</span>
+                    <span id="vgEditLockedText"></span>
                 </div>
 
                 <div class="vg-order-action-card" id="vgCancelCard" hidden>

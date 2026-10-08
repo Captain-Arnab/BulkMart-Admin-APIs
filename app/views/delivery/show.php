@@ -43,7 +43,7 @@ $codWarn = $codWarn ?? null;
                 <i class="bi <?= e($badge['icon']) ?>"></i>
                 <?= e($badge['label']) ?>
               </span>
-              <?php $badgeOrder = $order; require VIEW_PATH . '/shared/modified_badge.php'; ?>
+              <?php $badgeOrder = $order; $badgeShowCount = true; require VIEW_PATH . '/shared/modified_badge.php'; ?>
             </div>
           </div>
           <div class="mb-3">

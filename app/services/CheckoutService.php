@@ -214,17 +214,17 @@ class CheckoutService
     }
 
     /**
-     * One-time customer edit of an order's line items (replaces all lines).
+     * Customer edit of an order's line items (replaces all lines), allowed by Order::editState():
+     * at most Order::ORDER_EDIT_MAX_COUNT times, within Order::ORDER_EDIT_WINDOW_SECONDS of placement.
      * Lines are re-priced at current catalog prices; delivery fee is kept; coupon is re-evaluated.
      * If stock was already deducted (confirmed), old quantities are restored and new ones deducted.
      *
      * @param mixed $items list<array{product_id:int,quantity:float}> from the request body
      * @return array{order:array,items:array}
+     * @throws OrderEditDeniedException when the edit rule refuses the edit
      */
     public function editOrder(int $orderId, int $customerId, mixed $items): array
     {
-        $rows = $this->normalizeEditItems($items);
-
         $this->db->beginTransaction();
         try {
             $stmt = $this->db->prepare('SELECT * FROM orders WHERE id = ? FOR UPDATE');
@@ -233,18 +233,12 @@ class CheckoutService
             if (!$order || (int) $order['customer_id'] !== $customerId) {
                 throw new DomainException('Order not found.');
             }
-            if ((int) $order['edit_count'] >= Order::MAX_CUSTOMER_EDITS) {
-                throw new DomainException(
-                    'This order has already been modified once (edit_count = ' . (int) $order['edit_count']
-                    . '). Orders can only be modified one time. You can still cancel it if it has not been dispatched.'
-                );
+            // Checked under the row lock so concurrent edits cannot both pass the count/window check.
+            $state = Order::editState($order);
+            if (!$state['can_edit']) {
+                throw new OrderEditDeniedException((string) $state['reason'], (string) $state['message']);
             }
-            if (!Order::isEditableStatus((string) $order['status'])) {
-                throw new DomainException(
-                    'This order can no longer be modified (status: '
-                    . (Order::STATUS_LABELS[$order['status']] ?? $order['status']) . ').'
-                );
-            }
+            $rows = $this->normalizeEditItems($items);
 
             $orderService = new OrderService($this->db);
             $stockDeducted = $orderService->wasStockDeducted($orderId, (string) $order['status']);
@@ -286,17 +280,23 @@ class CheckoutService
                 'UPDATE orders SET subtotal = ?, discount_amount = ?, total = ?, edit_count = edit_count + 1
                  WHERE id = ? AND edit_count < ?'
             );
-            $upd->execute([$built['subtotal'], $discount, $total, $orderId, Order::MAX_CUSTOMER_EDITS]);
+            $upd->execute([$built['subtotal'], $discount, $total, $orderId, Order::ORDER_EDIT_MAX_COUNT]);
             if ($upd->rowCount() !== 1) {
-                throw new DomainException('This order has already been modified once. Orders can only be modified one time.');
+                throw new OrderEditDeniedException(
+                    Order::EDIT_LIMIT_REACHED,
+                    Order::editDeniedMessage(Order::EDIT_LIMIT_REACHED, $order)
+                );
             }
+            $editNo = (int) $order['edit_count'] + 1;
+            $editsLeft = max(0, Order::ORDER_EDIT_MAX_COUNT - $editNo);
 
             $this->db->prepare(
                 'INSERT INTO order_status_log (order_id, status, changed_by_admin_id, note) VALUES (?,?,NULL,?)'
             )->execute([
                 $orderId,
                 $order['status'],
-                'Order modified by customer (one-time edit). New total ₹' . number_format($total, 2),
+                'Order modified by customer (edit ' . $editNo . ' of ' . Order::ORDER_EDIT_MAX_COUNT
+                    . '). New total ₹' . number_format($total, 2),
             ]);
             $this->db->prepare(
                 'INSERT INTO notifications (customer_id, title, body, type, related_id, is_read)
@@ -304,8 +304,10 @@ class CheckoutService
             )->execute([
                 $customerId,
                 'Order modified',
-                "Your order {$order['order_number']} has been updated. New total ₹" . number_format($total, 2)
-                    . '. This order cannot be modified again.',
+                "Your order {$order['order_number']} has been updated. New total ₹" . number_format($total, 2) . '. '
+                    . ($editsLeft > 0
+                        ? 'You can edit it ' . $editsLeft . ' more time(s) within ' . intdiv(Order::ORDER_EDIT_WINDOW_SECONDS, 60) . ' minutes of placing it.'
+                        : 'This order cannot be modified again.'),
                 'order',
                 $orderId,
             ]);

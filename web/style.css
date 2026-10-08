@@ -49506,6 +49506,11 @@ html body *:not(i):not(.fa):not([class^="fa-"]):not([class*=" fa-"]) {
     font-weight: 600;
 }
 
+.vg-order-edit-locked[hidden],
+#vgEditCard[hidden] {
+    display: none !important;
+}
+
 .vc-order-edit-modal {
     position: fixed;
     inset: 0;
@@ -49569,6 +49574,29 @@ html body *:not(i):not(.fa):not([class^="fa-"]):not([class*=" fa-"]) {
     background: #fff7e6;
     color: #8a5a00;
     font-size: 13px;
+}
+
+.vc-order-edit-timer {
+    white-space: nowrap;
+    font-variant-numeric: tabular-nums;
+}
+
+.vg-order-edit-timer {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: space-between;
+    gap: 6px 12px;
+    margin: 0 0 14px;
+    padding: 9px 12px;
+    border-radius: 10px;
+    background: #fff7e6;
+    color: #8a5a00;
+    font-size: 13px;
+    font-weight: 600;
+}
+
+.vg-order-edit-timer strong {
+    font-variant-numeric: tabular-nums;
 }
 
 .vc-order-edit-list {

@@ -4100,7 +4100,8 @@
                     '<button type="button" class="vc-order-edit-x" data-edit-close aria-label="Close"><i class="fa-solid fa-xmark"></i></button>' +
                 '</div>' +
                 '<p class="vc-order-edit-warn"><i class="fa-solid fa-triangle-exclamation"></i> ' +
-                    'You can modify this order <strong>only once</strong>. After you save, it cannot be changed again (you can still cancel it).</p>' +
+                    '<span id="vcOrderEditWarnText"></span> ' +
+                    '<strong class="vc-order-edit-timer" id="vcOrderEditTimer"></strong></p>' +
                 '<div class="vc-order-edit-list" id="vcOrderEditList"></div>' +
                 '<div class="vc-order-edit-error" id="vcOrderEditError" role="alert" hidden></div>' +
                 '<div class="vc-order-edit-foot">' +
@@ -4136,7 +4137,102 @@
         document.body.classList.remove('vc-modal-open');
     }
 
-    /** One-time order edit. Submits the FULL desired item list to PUT /orders/{id}. */
+    /* ---------- Order edit window (server rule: edit_count < max AND within edit_window_seconds of placement) ---------- */
+
+    var orderEditTimer = null;
+    var orderEditOnExpire = null;
+
+    function editWindowMinutes(order) {
+        return Math.max(1, Math.round((Number(order.edit_window_seconds) || 120) / 60));
+    }
+
+    /** Seconds left as computed by the server; the device clock only measures elapsed time from here. */
+    function editSecondsLeft(order) {
+        var s = Number(order.edit_seconds_left);
+        if (isFinite(s)) {
+            return Math.max(0, Math.floor(s));
+        }
+        var exp = Date.parse(order.edit_expires_at || '');
+        var now = Date.parse(order.server_time || '');
+        return isFinite(exp) && isFinite(now) ? Math.max(0, Math.floor((exp - now) / 1000)) : 0;
+    }
+
+    function formatCountdown(sec) {
+        sec = Math.max(0, Math.floor(sec));
+        var m = Math.floor(sec / 60);
+        var s = sec % 60;
+        return m + ':' + (s < 10 ? '0' : '') + s;
+    }
+
+    function editLockedText(order, windowEnded) {
+        if (!windowEnded) {
+            return '';
+        }
+        var max = Number(order.edit_max_count) || 2;
+        var count = Number(order.edit_count) || 0;
+        if (count >= max) {
+            return 'This order has been edited ' + count + ' times (the maximum) and cannot be modified again.';
+        }
+        if (order.status === 'placed' || order.status === 'confirmed') {
+            return 'The ' + editWindowMinutes(order) + '-minute edit window for this order has ended, so it can no longer be modified.';
+        }
+        return '';
+    }
+
+    function setEditLockedNote(order, windowEnded) {
+        var note = document.getElementById('vgEditLockedNote');
+        if (!note) return;
+        var text = order.can_cancel ? editLockedText(order, windowEnded) : '';
+        setText('vgEditLockedText', text);
+        note.hidden = !text;
+    }
+
+    /** Shows the Edit card while the window is open and hides it the moment the countdown reaches zero. */
+    function setupOrderEditCountdown(order) {
+        if (orderEditTimer) {
+            clearInterval(orderEditTimer);
+            orderEditTimer = null;
+        }
+        var editCard = document.getElementById('vgEditCard');
+        var editBtn = document.getElementById('vgEditBtn');
+        var left = order.can_edit === true ? editSecondsLeft(order) : 0;
+        var open = left > 0;
+
+        if (editCard && editBtn) {
+            editCard.hidden = !open;
+            editBtn.onclick = open ? function () { openOrderEditModal(order); } : null;
+        }
+        var remaining = Number(order.edit_remaining) || 0;
+        setText('vgEditRemaining', remaining + (remaining === 1 ? ' edit' : ' edits') + ' left');
+        setText('vgEditWindowCopy', 'You can edit this order up to ' + (Number(order.edit_max_count) || 2) +
+            ' times within ' + editWindowMinutes(order) + ' minutes of placing it.');
+        setEditLockedNote(order, !open);
+        if (!open) {
+            return;
+        }
+
+        var deadline = performance.now() + left * 1000;
+        function tick() {
+            var s = Math.max(0, Math.ceil((deadline - performance.now()) / 1000));
+            setText('vgEditCountdown', formatCountdown(s));
+            setText('vcOrderEditTimer', formatCountdown(s) + ' left');
+            if (s > 0) return;
+            clearInterval(orderEditTimer);
+            orderEditTimer = null;
+            if (editCard && editBtn) {
+                editCard.hidden = true;
+                editBtn.onclick = null;
+            }
+            setEditLockedNote(order, true);
+            if (typeof orderEditOnExpire === 'function') {
+                orderEditOnExpire();
+            }
+        }
+        tick();
+        orderEditTimer = setInterval(tick, 1000);
+    }
+
+    /** Submits the FULL desired item list to PUT /orders/{id}. */
     function openOrderEditModal(order) {
         var modal = ensureOrderEditModal();
         var list = document.getElementById('vcOrderEditList');
@@ -4144,8 +4240,33 @@
         var saveBtn = document.getElementById('vcOrderEditSave');
         var subtotalEl = document.getElementById('vcOrderEditSubtotal');
         var rows = [];
+        var locked = false;
+        var remaining = Number(order.edit_remaining) || 0;
 
         setText('vcOrderEditTitle', 'Edit order ' + (order.order_number ? '#' + order.order_number : ''));
+        setText('vcOrderEditWarnText', remaining <= 1
+            ? 'This is your last edit. After you save, this order cannot be changed again (you can still cancel it).'
+            : 'You can edit this order ' + remaining + ' more times within ' + editWindowMinutes(order) +
+              ' minutes of placing it (you can still cancel it afterwards).');
+        var pageCountdown = document.getElementById('vgEditCountdown');
+        setText('vcOrderEditTimer', pageCountdown && pageCountdown.textContent ? pageCountdown.textContent + ' left' : '');
+        orderEditOnExpire = function () {
+            if (!modal.classList.contains('show') || modal.classList.contains('is-saving')) return;
+            lockEdit(editLockedText(order, true));
+        };
+
+        function lockEdit(message) {
+            locked = true;
+            errBox.hidden = false;
+            errBox.textContent = message;
+            saveBtn.disabled = true;
+            saveBtn.title = message;
+            if (orderEditTimer) {
+                clearInterval(orderEditTimer);
+                orderEditTimer = null;
+            }
+            setText('vcOrderEditTimer', 'Editing closed');
+        }
         list.innerHTML = '<div class="vg-order-loading">Loading current prices and order rules…</div>';
         errBox.hidden = true;
         errBox.textContent = '';
@@ -4240,6 +4361,10 @@
 
             var subtotal = keptRows().reduce(function (s, r) { return s + r.price * r.qty; }, 0);
             if (subtotalEl) subtotalEl.textContent = money(subtotal);
+            if (locked) {
+                saveBtn.disabled = true;
+                return;
+            }
             var hasProblem = keptRows().some(function (r) { return !!rowProblem(r); });
             saveBtn.disabled = !keptRows().length || hasProblem || !isChanged();
             saveBtn.title = !keptRows().length ? 'Keep at least one item, or cancel the order instead.'
@@ -4257,7 +4382,7 @@
                         return;
                     }
                     r.removed = !r.removed;
-                    errBox.hidden = true;
+                    if (!locked) errBox.hidden = true;
                     render();
                 }
                 return;
@@ -4282,13 +4407,16 @@
             var items = keptRows().map(function (r) {
                 return { product_id: r.product_id, quantity: r.qty };
             });
-            if (!items.length) return;
-            vcConfirmDialog('Save these changes? This order cannot be modified again after this.', {
+            if (!items.length || locked) return;
+            var leftAfter = Math.max(0, remaining - 1);
+            vcConfirmDialog(leftAfter > 0
+                ? 'Save these changes? You will be able to edit this order ' + leftAfter + ' more time(s) within the remaining time.'
+                : 'Save these changes? This is your last edit — the order cannot be modified again after this.', {
                 title: 'Confirm order changes',
                 confirmText: 'Yes, save changes',
                 cancelText: 'Go back'
             }).then(function (yes) {
-                if (!yes) return;
+                if (!yes || locked) return;
                 modal.classList.add('is-saving');
                 saveBtn.disabled = true;
                 saveBtn.textContent = 'Saving…';
@@ -4296,13 +4424,15 @@
                     modal.classList.remove('is-saving');
                     saveBtn.textContent = 'Save changes';
                     if (!res || !res.success) {
+                        var code = res && res.error && res.error.code;
+                        if (code === 'EDIT_WINDOW_EXPIRED' || code === 'EDIT_LIMIT_REACHED') {
+                            lockEdit((res.error && res.error.message) || 'This order can no longer be modified.');
+                            refreshOrderDetails(order.id);
+                            return;
+                        }
                         errBox.hidden = false;
                         errBox.textContent = apiErrorMessage(res, 'Could not update the order.');
                         render();
-                        if (res && res.error && res.error.code === 'EDIT_LIMIT_REACHED') {
-                            saveBtn.disabled = true;
-                            refreshOrderDetails(order.id);
-                        }
                         return;
                     }
                     closeOrderEditModal();
@@ -4310,8 +4440,10 @@
                     if (updated) {
                         fillOrderDetailsPage(updated, VC.getCustomer() || {}, addrLine(updated.address || {}));
                     }
-                    refreshOrderDetails(order.id);
-                    vcAlertDialog('Your order has been confirmed. This order cannot be modified again.', {
+                    var left = updated ? Number(updated.edit_remaining) || 0 : 0;
+                    vcAlertDialog(left > 0
+                        ? 'Order updated. You can edit this order ' + left + ' more time(s) within the remaining time.'
+                        : 'Your order has been confirmed. This order cannot be modified again.', {
                         icon: 'success',
                         title: 'Order updated'
                     });
@@ -4443,16 +4575,7 @@
             };
         }
 
-        var editCard = document.getElementById('vgEditCard');
-        var editBtn = document.getElementById('vgEditBtn');
-        var editLocked = document.getElementById('vgEditLockedNote');
-        if (editCard && editBtn) {
-            editCard.hidden = order.can_edit !== true;
-            editBtn.onclick = order.can_edit === true ? function () { openOrderEditModal(order); } : null;
-        }
-        if (editLocked) {
-            editLocked.hidden = !(order.can_edit !== true && Number(order.edit_count) > 0 && order.can_cancel);
-        }
+        setupOrderEditCountdown(order);
 
         var cancelCard = document.getElementById('vgCancelCard');
         var cancelBtn = document.getElementById('vgCancelBtn');

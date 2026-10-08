@@ -48,7 +48,14 @@ class Order extends Model
         'cancelled'         => [],
     ];
 
-    public const MAX_CUSTOMER_EDITS = 1;
+    /** Customer order edits: allowed within this many seconds of placed_at ... */
+    public const ORDER_EDIT_WINDOW_SECONDS = 120;
+    /** ... and at most this many times. */
+    public const ORDER_EDIT_MAX_COUNT = 2;
+
+    public const EDIT_LIMIT_REACHED = 'EDIT_LIMIT_REACHED';
+    public const EDIT_WINDOW_EXPIRED = 'EDIT_WINDOW_EXPIRED';
+    public const EDIT_STATUS_LOCKED = 'EDIT_STATUS_LOCKED';
 
     public static function canCancel(string $status): bool
     {
@@ -60,11 +67,67 @@ class Order extends Model
         return in_array($status, ['placed', 'confirmed'], true);
     }
 
-    /** @param array<string,mixed> $order needs status, edit_count */
+    /**
+     * Edit eligibility from server time only. placed_at is a DATETIME in APP_TIMEZONE (the DB session uses
+     * the same offset), so strtotime() turns it into the same instant MySQL stored.
+     *
+     * @param array<string,mixed> $order needs status, edit_count, placed_at
+     * @return array{can_edit:bool, edit_count:int, edit_remaining:int, edit_expires_at:?string,
+     *               edit_seconds_left:int, reason:?string, message:?string}
+     */
+    public static function editState(array $order, ?int $now = null): array
+    {
+        $now ??= time();
+        $count = (int) ($order['edit_count'] ?? 0);
+        $placedTs = !empty($order['placed_at']) ? strtotime((string) $order['placed_at']) : false;
+        $expiresTs = $placedTs !== false ? $placedTs + self::ORDER_EDIT_WINDOW_SECONDS : null;
+
+        $reason = null;
+        if ($count >= self::ORDER_EDIT_MAX_COUNT) {
+            $reason = self::EDIT_LIMIT_REACHED;
+        } elseif ($expiresTs === null || $now > $expiresTs) {
+            $reason = self::EDIT_WINDOW_EXPIRED;
+        } elseif (!self::isEditableStatus((string) ($order['status'] ?? ''))) {
+            $reason = self::EDIT_STATUS_LOCKED;
+        }
+
+        return [
+            'can_edit'          => $reason === null,
+            'edit_count'        => $count,
+            'edit_remaining'    => max(0, self::ORDER_EDIT_MAX_COUNT - $count),
+            'edit_expires_at'   => $expiresTs !== null ? date('c', $expiresTs) : null,
+            'edit_seconds_left' => $reason === null ? max(0, $expiresTs - $now) : 0,
+            'reason'            => $reason,
+            'message'           => $reason !== null ? self::editDeniedMessage($reason, $order) : null,
+        ];
+    }
+
     public static function canEdit(array $order): bool
     {
-        return self::isEditableStatus((string) ($order['status'] ?? ''))
-            && (int) ($order['edit_count'] ?? 0) < self::MAX_CUSTOMER_EDITS;
+        return self::editState($order)['can_edit'];
+    }
+
+    public static function editDeniedMessage(string $reason, array $order): string
+    {
+        $minutes = intdiv(self::ORDER_EDIT_WINDOW_SECONDS, 60);
+        $cancelHint = ' You can still cancel it if it has not been dispatched.';
+        return match ($reason) {
+            self::EDIT_LIMIT_REACHED => 'This order has already been edited ' . self::ORDER_EDIT_MAX_COUNT
+                . ' times, which is the maximum. It cannot be modified again.' . $cancelHint,
+            self::EDIT_WINDOW_EXPIRED => 'The ' . $minutes . '-minute edit window for this order has ended. '
+                . 'Orders can only be edited within ' . $minutes . ' minutes of placing them.' . $cancelHint,
+            default => 'This order can no longer be modified (status: '
+                . (self::STATUS_LABELS[$order['status'] ?? ''] ?? ($order['status'] ?? 'unknown')) . ').',
+        };
+    }
+
+    /** Message shown after a successful edit, based on edits left. */
+    public static function editSuccessMessage(int $editRemaining): string
+    {
+        if ($editRemaining > 0) {
+            return 'Order updated. You can edit this order ' . $editRemaining . ' more time(s) within the remaining time.';
+        }
+        return 'Your order has been confirmed. This order cannot be modified again.';
     }
 
     public static function nextStatuses(string $current): array
@@ -86,7 +149,7 @@ class Order extends Model
         ];
     }
 
-    /** Customer used their one-time edit. */
+    /** Customer edited the order at least once. */
     public static function isModified(array $order): bool
     {
         return (int) ($order['edit_count'] ?? 0) >= 1;

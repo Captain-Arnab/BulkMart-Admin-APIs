@@ -30,14 +30,14 @@ $addrMapsNote = $addrMaps['exact'] ? 'Pinned GPS location' : 'Approximate locati
 
   <div class="vc-addr-actions">
     <button type="button"
-            class="btn btn-sm btn-outline-secondary"
+            class="btn btn-sm vc-btn-addr"
             data-vc-copy="<?= e($addrText) ?>"
             data-vc-copy-done="Address copied"
             title="Copy Address">
       <i class="bi bi-clipboard"></i><?php if (!$addrCompact): ?> Copy Address<?php endif; ?>
     </button>
     <button type="button"
-            class="btn btn-sm btn-outline-secondary"
+            class="btn btn-sm vc-btn-addr"
             data-vc-copy="<?= e($addrMaps['url']) ?>"
             data-vc-copy-done="<?= $addrMaps['exact'] ? 'Location link copied' : 'Approximate location link copied' ?>"
             title="Copy Location Link — <?= e($addrMapsNote) ?>">
@@ -53,11 +53,10 @@ $addrMapsNote = $addrMaps['exact'] ? 'Pinned GPS location' : 'Approximate locati
   </div>
 
   <div class="vc-addr-geo <?= $addrMaps['exact'] ? 'is-exact' : 'is-approx' ?>">
-    <i class="bi <?= $addrMaps['exact'] ? 'bi-pin-map-fill' : 'bi-exclamation-triangle' ?>"></i>
-    <?= e($addrMaps['exact'] ? 'Pinned GPS location' : 'Approximate location') ?>
-    <?php if (!$addrCompact): ?>
-      <span class="text-muted">· <?= e($addrMaps['exact'] ? 'link opens the exact pin' : 'no GPS pin saved, link searches the address') ?></span>
-    <?php endif; ?>
-    · <a href="<?= e($addrMaps['url']) ?>" target="_blank" rel="noopener">Open map</a>
+    <span title="<?= e($addrMaps['exact'] ? 'The location link opens the exact GPS pin' : 'No GPS pin saved — the location link searches the address') ?>">
+      <i class="bi <?= $addrMaps['exact'] ? 'bi-pin-map-fill' : 'bi-exclamation-triangle' ?>"></i>
+      <?= e($addrMaps['exact'] ? 'Pinned GPS location' : 'Approximate location') ?>
+    </span>
+    <a href="<?= e($addrMaps['url']) ?>" target="_blank" rel="noopener">Open map <i class="bi bi-box-arrow-up-right"></i></a>
   </div>
 </div>

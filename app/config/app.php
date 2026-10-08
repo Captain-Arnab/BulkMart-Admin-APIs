@@ -18,6 +18,13 @@ define('APP_PATH', dirname(__DIR__));
 define('PUBLIC_PATH', APP_ROOT . '/public');
 define('VIEW_PATH', APP_PATH . '/views');
 
+/**
+ * One timezone for PHP and the MySQL session (db() sets time_zone to this offset), so DATETIMEs written
+ * with NOW() and values compared against time() agree — e.g. the order edit window.
+ */
+define('APP_TIMEZONE', (string) ($appCfg['timezone'] ?? 'Asia/Kolkata'));
+date_default_timezone_set(APP_TIMEZONE);
+
 define('SESSION_LIFETIME', (int) ($appCfg['session_lifetime'] ?? 7200));
 define('APP_DEBUG', (bool) ($appCfg['debug'] ?? true));
 
@@ -160,7 +167,10 @@ function url(string $path = ''): string
 
 function asset(string $path): string
 {
-    return url('assets/' . ltrim($path, '/'));
+    $path = ltrim($path, '/');
+    $file = PUBLIC_PATH . '/assets/' . $path;
+    $version = is_file($file) ? '?v=' . filemtime($file) : '';
+    return url('assets/' . $path) . $version;
 }
 
 /** Public upload / media URL helper */
